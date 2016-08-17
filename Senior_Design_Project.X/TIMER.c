@@ -4,8 +4,8 @@
 #include "TIMER.h"
 
 // Period needed for timer 1 to trigger an interrupt every 1 second
-// (8 MHz PBCLK / 256 = 31250 KHz Timer 1 clock)
-#define PERIOD  31250
+// (8 MHz PBCLK / 64 = 125 KHz Timer 1 clock)
+#define PERIOD  125
 
 UINT32 ms_TICK;
 
@@ -16,7 +16,7 @@ void TIMER1_Init(void);
  */
 void TIMER_Init(void)
 {
-    OpenTimer1(T1_ON | T1_SOURCE_INT | T1_PS_1_256, PERIOD);
+    OpenTimer1(T1_ON | T1_SOURCE_INT | T1_PS_1_64, PERIOD);
     
     // Set up the timer interrupt with a priority of 2
     INTEnable(INT_T1, INT_ENABLED);
@@ -37,9 +37,8 @@ UINT32 TIMER_GetMSecond()
 
 void __ISR(_TIMER_1_VECTOR, IPL2AUTO) Timer1Handler(void)
 {
-//    ms_TICK++;
+    ms_TICK++;
     
-        mPORTAToggleBits(BIT_0);
     // Clear the interrupt flag
     INTClearFlag(INT_T1);
 }
