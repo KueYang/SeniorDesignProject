@@ -14,11 +14,11 @@
  * PBCLK = 8 MHz (SYSCLK / FPBDIV)
  * Primary Osc w/PLL (XT+,HS+,EC+PLL)
  * WDT OFF */
-#pragma config FPLLMUL = MUL_20
-#pragma config FPLLIDIV = DIV_1
-#pragma config FPLLODIV = DIV_1
-#pragma config FNOSC = PRIPLL       // Oscillator Selection Bit, Primary Osc (FRC) with PLL
-#pragma config POSCMOD = HS         // Primary Oscillator Configuration, HS osc mode
+#pragma config FPLLMUL = MUL_24
+#pragma config FPLLIDIV = DIV_3
+#pragma config FPLLODIV = DIV_8
+#pragma config FNOSC = FRCPLL       // Oscillator Selection Bit, Internal Osc (FRC) with PLL
+#pragma config POSCMOD = OFF        // Primary Oscillator Configuration, HS osc mode
 #pragma config FPBDIV = DIV_1       // Peripheral Clock Divisor, Pb_Clk is Sys_Clk/1
 #pragma config FSOSCEN = OFF        // Secondary Oscillator Disabled
 
@@ -45,9 +45,8 @@ int main(int argc, char** argv) {
     
     while(1)
     {
-//        UART_Process();
+        UART_Process();
     }
 
     return (0);
 }
-

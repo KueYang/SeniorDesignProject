@@ -5,7 +5,7 @@
 #include "Timer.h"
 #include "UART.h"
 
-#define UART_MODULE_ID          UART1 // PIM is connected to Explorer through UART1 module
+#define UART_MODULE_ID          UART1
 #define DESIRED_BAUDRATE        (9600) //The desired BaudRate
 #define	GetPeripheralClock()    (SYS_FREQ/(1 << OSCCONbits.PBDIV))
 #define	GetInstructionClock()	(SYS_FREQ)
@@ -15,19 +15,19 @@ void PutCharacter(const char character);
 
 void UART_Init(void)
 {
-    // Unlocks the PPS assignments
-    PPSUnLock;
     // Re-mapped pins RB14 and RB15 pins to U1RX and U1TX
-    PPSInput(3,U1RX,RPB13);     // Assign RPB13 as input pin for U1RX
-    PPSOutput(1,RPB15,U1TX);    // Set RPB15 pin as output for U1TX
-    // Locks the PPS assignments
-    PPSLock;
+    mSysUnlockOpLock({
+        PPSUnLock;
+        PPSInput(3,U1RX,RPB13);     // Assign RPB13 as input pin for U1RX
+        PPSOutput(1,RPB15,U1TX);    // Set RPB15 pin as output for U1TX
+        PPSLock;
+    });
     
     // Configure UART1 module
     UARTConfigure(UART_MODULE_ID, UART_ENABLE_PINS_TX_RX_ONLY);
     UARTSetFifoMode(UART_MODULE_ID, UART_INTERRUPT_ON_TX_NOT_FULL | UART_INTERRUPT_ON_RX_NOT_EMPTY);
     UARTSetLineControl(UART_MODULE_ID, UART_DATA_SIZE_8_BITS | UART_PARITY_NONE | UART_STOP_BITS_1);
-    UARTSetDataRate(UART_MODULE_ID, GetPeripheralClock(), DESIRED_BAUDRATE);
+    UINT32 actualRate = UARTSetDataRate(UART_MODULE_ID, GetPeripheralClock(), DESIRED_BAUDRATE);
     UARTEnable(UART_MODULE_ID, UART_ENABLE_FLAGS(UART_PERIPHERAL | UART_RX | UART_TX));
 
     // Configure UART RX1 and TX1 Interrupt
@@ -36,13 +36,13 @@ void UART_Init(void)
     INTSetVectorPriority(INT_VECTOR_UART(UART_MODULE_ID), INT_PRIORITY_LEVEL_2);
     INTSetVectorSubPriority(INT_VECTOR_UART(UART_MODULE_ID), INT_SUB_PRIORITY_LEVEL_0);
     
-    WriteString("*** UART Interrupt-driven Application Example ***\r\n");
-    WriteString("*** Type some characters and observe echo and RA7 LED toggle ***\r\n");
+//    WriteString("*** UART Interrupt-driven Application Example ***\r\n");
+//    WriteString("*** Type some characters and observe echo and RA7 LED toggle ***\r\n");
 }
 
 void UART_Process(void)
 {
-    
+
 }
 
 // Helper functions
@@ -80,5 +80,7 @@ void __ISR(_UART1_VECTOR, IPL2AUTO) IntUart1Handler(void)
 	if ( INTGetFlag(INT_SOURCE_UART_TX(UART_MODULE_ID)) )
 	{
         INTClearFlag(INT_SOURCE_UART_TX(UART_MODULE_ID));
+        // Toggle LED to indicate UART activity
+        mPORTBToggleBits(BIT_5);
 	}
 }
