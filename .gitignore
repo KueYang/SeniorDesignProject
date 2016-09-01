@@ -1,3 +1,8 @@
+# Build directories #
+###################
+Senior_Design_Project.X/build/
+Senior_Design_Project.X/debug/
+
 # Compiled source #
 ###################
 *.com

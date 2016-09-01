@@ -5,13 +5,17 @@
 
 void IO_Init(void)
 {   
-    // Clear PORTA bits so there are no unexpected flashes when setting
-    // them to output in the next step
-    mPORTAClearBits(BIT_0);
-
-    // Set PORTA bits as output
-    mPORTASetPinsDigitalOut(BIT_0);
+    // Set RB13 and RB15 to Digital IO
+    ANSELBbits.ANSB13 = 0;
+    ANSELBbits.ANSB15 = 0;
     
+    mPORTAClearBits(BIT_0);
+    mPORTBClearBits(BIT_5 | BIT_13 | BIT_15);
+    mPORTBSetPinsDigitalIn(BIT_13); //U1RX
+    mPORTASetPinsDigitalOut(BIT_0); //LED
+    mPORTBSetPinsDigitalOut(BIT_5 | BIT_15); //LED | U1TX
+
+//    
     // ADC IO
     
     // UART IO
