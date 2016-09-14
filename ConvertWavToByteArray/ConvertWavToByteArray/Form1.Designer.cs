@@ -40,9 +40,10 @@
             this.saveButton = new System.Windows.Forms.Button();
             this.displayBox = new System.Windows.Forms.TabControl();
             this.hexPage = new System.Windows.Forms.TabPage();
-            this.decimalPage = new System.Windows.Forms.TabPage();
             this.hexTextBox = new System.Windows.Forms.RichTextBox();
+            this.decimalPage = new System.Windows.Forms.TabPage();
             this.decTextBox = new System.Windows.Forms.RichTextBox();
+            this.playButton = new System.Windows.Forms.Button();
             this.displayBox.SuspendLayout();
             this.hexPage.SuspendLayout();
             this.decimalPage.SuspendLayout();
@@ -82,9 +83,9 @@
             this.bitPerSampleLabel.AutoSize = true;
             this.bitPerSampleLabel.Location = new System.Drawing.Point(12, 83);
             this.bitPerSampleLabel.Name = "bitPerSampleLabel";
-            this.bitPerSampleLabel.Size = new System.Drawing.Size(75, 13);
+            this.bitPerSampleLabel.Size = new System.Drawing.Size(81, 13);
             this.bitPerSampleLabel.TabIndex = 8;
-            this.bitPerSampleLabel.Text = "BitsPerSample";
+            this.bitPerSampleLabel.Text = "Bits Per Sample";
             // 
             // samplingLabel
             // 
@@ -162,6 +163,14 @@
             this.hexPage.Text = "Hex Format";
             this.hexPage.UseVisualStyleBackColor = true;
             // 
+            // hexTextBox
+            // 
+            this.hexTextBox.Location = new System.Drawing.Point(0, 0);
+            this.hexTextBox.Name = "hexTextBox";
+            this.hexTextBox.Size = new System.Drawing.Size(358, 126);
+            this.hexTextBox.TabIndex = 0;
+            this.hexTextBox.Text = "";
+            // 
             // decimalPage
             // 
             this.decimalPage.Controls.Add(this.decTextBox);
@@ -173,14 +182,6 @@
             this.decimalPage.Text = "Decimal Format";
             this.decimalPage.UseVisualStyleBackColor = true;
             // 
-            // hexTextBox
-            // 
-            this.hexTextBox.Location = new System.Drawing.Point(0, 0);
-            this.hexTextBox.Name = "hexTextBox";
-            this.hexTextBox.Size = new System.Drawing.Size(358, 126);
-            this.hexTextBox.TabIndex = 0;
-            this.hexTextBox.Text = "";
-            // 
             // decTextBox
             // 
             this.decTextBox.Location = new System.Drawing.Point(0, 0);
@@ -189,11 +190,22 @@
             this.decTextBox.TabIndex = 0;
             this.decTextBox.Text = "";
             // 
+            // playButton
+            // 
+            this.playButton.Location = new System.Drawing.Point(306, 99);
+            this.playButton.Name = "playButton";
+            this.playButton.Size = new System.Drawing.Size(75, 23);
+            this.playButton.TabIndex = 15;
+            this.playButton.Text = "Play Audio";
+            this.playButton.UseVisualStyleBackColor = true;
+            this.playButton.Click += new System.EventHandler(this.playButton_Click);
+            // 
             // MainForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(393, 270);
+            this.Controls.Add(this.playButton);
             this.Controls.Add(this.displayBox);
             this.Controls.Add(this.bitsPerSampleBox);
             this.Controls.Add(this.byteRateBox);
@@ -232,6 +244,7 @@
         private System.Windows.Forms.TabPage decimalPage;
         private System.Windows.Forms.RichTextBox hexTextBox;
         private System.Windows.Forms.RichTextBox decTextBox;
+        private System.Windows.Forms.Button playButton;
     }
 }
 

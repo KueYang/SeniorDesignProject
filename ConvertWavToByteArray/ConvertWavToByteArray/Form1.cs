@@ -8,37 +8,58 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using System.IO;
+using System.Media;
 
 namespace ConvertWavToByteArray
 {
     public partial class MainForm : Form
     {
         string file, wavDataHex, wavDataDec;
-        byte[] wav;
-        List<byte> wavHeader, wavRawData;
+        List<byte> wav;
+        List<Int32> wavHeader, wavRawData;
+        SoundPlayer audioPlayer;
+        OpenFileDialog openFileDialog1;
+        SaveFileDialog saveFileDialog;
 
         public MainForm()
         {
             InitializeComponent();
-            wavHeader = new List<byte>();
-            wavRawData = new List<byte>();
+            
+            openFileDialog1 = new OpenFileDialog();
+            openFileDialog1.Filter = "WAV files (.wav)|*.wav";
+            openFileDialog1.FilterIndex = 1;
+            openFileDialog1.Multiselect = false;
+
+            saveFileDialog = new SaveFileDialog();
+            saveFileDialog.Filter = ".csv|*.csv";
+            saveFileDialog.Title = "Save CSV file";
+        }
+
+        private void playButton_Click(object sender, EventArgs e)
+        {
+            if(wav != null)
+            {
+                using (MemoryStream ms = new MemoryStream(wav.ToArray()))
+                {
+                    audioPlayer = new SoundPlayer(ms);
+                    audioPlayer.Play();
+                }
+            }
+            else
+            {
+                MessageBox.Show("Error: Need to select a file and convert prior to playing audio.");
+            }
         }
 
         private void saveButton_Click(object sender, EventArgs e)
         {
-            SaveFileDialog saveFileDialog = new SaveFileDialog();
-            saveFileDialog.Filter = ".csv|*.csv";
-            saveFileDialog.Title = "Save CSV file";
-            saveFileDialog.ShowDialog();
-
-            if(saveFileDialog.FileName != "")
+            if (saveFileDialog.ShowDialog() == DialogResult.OK && saveFileDialog.FileName != "")
             {
                 string filePath = saveFileDialog.FileName;
                 try
                 {
                     if (this.displayBox.SelectedIndex == 0)
                     {
-                        wavDataHex = wavDataHex.Replace('-', ',');
                         File.WriteAllText(filePath, wavDataHex);
                     }
                     else
@@ -51,22 +72,10 @@ namespace ConvertWavToByteArray
                     MessageBox.Show("Error: Could not write to file. Original error: " + ex.Message);
                 }
             }
-            else
-            {
-                MessageBox.Show("Error: File path cannot be empty.");
-            }
         }
 
         private void selectButton_Click(object sender, EventArgs e)
         {
-            // Create an instance of the open file dialog box.
-            OpenFileDialog openFileDialog1 = new OpenFileDialog();
-
-            // Set filter options and filter index.
-            openFileDialog1.Filter = "WAV files (.wav)|*.wav";
-            openFileDialog1.FilterIndex = 1;
-            openFileDialog1.Multiselect = false;
-
             // Process input if the user clicked OK.
             if (openFileDialog1.ShowDialog() == DialogResult.OK)
             {
@@ -95,34 +104,38 @@ namespace ConvertWavToByteArray
             {
                 try
                 {
-                    wav = File.ReadAllBytes(file);
+                    wav = new List<byte>();
+                    wavHeader = new List<Int32>();
+                    wavRawData = new List<Int32>();
+
+                    // Read bytes from .wav file
+                    wav.AddRange(File.ReadAllBytes(file));
+                    byte[] wavArray = wav.ToArray();
 
                     // Parses the first 44 bytes for the wav header.
                     for (int i = 0; i < 44; i++)
                     {
-                        wavHeader.Add(wav[i]);
+                        wavHeader.Add(wavArray[i]);
                     }
 
-                    byte[] headerArray = wavHeader.ToArray();
-                    Int32 bitPerSample = (headerArray[35] << 8 | headerArray[34]);
-                    Int32 byteRate = (headerArray[31] << 24 | headerArray[30] << 16 | headerArray[29] << 8 | headerArray[28]);
-                    Int32 sampleRate = (headerArray[27] << 24 | headerArray[26] << 16 | headerArray[25] << 8 | headerArray[24]);
+                    Int32[] headerArray = wavHeader.ToArray();
+                    int bitPerSample = (headerArray[35] << 8 | headerArray[34]);
+                    int byteRate = (headerArray[31] << 24 | headerArray[30] << 16 | headerArray[29] << 8 | headerArray[28]);
+                    int sampleRate = (headerArray[27] << 24 | headerArray[26] << 16 | headerArray[25] << 8 | headerArray[24]);
 
                     this.sampleRateBox.Text = sampleRate.ToString();
                     this.byteRateBox.Text = byteRate.ToString();
                     this.bitsPerSampleBox.Text = bitPerSample.ToString();
 
-
                     // Parses the data from the wav file.
-                    wavRawData = new List<byte>();
-                    for (int i = 44; i < (wav.Length); i++)
+                    for (int i = 44; i < (wavArray.Length); i++)
                     {
-                        wavRawData.Add(wav[i]);
+                        wavRawData.Add(wavArray[i]);
                     }
 
-                    byte[] wavData = wavRawData.ToArray();
-                    wavDataHex = BitConverter.ToString(wavData);
-                    wavDataDec = string.Join(",", Array.ConvertAll<byte, string>(wavData, x => x.ToString()));
+                    Int32[] wavData = wavRawData.ToArray();
+                    wavDataHex = string.Join(",", Array.ConvertAll<Int32, string>(wavData, x => x.ToString("X")));
+                    wavDataDec = string.Join(",", Array.ConvertAll<Int32, string>(wavData, x => x.ToString("D")));
 
                     this.hexTextBox.Text = wavDataHex;
                     this.decTextBox.Text = wavDataDec;
