@@ -122,10 +122,12 @@ namespace ConvertWavToByteArray
                     int bitPerSample = (headerArray[35] << 8 | headerArray[34]);
                     int byteRate = (headerArray[31] << 24 | headerArray[30] << 16 | headerArray[29] << 8 | headerArray[28]);
                     int sampleRate = (headerArray[27] << 24 | headerArray[26] << 16 | headerArray[25] << 8 | headerArray[24]);
+                    int numOfChan = (headerArray[23] << 8 | headerArray[22]);
 
                     this.sampleRateBox.Text = sampleRate.ToString();
                     this.byteRateBox.Text = byteRate.ToString();
                     this.bitsPerSampleBox.Text = bitPerSample.ToString();
+                    this.numOfChanBox.Text = numOfChan.ToString();
 
                     // Parses the data from the wav file.
                     for (int i = 44; i < (wavArray.Length); i++)

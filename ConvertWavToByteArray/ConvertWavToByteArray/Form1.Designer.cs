@@ -44,6 +44,8 @@
             this.decimalPage = new System.Windows.Forms.TabPage();
             this.decTextBox = new System.Windows.Forms.RichTextBox();
             this.playButton = new System.Windows.Forms.Button();
+            this.label1 = new System.Windows.Forms.Label();
+            this.numOfChanBox = new System.Windows.Forms.TextBox();
             this.displayBox.SuspendLayout();
             this.hexPage.SuspendLayout();
             this.decimalPage.SuspendLayout();
@@ -81,7 +83,7 @@
             // bitPerSampleLabel
             // 
             this.bitPerSampleLabel.AutoSize = true;
-            this.bitPerSampleLabel.Location = new System.Drawing.Point(12, 83);
+            this.bitPerSampleLabel.Location = new System.Drawing.Point(12, 93);
             this.bitPerSampleLabel.Name = "bitPerSampleLabel";
             this.bitPerSampleLabel.Size = new System.Drawing.Size(81, 13);
             this.bitPerSampleLabel.TabIndex = 8;
@@ -90,7 +92,7 @@
             // samplingLabel
             // 
             this.samplingLabel.AutoSize = true;
-            this.samplingLabel.Location = new System.Drawing.Point(12, 41);
+            this.samplingLabel.Location = new System.Drawing.Point(13, 41);
             this.samplingLabel.Name = "samplingLabel";
             this.samplingLabel.Size = new System.Drawing.Size(76, 13);
             this.samplingLabel.TabIndex = 9;
@@ -99,7 +101,7 @@
             // bitRateButton
             // 
             this.bitRateButton.AutoSize = true;
-            this.bitRateButton.Location = new System.Drawing.Point(12, 62);
+            this.bitRateButton.Location = new System.Drawing.Point(13, 67);
             this.bitRateButton.Name = "bitRateButton";
             this.bitRateButton.Size = new System.Drawing.Size(54, 13);
             this.bitRateButton.TabIndex = 10;
@@ -108,7 +110,7 @@
             // sampleRateBox
             // 
             this.sampleRateBox.Enabled = false;
-            this.sampleRateBox.Location = new System.Drawing.Point(94, 38);
+            this.sampleRateBox.Location = new System.Drawing.Point(99, 38);
             this.sampleRateBox.Name = "sampleRateBox";
             this.sampleRateBox.ReadOnly = true;
             this.sampleRateBox.Size = new System.Drawing.Size(100, 20);
@@ -117,7 +119,7 @@
             // byteRateBox
             // 
             this.byteRateBox.Enabled = false;
-            this.byteRateBox.Location = new System.Drawing.Point(94, 59);
+            this.byteRateBox.Location = new System.Drawing.Point(99, 64);
             this.byteRateBox.Name = "byteRateBox";
             this.byteRateBox.ReadOnly = true;
             this.byteRateBox.Size = new System.Drawing.Size(100, 20);
@@ -126,7 +128,7 @@
             // bitsPerSampleBox
             // 
             this.bitsPerSampleBox.Enabled = false;
-            this.bitsPerSampleBox.Location = new System.Drawing.Point(94, 80);
+            this.bitsPerSampleBox.Location = new System.Drawing.Point(99, 90);
             this.bitsPerSampleBox.Name = "bitsPerSampleBox";
             this.bitsPerSampleBox.ReadOnly = true;
             this.bitsPerSampleBox.Size = new System.Drawing.Size(100, 20);
@@ -146,7 +148,7 @@
             // 
             this.displayBox.Controls.Add(this.hexPage);
             this.displayBox.Controls.Add(this.decimalPage);
-            this.displayBox.Location = new System.Drawing.Point(15, 106);
+            this.displayBox.Location = new System.Drawing.Point(12, 140);
             this.displayBox.Name = "displayBox";
             this.displayBox.SelectedIndex = 0;
             this.displayBox.Size = new System.Drawing.Size(366, 152);
@@ -200,11 +202,31 @@
             this.playButton.UseVisualStyleBackColor = true;
             this.playButton.Click += new System.EventHandler(this.playButton_Click);
             // 
+            // label1
+            // 
+            this.label1.AutoSize = true;
+            this.label1.Location = new System.Drawing.Point(12, 119);
+            this.label1.Name = "label1";
+            this.label1.Size = new System.Drawing.Size(77, 13);
+            this.label1.TabIndex = 16;
+            this.label1.Text = "Num Of Chann";
+            // 
+            // numOfChanBox
+            // 
+            this.numOfChanBox.Enabled = false;
+            this.numOfChanBox.Location = new System.Drawing.Point(99, 116);
+            this.numOfChanBox.Name = "numOfChanBox";
+            this.numOfChanBox.ReadOnly = true;
+            this.numOfChanBox.Size = new System.Drawing.Size(100, 20);
+            this.numOfChanBox.TabIndex = 17;
+            // 
             // MainForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(393, 270);
+            this.ClientSize = new System.Drawing.Size(393, 304);
+            this.Controls.Add(this.numOfChanBox);
+            this.Controls.Add(this.label1);
             this.Controls.Add(this.playButton);
             this.Controls.Add(this.displayBox);
             this.Controls.Add(this.bitsPerSampleBox);
@@ -245,6 +267,8 @@
         private System.Windows.Forms.RichTextBox hexTextBox;
         private System.Windows.Forms.RichTextBox decTextBox;
         private System.Windows.Forms.Button playButton;
+        private System.Windows.Forms.Label label1;
+        private System.Windows.Forms.TextBox numOfChanBox;
     }
 }
 
