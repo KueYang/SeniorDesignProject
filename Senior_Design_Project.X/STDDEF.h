@@ -10,6 +10,7 @@ extern "C" {
  */
 #define TRUE    1
 #define FALSE   0
+#define BOOL    int
 
 /*
  * Standard typedef definitions
@@ -24,12 +25,7 @@ typedef unsigned long       UINT32;
 typedef unsigned char       BYTE;
 typedef unsigned short      WORD;
 typedef unsigned long       DWORD;
-//typedef unsigned int        BOOL;
 
-/*
- * Other definitions:
- */
-//#define NULL    0
 
 #ifdef	__cplusplus
 }

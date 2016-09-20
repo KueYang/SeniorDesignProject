@@ -1,22 +1,32 @@
 #include <p32xxxx.h>
 #include <plib.h>
+#include "CONFIG.h"
 #include "STDDEF.h"
 #include "TIMER.h"
 
 // Period needed for timer 1 to trigger an interrupt every 1 second
-// (8 MHz PBCLK / 64 = 125 KHz Timer 1 clock)
-#define PERIOD  125
+// (40 MHz PBCLK / 256 = 156.25 kHz Timer 1 clock)
+#define PERIOD  156 
 
 UINT32 ms_TICK;
 
 void TIMER1_Init(void);
 
-/*
- *  Timers Initialization
- */
 void TIMER_Init(void)
 {
-    OpenTimer1(T1_ON | T1_SOURCE_INT | T1_PS_1_64, PERIOD);
+    TIMER1_Init();
+}
+
+void TIMER_Process(void)
+{
+    TIMER_MSecondDelay(5000);
+    mPORTAToggleBits(BIT_1);
+}
+
+/* Timer 1 Initialization */
+void TIMER1_Init(void)
+{
+    OpenTimer1(T1_ON | T1_SOURCE_INT | T1_PS_1_256, PERIOD);
     
     // Set up the timer interrupt with a priority of 2
     INTEnable(INT_T1, INT_ENABLED);

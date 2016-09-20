@@ -12,6 +12,7 @@
       <itemPath>TIMER.h</itemPath>
       <itemPath>UART.h</itemPath>
       <itemPath>CONFIG.h</itemPath>
+      <itemPath>FIFO.h</itemPath>
     </logicalFolder>
     <logicalFolder name="LinkerScript"
                    displayName="Linker Files"
@@ -27,6 +28,7 @@
       <itemPath>SPI.c</itemPath>
       <itemPath>TIMER.c</itemPath>
       <itemPath>UART.c</itemPath>
+      <itemPath>FIFO.c</itemPath>
     </logicalFolder>
     <logicalFolder name="ExternalFiles"
                    displayName="Important Files"
@@ -221,7 +223,6 @@
         <property key="UART1" value="true"/>
         <property key="UART2" value="true"/>
         <property key="USB" value="true"/>
-        <property key="firmware.download.all" value="false"/>
         <property key="hwtoolclock.frcindebug" value="false"/>
         <property key="memories.aux" value="false"/>
         <property key="memories.bootflash" value="true"/>
