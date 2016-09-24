@@ -6,10 +6,9 @@ extern "C" {
 #endif
     
 typedef struct COMMANDS{
-    const char* commandName;
-    const int   commandID;
-    const char* commandInfo;
-    void (*MON_COMMAND)(void);
+    const char* name;
+    const char* description;
+    void (*handler)(void);
 }COMMANDS;
 
 void UART_Init(void);
