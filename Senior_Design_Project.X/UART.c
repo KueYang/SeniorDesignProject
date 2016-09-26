@@ -16,8 +16,8 @@ char UART_getNextChar(FIFO* buffer);
 void UART_putNextChar(FIFO* buffer, char ch);
 
 void UART_processCommand(void);
-void MON_parseCommand(char** cmd, FIFO* buffer);
-COMMANDS MON_getCommand(const char* cmd);
+int MON_parseCommand(COMMANDSTR* cmd, FIFO* buffer);
+COMMANDS MON_getCommand(COMMANDSTR* cmd);
 void MON_removeWhiteSpace(const char* string);
 
 void MON_GetHelp(void);
@@ -26,6 +26,7 @@ void MON_GetInputTest(void);
 FIFO rxBuffer, txBuffer;
 UINT32 cmdListSize;
 UINT16 actualBaudRate;
+BOOL cmdReady;
 
 COMMANDS MON_COMMANDS[] = {
     {"HELP", "Display the list of commands avaliable.", MON_GetHelp},
@@ -36,6 +37,7 @@ COMMANDS MON_COMMANDS[] = {
 void UART_Init(void)
 { 
     cmdListSize = 2;
+    cmdReady = FALSE;
     
     // Re-mapped pins RB14 and RB15 pins to U1RX and U1TX
     mSysUnlockOpLock({
@@ -68,61 +70,80 @@ int UART_GetBaudRate(int desireBaud)
 
 void UART_Process(void)
 {
-//    UART_processCommand();
-//    TIMER_MSecondDelay(5000);
+    UART_processCommand();
 } 
 
 // UART Receive Functions Handlers
 void UART_processCommand(void)
 {
-    if(!UART_isBufferEmpty(&rxBuffer))
+    if(!UART_isBufferEmpty(&rxBuffer) && cmdReady == TRUE)
     {
-        char* command[3];
+        COMMANDSTR cmdStr;
+        COMMANDS command;
+        int numOfArgs = 0;
         
         /* Parses command from receive buffer. */
-        MON_parseCommand(command, &rxBuffer);
+        numOfArgs = MON_parseCommand(&cmdStr, &rxBuffer);
         
         /* Grabs the command handler. */
-        MON_getCommand(command[0]);
+        command = MON_getCommand(&cmdStr);
+        command.handler();
         
         /* Prepares for the next command. */
-        UART_sendString("> ");
+        UART_sendString("\n\r> ");
+        
+        cmdReady = FALSE;
     }
 }
 
-void MON_parseCommand(char** cmd, FIFO* buffer)
+int MON_parseCommand(COMMANDSTR* cmd, FIFO* buffer)
 {   
-    int i = 0;
-    char* str = "";
+    int i = 0, numOfArgs = 0;
+    int argIndexes[3] = {0,0,0};
+    char str[24] = "";
     
     /* Pops off the first character in the receive buffer. */
     char ch = UART_getNextChar(buffer);
-    
-    while(ch != '\r')
+    /* Grabs the first command from the fifo buffer. */
+    while(ch != '\r' && i < 24)
     {
-        /* 
-         * If character is a space, save the string and continue parsing other strings. 
-         * Concatenate character to the current string value if next character isn't a space. 
-         */
-        if(ch == ' ')
-        {
-            cmd[i++] = str;
-        }
-        else
-        {
-            strncat(str, &ch,1);
-        }
-        /* Pops off the next character in the receive buffer. */
+        str[i++] = ch;
         ch = UART_getNextChar(buffer);
+        
+        if(ch == ' ' || ch == '\r')
+        {
+            argIndexes[numOfArgs++] = i;
+        }
     }
+    
+    switch(numOfArgs)
+    {
+        case 1:
+            cmd->name = &str[0];
+            break;
+        case 2:
+            cmd->name = &str[0];
+            cmd->arg1 = &str[argIndexes[1]+1];
+            break;
+        case 3:
+            cmd->name = &str[0];
+            cmd->arg1 = &str[argIndexes[0]+1];
+            cmd->arg2 = &str[argIndexes[1]+1];
+            break;
+        default:
+            
+            break;
+    }
+    
+    return numOfArgs;
 }
 
-COMMANDS MON_getCommand(const char* cmd)
+COMMANDS MON_getCommand(COMMANDSTR* cmd)
 {
     int i = 0;
     for(i = 0; i < cmdListSize; i++)
     {
-        if(cmd == MON_COMMANDS[i].name)
+        if(strcmp(cmd->name, MON_COMMANDS[i].name) == 0)
         {
             return MON_COMMANDS[i];
         }
@@ -172,6 +193,12 @@ void __ISR(_UART1_VECTOR, IPL4AUTO) IntUart1Handler(void)
 
                 // Toggle LED to indicate UART activity
                 mPORTBToggleBits(BIT_5);
+                
+                // Sets a flag for end of receiving a command.
+                if(data == '\r')
+                {
+                    cmdReady = TRUE;
+                }
             }
         }
         
@@ -213,7 +240,14 @@ void MON_removeWhiteSpace(const char* string)
 
 void MON_GetHelp(void)
 {
-    
+    int i =0;
+    char buf[128];
+    for(i = 0; i < cmdListSize; i++)
+    {
+        strncpy(&buf[0], MON_COMMANDS[i].name, sizeof(buf));
+        strncat(buf, MON_COMMANDS[i].description, sizeof(MON_COMMANDS[i].description));
+        UART_sendString(&buf[0]);
+    }
 }
 
 void MON_GetInputTest(void)
