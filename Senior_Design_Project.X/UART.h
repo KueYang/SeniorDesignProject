@@ -12,9 +12,9 @@ typedef struct COMMANDS{
 }COMMANDS;
 
 typedef struct COMMANDSTR{
-    char* name;
-    char* arg1;
-    char* arg2;
+    char name[32];
+    char arg1[32];
+    char arg2[32];
 }COMMANDSTR;
 
 void UART_Init(void);
