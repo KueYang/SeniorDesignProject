@@ -7,6 +7,10 @@
 //#include "ADC.h"
 //#include "SPI.h"
 #include "UART.h"
+#include "SD_Library/FSDefs.h"
+#include "SD_Library/FSconfig.h"
+#include "SD_Library/FSIO.h"
+#include "SD_Library/SD-SPI.h"
 
 /* USB configurations */
 #pragma config PMDL1WAY = OFF       // Peripheral Module Disable Configuration, disabled
@@ -55,10 +59,34 @@ int main(int argc, char** argv) {
     INTConfigureSystem(INT_SYSTEM_CONFIG_MULT_VECTOR);
     INTEnableInterrupts();
     
+    char sendBuffer[] = "This is test string 1";
+    char send2[] = "2";
+    char receiveBuffer[50];
+    
     while(1)
     {
-//        TIMER_Process();
         UART_Process();
+        
+        FSFILE * pointer;
+        char path[30];
+        char count = 30;
+        char * pointer2;
+        SearchRec rec;
+        unsigned char attributes;
+        unsigned char size = 0, i;
+
+        // Turn on the interrupts
+        mOSCSetPBDIV(OSC_PB_DIV_2);
+        //Initialize the RTCC
+        RtccInit();
+        while(RtccGetClkStat()!=RTCC_CLK_ON);// wait for the SOSC to be actually running and RTCC to have its clock source
+                                             // could wait here at most 32ms
+        RtccOpen(0x10073000, 0x07011602, 0);
+
+        while (!MDD_SDSPI_MediaDetect());
+
+        // Initialize the library
+        while (!FSInit());
     }
 
     return (0);
