@@ -539,7 +539,7 @@ typedef struct
 
 //These are the public API functions provided by SD-SPI.c
 BYTE MDD_SDSPI_MediaDetect(void);
-MEDIA_INFORMATION * MDD_SDSPI_MediaInitialize(void);
+MEDIA_INFORMATION* MDD_SDSPI_MediaInitialize(void);
 DWORD MDD_SDSPI_ReadCapacity(void);
 WORD MDD_SDSPI_ReadSectorSize(void);
 void MDD_SDSPI_InitIO(void);

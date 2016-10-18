@@ -1557,13 +1557,13 @@ BYTE FILEget_next_cluster(FSFILE *fo, DWORD n)
 BYTE DISKmount( DISK *dsk)
 {
     BYTE                error = CE_GOOD;
-    MEDIA_INFORMATION   *mediaInformation;
+    MEDIA_INFORMATION *mediaInformation;
 
     dsk->mount = FALSE; // default invalid
     dsk->buffer = gDataBuffer;    // assign buffer
 
     // Initialize the device
-    mediaInformation = MDD_SDSPI_MediaInitialize();
+    mediaInformation = (MEDIA_INFORMATION *)MDD_SDSPI_MediaInitialize();
     if (mediaInformation->errorCode != MEDIA_NO_ERROR)
     {
         error = CE_INIT_ERROR;
@@ -2260,7 +2260,7 @@ int FSformat (char mode, long int serialNumber, char * volumeID)
 
     MDD_SDSPI_InitIO();
 
-    mediaInfo = MDD_SDSPI_MediaInitialize();
+    mediaInfo = (MEDIA_INFORMATION *)MDD_SDSPI_MediaInitialize();
     if (mediaInfo->errorCode != MEDIA_NO_ERROR)
     {
         FSerrno = CE_INIT_ERROR;

@@ -12,8 +12,6 @@
 #define CMD_SIZE                16
 #define DESCRIPTION_SIZE        (WRITE_BUFFER_SIZE-CMD_SIZE)
 
-void UART_sendString(const char *string);
-void UART_sendCharacter(const char character);
 BOOL UART_isBufferEmpty(FIFO* buffer);
 char UART_getNextChar(FIFO* buffer);
 void UART_putNextChar(FIFO* buffer, char ch);

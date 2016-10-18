@@ -19,6 +19,9 @@ typedef struct COMMANDSTR{
 
 void UART_Init(void);
 void UART_Process(void);
+void UART_sendString(const char *string);
+void UART_sendCharacter(const char character);
+
 
 #ifdef	__cplusplus
 }

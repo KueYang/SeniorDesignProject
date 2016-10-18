@@ -73,6 +73,7 @@
 #include "SD-SPI.h"
 #include "string.h"
 #include "FSconfig.h"
+#include "../UART.h"
 
 /******************************************************************************
  * Global Variables
@@ -2171,7 +2172,7 @@ void InitSPISlowMode(void)
     #if defined __C30__ || defined __C32__
     	#ifdef __PIC32MX__
     		OpenSPI(SPI_START_CFG_1, SPI_START_CFG_2);
-    	    SPIBRG = SPICalutateBRG(GetPeripheralClock(), 400000);
+    	    SPIBRG = SPICalutateBRG(400000, 400000);
     	#else //else C30 = PIC24/dsPIC devices
     		WORD spiconvalue = 0x0003;
             WORD timeout;
@@ -2307,6 +2308,8 @@ MEDIA_INFORMATION *  MDD_SDSPI_MediaInitialize(void)
     PrintROMASCIIStringUART("\r\n\r\nInitializing Media\r\n"); 
     #endif
 
+    UART_sendString("\r\n\r\nInitializing Media\r\n");
+
     //Media wants the longer of: Vdd ramp time, 1 ms fixed delay, or 74+ clock pulses.
     //According to spec, CS should be high during the 74+ clock pulses.
     //In practice it is preferrable to wait much longer than 1ms, in case of
@@ -2338,6 +2341,7 @@ MEDIA_INFORMATION *  MDD_SDSPI_MediaInitialize(void)
         //Send CMD0 to software reset the device
         response = SendMediaSlowCmd(GO_IDLE_STATE, 0x0);
     }while((response.r1._byte != 0x01) && (timeout != 0));
+    
     //Check if all attempts failed and we timed out.  Normally, this won't happen,
     //unless maybe the SD card was busy, because it was previously performing a
     //read or write operation, when it was interrupted by the microcontroller getting
@@ -2346,13 +2350,16 @@ MEDIA_INFORMATION *  MDD_SDSPI_MediaInitialize(void)
     //read request data), and may not be ready to process CMD0.  In this case,
     //we can try to recover by issuing CMD12 (STOP_TRANSMISSION).
     if(timeout == 0)
-    {
+    {    
+        UART_sendString("Reset Failed... \r\n");
         #ifdef __DEBUG_UART  
         PrintROMASCIIStringUART("Media failed CMD0 too many times. R1 response byte = ");
         PrintRAMBytesUART(((unsigned char*)&response + 1), 1);
         UARTSendLineFeedCarriageReturn();
         PrintROMASCIIStringUART("Trying CMD12 to recover.\r\n");
         #endif
+        UART_sendString("Media failed CMD0 too many times. \n\r ");
+        UART_sendString("Trying CMD12 to recover. \r\n");
 
         SD_CS = 1;
         WriteSPISlow(0xFF);       //Send some "extraneous" clock pulses.  If a previous
@@ -2377,6 +2384,7 @@ MEDIA_INFORMATION *  MDD_SDSPI_MediaInitialize(void)
             #ifdef __DEBUG_UART  
             PrintROMASCIIStringUART("Media still failed CMD0. Cannot initialize card, returning.\r\n");
             #endif   
+            UART_sendString("Media still failed CMD0. Cannot initialize card, returning.\r\n");
             mediaInformation.errorCode = MEDIA_CANNOT_INITIALIZE;
             return &mediaInformation;
         }            
@@ -2386,6 +2394,7 @@ MEDIA_INFORMATION *  MDD_SDSPI_MediaInitialize(void)
             #ifdef __DEBUG_UART  
             PrintROMASCIIStringUART("Media successfully processed CMD0 after CMD12.\r\n");
             #endif        
+            UART_sendString("Media successfully processed CMD0 after CMD12.\r\n");
         }    
     }//if(timeout == 0) [for the CMD0 transmit loop]
     else
@@ -2393,6 +2402,7 @@ MEDIA_INFORMATION *  MDD_SDSPI_MediaInitialize(void)
         #ifdef __DEBUG_UART  
         PrintROMASCIIStringUART("Media successfully processed CMD0.\r\n");
         #endif        
+        UART_sendString("Media successfully processed CMD0.\r\n");
     }       
     
 
@@ -2416,11 +2426,14 @@ MEDIA_INFORMATION *  MDD_SDSPI_MediaInitialize(void)
         UARTSendLineFeedCarriageReturn();
         #endif
 
+        UART_sendString("Media successfully processed CMD8.\r\n");
+
 		//Send CMD58 (Read OCR [operating conditions register]).  Reponse type is R3, which has 5 bytes.
 		//Byte 4 = normal R1 response byte, Bytes 3-0 are = OCR register value.
         #ifdef __DEBUG_UART  
         PrintROMASCIIStringUART("Sending CMD58.\r\n");
         #endif
+        UART_sendString("Sending CMD58.\r\n");
         response = SendMediaSlowCmd(READ_OCR, 0x0);
         //Now that we have the OCR register value in the reponse packet, we could parse
         //the register contents and learn what voltage the SD card wants to run at.
@@ -2448,6 +2461,7 @@ MEDIA_INFORMATION *  MDD_SDSPI_MediaInitialize(void)
     		    #ifdef __DEBUG_UART  
                 PrintROMASCIIStringUART("Media successfully processed CMD55/ACMD41 and is no longer busy.\r\n");
 				#endif
+                UART_sendString("Media successfully processed CMD55/ACMD41 and is no longer busy.\r\n");
 				break;  //Break out of for() loop.  Card is finished initializing.
             }				
 		}		
@@ -2456,6 +2470,7 @@ MEDIA_INFORMATION *  MDD_SDSPI_MediaInitialize(void)
             #ifdef __DEBUG_UART  
             PrintROMASCIIStringUART("Media Timeout on CMD55/ACMD41.\r\n");
             #endif
+            UART_sendString("Media Timeout on CMD55/ACMD41.\r\n");
     		mediaInformation.errorCode = MEDIA_CANNOT_INITIALIZE;
         }				
 		
@@ -2473,6 +2488,7 @@ MEDIA_INFORMATION *  MDD_SDSPI_MediaInitialize(void)
 		    #ifdef __DEBUG_UART  
             PrintROMASCIIStringUART("Media successfully processed CMD58: SD card is SDHC v2.0 (or later) physical spec type.\r\n");
             #endif
+            UART_sendString("Media successfully processed CMD58: SD card is SDHC v2.0 (or later) physical spec type.\r\n");
         }				
         else
         {
@@ -2481,6 +2497,7 @@ MEDIA_INFORMATION *  MDD_SDSPI_MediaInitialize(void)
             #ifdef __DEBUG_UART  
             PrintROMASCIIStringUART("Media successfully processed CMD58: SD card is standard capacity v2.0 (or later) spec.\r\n");
             #endif
+            UART_sendString("Media successfully processed CMD58: SD card is standard capacity v2.0 (or later) spec.\r\n");
         } 
         //SD Card should now be finished with initialization sequence.  Device should be ready
         //for read/write commands.
@@ -2494,6 +2511,7 @@ MEDIA_INFORMATION *  MDD_SDSPI_MediaInitialize(void)
         #ifdef __DEBUG_UART  
         PrintROMASCIIStringUART("CMD8 Unsupported: Media is most likely MMC or SD 1.x device.\r\n");
         #endif
+        UART_sendString("CMD8 Unsupported: Media is most likely MMC or SD 1.x device.\r\n");
 
 
         SD_CS = 1;                              // deselect the devices
@@ -2516,6 +2534,7 @@ MEDIA_INFORMATION *  MDD_SDSPI_MediaInitialize(void)
             #ifdef __DEBUG_UART  
             PrintROMASCIIStringUART("CMD1 failed.\r\n");
             #endif
+            UART_sendString("CMD1 failed.\r\n");
 
             mediaInformation.errorCode = MEDIA_CANNOT_INITIALIZE;
             SD_CS = 1;                              // deselect the devices
@@ -2525,6 +2544,7 @@ MEDIA_INFORMATION *  MDD_SDSPI_MediaInitialize(void)
             #ifdef __DEBUG_UART  
             PrintROMASCIIStringUART("CMD1 Successfully processed, media is no longer busy.\r\n");
             #endif
+            UART_sendString("CMD1 Successfully processed, media is no longer busy.\r\n");
             
             //Set read/write block length to 512 bytes.  Note: commented out since
             //this theoretically isn't necessary, since all cards v1 and v2 are 
@@ -2564,6 +2584,7 @@ MEDIA_INFORMATION *  MDD_SDSPI_MediaInitialize(void)
         PrintRAMBytesUART((unsigned char*)&response, 1); 
         UARTSendLineFeedCarriageReturn();
         #endif
+        UART_sendString("CMD9 Successfully processed: Read CSD register.\r\n");
     }    
     else
     {
@@ -2571,6 +2592,8 @@ MEDIA_INFORMATION *  MDD_SDSPI_MediaInitialize(void)
         #ifdef __DEBUG_UART  
         PrintROMASCIIStringUART("Timeout occurred while processing CMD9 to read CSD register.\r\n");
         #endif
+
+        UART_sendString("Timeout occurred while processing CMD9 to read CSD register.\r\n");
         
         mediaInformation.errorCode = MEDIA_CANNOT_INITIALIZE;
         SD_CS = 1;
@@ -2681,6 +2704,7 @@ MEDIA_INFORMATION *  MDD_SDSPI_MediaInitialize(void)
     #endif
 
 
+    UART_sendString("Returning from MediaInitialize() function.\r\n");
     return &mediaInformation;
 }//end MediaInitialize
 
