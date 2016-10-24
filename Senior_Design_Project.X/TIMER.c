@@ -19,8 +19,10 @@ void TIMER_Init(void)
 
 void TIMER_Process(void)
 {
-    TIMER_MSecondDelay(5000);
-    mPORTAToggleBits(BIT_1);
+    PORTBbits.RB15 = 1;
+    TIMER_MSecondDelay(3000);
+    PORTBbits.RB15 = 0;
+    TIMER_MSecondDelay(3000);
 }
 
 /* Timer 1 Initialization */
@@ -30,7 +32,7 @@ void TIMER1_Init(void)
     
     // Set up the timer interrupt with a priority of 2
     INTEnable(INT_T1, INT_ENABLED);
-    INTSetVectorPriority(INT_TIMER_1_VECTOR, INT_PRIORITY_LEVEL_2);
+    INTSetVectorPriority(INT_TIMER_1_VECTOR, INT_PRIORITY_LEVEL_1);
     INTSetVectorSubPriority(INT_TIMER_1_VECTOR, INT_SUB_PRIORITY_LEVEL_0);
 }
 

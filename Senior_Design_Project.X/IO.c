@@ -6,11 +6,14 @@ void IO_Init(void)
 {   
     ANSELA = 0; ANSELB = 0;                 // Disable analog inputs
     CM1CON = 0; CM2CON = 0; CM3CON = 0;     // Disable analog comparators
+    
+    // Digital IO
+    
     // ADC IO
     
     // UART IO
     TRISAbits.TRISA2 = 1;  // U1RX
-    TRISBbits.TRISB5 = 0;  // U1TX
+    TRISBbits.TRISB3 = 0;  // U1TX
     
     // SPI IO
 //    ANSELBbits.ANSB2 = 0;

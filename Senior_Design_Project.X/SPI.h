@@ -4,7 +4,7 @@
 #ifdef	__cplusplus
 extern "C" {
 #endif
-
+    
 void SPI_Init(void);
 void SPI_Process();
 BYTE SPI1_ReadWrite(BYTE);

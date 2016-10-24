@@ -1,6 +1,6 @@
 #include <p32xxxx.h>
 #include <plib.h>
-#include "CONFIG.h"
+#include "./FIO_Library/HardwareProfile.h"
 #include "STDDEF.h"
 #include "IO.h"
 #include "TIMER.h"
@@ -28,6 +28,7 @@
 #pragma config FNOSC = FRCPLL       // Oscillator Selection Bit, Internal Osc (FRC) with PLL
 #pragma config POSCMOD = OFF        // Primary Oscillator Configuration, HS osc mode
 #pragma config FSOSCEN = OFF        // Secondary Oscillator Disabled
+#pragma config OSCIOFNC = OFF       // CLKO Output Signal on OSCO pin Disabled
 #pragma config FPBDIV = DIV_1       // Peripheral Clock Divisor, Pb_Clk is Sys_Clk/1
 
 /* Programming Configurations */
@@ -47,7 +48,7 @@ int main(int argc, char** argv) {
     
     /* Peripheral Initializations */
     IO_Init();
-//    TIMER_Init();
+    TIMER_Init();
 //    ADC_Init();
 //    SPI_Init();
     UART_Init();
@@ -56,9 +57,11 @@ int main(int argc, char** argv) {
     /* Enable multi-vector interrupts */
     INTConfigureSystem(INT_SYSTEM_CONFIG_MULT_VECTOR);
     INTEnableInterrupts();
-    
+   
+  
     while(1)
     {
+//        TIMER_Process();
         UART_Process();
 //        SPI_Process();
         AUDIO_Process();

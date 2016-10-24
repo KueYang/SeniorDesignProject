@@ -1,41 +1,5 @@
-/******************************************************************************
- *
- *               Microchip Memory Disk Drive File System
- *
- ******************************************************************************
- * FileName:        FSDefs.h
- * Dependencies:    GenericTypeDefs.h
- * Processor:       PIC18/PIC24/dsPIC30/dsPIC33/PIC32
- * Compiler:        C18/C30/C32
- * Company:         Microchip Technology, Inc.
- * Version:         1.2.4
- *
- * Software License Agreement
- *
- * The software supplied herewith by Microchip Technology Incorporated
- * (the “Company”) for its PICmicro® Microcontroller is intended and
- * supplied to you, the Company’s customer, for use solely and
- * exclusively on Microchip PICmicro Microcontroller products. The
- * software is owned by the Company and/or its supplier, and is
- * protected under applicable copyright laws. All rights are reserved.
- * Any use in violation of the foregoing restrictions may subject the
- * user to criminal sanctions under applicable laws, as well as to
- * civil liability for the breach of the terms and conditions of this
- * license.
- *
- * THIS SOFTWARE IS PROVIDED IN AN “AS IS” CONDITION. NO WARRANTIES,
- * WHETHER EXPRESS, IMPLIED OR STATUTORY, INCLUDING, BUT NOT LIMITED
- * TO, IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A
- * PARTICULAR PURPOSE APPLY TO THIS SOFTWARE. THE COMPANY SHALL NOT,
- * IN ANY CIRCUMSTANCES, BE LIABLE FOR SPECIAL, INCIDENTAL OR
- * CONSEQUENTIAL DAMAGES, FOR ANY REASON WHATSOEVER.
- *
-*****************************************************************************/
-
 #ifndef  _FSDEF__H
 #define  _FSDEF__H
-
-#include "GenericTypeDefs.h"
 
 // Summary: An enumeration used for various error codes.
 // Description: The CETYPE enumeration is used to indicate different error conditions during device operation.
@@ -77,7 +41,6 @@ typedef enum _CETYPE
     CE_UNSUPPORTED_SECTOR_SIZE      // Unsupported sector size
 } CETYPE;
 
-
 // Summary: A macro indicating a dir entry was found
 // Description: The FOUND macro indicates that a directory entry was found in the specified position
 #define FOUND       0
@@ -90,8 +53,6 @@ typedef enum _CETYPE
 // Description: The NO_MORE macro indicates that there are no more directory entries to search for
 #define NO_MORE     2
 
-
-
 // Summary: A macro indicating the device is formatted with FAT12
 // Description: The FAT12 macro is used to indicate that the file system on the device being accessed is a FAT12 file system.
 #define FAT12       1
@@ -103,8 +64,6 @@ typedef enum _CETYPE
 // Summary: A macro indicating the device is formatted with FAT32
 // Description: The FAT32 macro is used to indicate that the file system on the device being accessed is a FAT32 file system.
 #define FAT32       3
-
-
 
 // Summary: A read-only attribute macro
 // Description: A macro for the read-only attribute.  A file with this attribute should not be written to.  Note that this
@@ -148,7 +107,6 @@ typedef enum _CETYPE
 //              a file is allowed to have in order to be found.  If ATTR_MASK is specified as this argument, any file may be found, regardless
 //              of its attributes.
 #define ATTR_MASK           0x3f
-
 
 
 // Summary: A macro to indicate an empty FAT entry
@@ -252,14 +210,12 @@ typedef enum _CETYPE
 #define RAMreadD( a, f) *(DWORD *)(a+f)
 
 
-
 #ifndef EOF
     // Summary: Indicates error conditions or end-of-file conditions
     // Description: The EOF macro is used to indicate error conditions in some function calls.  It is also used to indicate
     //              that the end-of-file has been reached.
     #define EOF             ((int)-1)
 #endif
-
 
 
 // Summary: A structure containing information about the device.
@@ -279,31 +235,17 @@ typedef struct
     BYTE        SecPerClus;     // The number of sectors per cluster in the data region
     BYTE        type;           // The file system type of the partition (FAT12, FAT16 or FAT32)
     BYTE        mount;          // Device mount flag (TRUE if disk was mounted successfully, FALSE otherwise)
-#if defined __PIC32MX__ || defined __C30__
 } __attribute__ ((packed)) DISK;
-#else
-} DISK;
-#endif
 
 
-#ifdef __18CXX
-    // Summary: A 24-bit data type
-    // Description: The SWORD macro is used to defined a 24-bit data type.  For 16+ bit architectures, this must be represented as
-    //              an array of three bytes.
-    typedef unsigned short long SWORD;
-#else
-    // Summary: A 24-bit data type
-    // Description: The SWORD macro is used to defined a 24-bit data type.  For 16+ bit architectures, this must be represented as
-    //              an array of three bytes.
-    typedef struct
-    {
-        unsigned char array[3];
-#if defined __PIC32MX__ || defined __C30__
-    } __attribute__ ((packed)) SWORD;
-#else
-    } SWORD;
-#endif
-#endif
+
+// Summary: A 24-bit data type
+// Description: The SWORD macro is used to defined a 24-bit data type.  For 16+ bit architectures, this must be represented as
+//              an array of three bytes.
+typedef struct
+{
+	unsigned char array[3];
+} __attribute__ ((packed)) SWORD;
 
 
 
@@ -329,12 +271,8 @@ typedef struct {
     BYTE  BootSec_BootSig;          // Boot signature - equal to 0x29
     BYTE  BootSec_VolID[4];         // Volume ID
     BYTE  BootSec_VolLabel[11];     // Volume Label
-    BYTE  BootSec_FSType[8];        // File system type in ASCII. Not used for determination   
-#if defined __PIC32MX__ || defined __C30__
-    } __attribute__ ((packed)) _BPB_FAT12;
-#else
-    } _BPB_FAT12;
-#endif
+    BYTE  BootSec_FSType[8];        // File system type in ASCII. Not used for determination 
+} __attribute__ ((packed)) _BPB_FAT12;
 
 // Summary: A structure containing the bios parameter block for a FAT16 file system (in the boot sector)
 // Description: The _BPB_FAT16 structure provides a layout of the "bios parameter block" in the boot sector of a FAT16 partition.
@@ -359,11 +297,7 @@ typedef struct {
     BYTE  BootSec_VolID[4];         // Volume ID
     BYTE  BootSec_VolLabel[11];     // Volume Label
     BYTE  BootSec_FSType[8];        // File system type in ASCII. Not used for determination     
-#if defined __PIC32MX__ || defined __C30__
-    } __attribute__ ((packed)) _BPB_FAT16;
-#else
-    } _BPB_FAT16;
-#endif
+} __attribute__ ((packed)) _BPB_FAT16;
 
 // Summary: A structure containing the bios parameter block for a FAT32 file system (in the boot sector)
 // Description: The _BPB_FAT32 structure provides a layout of the "bios parameter block" in the boot sector of a FAT32 partition.
@@ -395,11 +329,7 @@ typedef struct {
     BYTE  BootSec_VolID[4];         // Volume ID
     BYTE  BootSec_VolLab[11];       // Volume Label
     BYTE  BootSec_FilSysType[8];    // File system type in ASCII.  Not used for determination  
-#if defined __PIC32MX__ || defined __C30__
-    } __attribute__ ((packed)) _BPB_FAT32;
-#else
-    } _BPB_FAT32;
-#endif
+} __attribute__ ((packed)) _BPB_FAT32;
 
 
 // Description: A macro for the boot sector bytes per sector value offset
@@ -456,11 +386,8 @@ typedef struct
     SWORD     PTE_LstPartSect;        // The cylinder-head-sector address of the last sector of the partition
     DWORD     PTE_FrstSect;           // The logical block address of the first sector of the partition
     DWORD     PTE_NumSect;            // The number of sectors in a partition
-#if defined __PIC32MX__ || defined __C30__
-    } __attribute__ ((packed)) PTE_MBR;
-#else
-    } PTE_MBR;
-#endif
+} __attribute__ ((packed)) PTE_MBR;
+	
 
 
 // Summary: A structure of the organization of a master boot record.
@@ -475,11 +402,7 @@ typedef struct
     PTE_MBR     Partition3;             // The fourth partition table entry
     BYTE        Signature0;             // MBR signature code - equal to 0x55
     BYTE        Signature1;             // MBR signature code - equal to 0xAA
-#if defined __PIC32MX__ || defined __C30__
 }__attribute__((packed)) _PT_MBR;
-#else
-}_PT_MBR;
-#endif
 
 // Summary: A pointer to a _PT_MBR structure
 // Description: The PT_MBR pointer points to a _PT_MBR structure.
@@ -502,24 +425,18 @@ typedef struct
     BYTE    Reserved[512-sizeof(_BPB_FAT32)-2]; // Reserved space
     BYTE    Signature0;         // Boot sector signature code - equal to 0x55
     BYTE    Signature1;         // Boot sector signature code - equal to 0xAA
-#if defined __PIC32MX__ || defined __C30__
-    } __attribute__ ((packed)) _BootSec;
-#else
-    } _BootSec;
-#endif
+} __attribute__ ((packed)) _BootSec;
+	
 
 // Summary: A pointer to a _BootSec structure
 // Description: The BootSec pointer points to a _BootSec structure.
 typedef _BootSec * BootSec;
 
 
-
 // Summary: A macro indicating the offset for the master boot record
 // Description: FO_MBR is a macro that indicates the addresss of the master boot record on the device.  When the device is initialized
 //              this sector will be read
 #define FO_MBR          0L
-
-
 
 // Summary: A macro for the first boot sector/MBR signature byte
 // Description: The FAT_GOOD_SIGN_0 macro is used to determine that the first byte of the MBR or boot sector signature code is correct

@@ -1,83 +1,15 @@
-/******************************************************************************
- *
- *                Microchip Memory Disk Drive File System
- *
- ******************************************************************************
- * FileName:        FSIO.h
- * Dependencies:    GenericTypeDefs.h
- *                  FSconfig.h
- *                  FSDefs.h
- *                  stddef.h
- * Processor:       PIC18/PIC24/dsPIC30/dsPIC33/PIC32
- * Compiler:        C18/C30/C32
- * Company:         Microchip Technology, Inc.
- * Version:         1.4.0
- *
- * Software License Agreement
- *
- * The software supplied herewith by Microchip Technology Incorporated
- * (the “Company”) for its PICmicro® Microcontroller is intended and
- * supplied to you, the Company’s customer, for use solely and
- * exclusively on Microchip PICmicro Microcontroller products. The
- * software is owned by the Company and/or its supplier, and is
- * protected under applicable copyright laws. All rights are reserved.
- * Any use in violation of the foregoing restrictions may subject the
- * user to criminal sanctions under applicable laws, as well as to
- * civil liability for the breach of the terms and conditions of this
- * license.
- *
- * THIS SOFTWARE IS PROVIDED IN AN “AS IS” CONDITION. NO WARRANTIES,
- * WHETHER EXPRESS, IMPLIED OR STATUTORY, INCLUDING, BUT NOT LIMITED
- * TO, IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A
- * PARTICULAR PURPOSE APPLY TO THIS SOFTWARE. THE COMPANY SHALL NOT,
- * IN ANY CIRCUMSTANCES, BE LIABLE FOR SPECIAL, INCIDENTAL OR
- * CONSEQUENTIAL DAMAGES, FOR ANY REASON WHATSOEVER.
- *
-*****************************************************************************/
-
 #ifndef  FS_DOT_H
 #define  FS_DOT_H
 
-#include "GenericTypeDefs.h"
+#include "STDDEF.h"
 #include "FSconfig.h"
 #include "FSDefs.h" 
-#include "stddef.h"
-
-#ifdef USE_SD_INTERFACE_WITH_SPI
-    #include    "SD-SPI.h"
-#endif
-#ifdef USE_CF_INTERFACE_WITH_PMP
-    #include    "MDD File System/CF-PMP.h"
-#endif
-#ifdef USE_MANUAL_CF_INTERFACE
-    #include    "MDD File System/CF- Bit transaction.h"
-#endif
-#ifdef USE_USB_INTERFACE
-    #include    "USB/usb_host_msd_scsi.h"
-#endif
-#ifdef USE_INTERNAL_FLASH
-    #include    "MDD File System/Internal Flash.h"
-#endif
+#include "SD-SPI.h"
 
 
 /*******************************************************************/
 /*                     Strunctures and defines                     */
 /*******************************************************************/
-
-#ifndef FALSE
-    // Summary: False value
-    // Description:  This macro will indicate that a condition is false.
-    #define FALSE   0
-#endif
-#ifndef TRUE
-    // Summary: True value
-    // Description: This macro will indicate that a condition is true.
-    #define TRUE    !FALSE  // True value
-#endif
-
-
-
-
 #ifndef SEEK_SET
     // Summary: Macro for the FSfseek SEEK_SET base location.
     // Description: Functions as an input for FSfseek that specifies that the position in the file will be changed 
@@ -139,23 +71,6 @@
 //              specified file will be loaded.  If the file does not exist, the FSfopen function will fail.  The user 
 //              will then be able to read from the file or write to the file.
 #define FS_READPLUS     "r+"
-
-#ifndef intmax_t
-    #ifdef __PIC24F__
-        // Summary: A data type indicating the maximum integer size in an architecture
-        // Description: The intmax_t data type refers to the maximum-sized data type on any given architecture.  This
-        //              data type can be specified as a format specifier size specification for the FSfprintf function.
-        #define intmax_t long long
-    #elif defined __PIC24H__
-        #define intmax_t long long
-    #elif defined __dsPIC30F__
-        #define intmax_t long long
-    #elif defined __dsPIC33F__
-        #define intmax_t long long
-    #endif
-#endif
-
-
 
 // Summary:  Indicates flag conditions for a file object
 // Description: The FILEFLAGS structure is used to indicate conditions in a file.  It contains three flags: 'write' indicates
@@ -316,9 +231,6 @@ typedef struct
 * Prototypes                                                               *
 ***************************************************************************/
 
-
-
-
 /*************************************************************************
   Function:
     int FSInit(void)
@@ -343,7 +255,6 @@ typedef struct
   Remarks:
     None
   *************************************************************************/
-
 int FSInit(void);
 
 
@@ -389,7 +300,6 @@ int FSInit(void);
   Remarks:
     None.
   *********************************************************************/
-
 FSFILE * FSfopen(const char * fileName, const char *mode);
 
 #ifdef SUPPORT_LFN
@@ -435,203 +345,8 @@ FSFILE * FSfopen(const char * fileName, const char *mode);
   Remarks:
     None.
   *********************************************************************/
-
 FSFILE * wFSfopen(const unsigned short int * fileName, const char *mode);
 #endif
-
-#ifdef ALLOW_PGMFUNCTIONS
-
-/******************************************************************************
-  Function:
-    FSFILE * FSfopenpgm(const rom char * fileName, const rom char *mode)
-  Summary:
-    Opens a file on PIC18 Microcontrollers where 'fileName' ROM string is given
-    in Ascii format.
-  Conditions:
-    For read modes, file exists; FSInit performed
-  Input:
-    fileName -  The name of the file to be opened (ROM)
-    mode -      The mode the file will be opened in (ROM)
-  Return Values:
-    FSFILE * - A pointer to the file object
-    NULL -     File could not be opened
-  Side Effects:
-    The FSerrno variable will be changed.
-  Description:
-    This function opens a file on PIC18 Microcontrollers where 'fileName' ROM string
-    is given in Ascii format.The FSfopenpgm function will copy a PIC18 ROM fileName and
-    mode argument into RAM arrays, and then pass those arrays to the FSfopen function.
-  Remarks:
-    This function is for use with PIC18 when passing arguments in ROM.
-  ******************************************************************************/
-
-    FSFILE * FSfopenpgm(const rom char * fileName, const rom char *mode);
-
-
-/**************************************************************************************
-  Function:
-    int FindFirstpgm (const char * fileName, unsigned int attr, SearchRec * rec)
-  Summary:
-    Find a file named with a ROM string on PIC18
-  Conditions:
-    None
-  Input:
-    fileName -  The name of the file to be found (ROM)
-    attr -      The attributes of the file to be found
-    rec -       Pointer to a search record to store the file info in
-  Return Values:
-    0 -  File was found
-    -1 - No file matching the given parameters was found
-  Side Effects:
-    Search criteria from previous FindFirstpgm call on passed SearchRec object
-    will be lost.The FSerrno variable will be changed.
-  Description:
-    This function finds a file named with 'fileName' on PIC18. The FindFirstpgm
-    function will copy a PIC18 ROM fileName argument into a RAM array, and then
-    pass that array to the FindFirst function.
-  Remarks:
-    Call FindFirstpgm or FindFirst before calling FindNext.
-    This function is for use with PIC18 when passing arguments in ROM.
-  **************************************************************************************/
-
-    int FindFirstpgm (const rom char * fileName, unsigned int attr, SearchRec * rec);
-
-
-/**************************************************************************
-  Function:
-    int FSchdirpgm (const rom char * path)
-  Summary:
-    Changes the CWD to the input path on PIC18
-  Conditions:
-    None
-  Input:
-    path - The path of the directory to change to (ROM)
-  Return Values:
-    0 -   The current working directory was changed successfully
-    EOF - The current working directory could not be changed
-  Side Effects:
-    The current working directory may be changed. The FSerrno variable will
-    be changed.
-  Description:
-    Changes the CWD to the input path on PIC18.The FSchdirpgm function
-    passes a PIC18 ROM path pointer to the chdirhelper function.
-  Remarks:
-    This function is for use with PIC18 when passing arguments in ROM
-  **************************************************************************/
-
-    int FSchdirpgm (const rom char * path);
-
-    #ifdef ALLOW_WRITES
-
-
-/*************************************************************
-  Function:
-    int FSremovepgm (const rom char * fileName)
-  Summary:
-    Deletes the file on PIC18 device
-  Conditions:
-    File not opened; file exists
-  Input:
-    fileName -  The name of the file to be deleted (ROM)
-  Return Values:
-    0 -  File was removed successfully
-    -1 - File could not be removed
-  Side Effects:
-    The FSerrno variable will be changed.
-  Description:
-    Deletes the file on PIC18 device.The FSremovepgm function will copy a
-    PIC18 ROM fileName argument into a RAM array, and then pass that array
-    to the FSremove function.
-  Remarks:
-    This function is for use with PIC18 when passing arguments in ROM.
-  *************************************************************/
-
-        int FSremovepgm (const rom char * fileName);
-
-
-/**************************************************************************
-  Function:
-    int FSmkdirpgm (const rom char * path)
-  Summary:
-    Creates a directory as per the path mentioned in the input string on 
-    PIC18 devices.
-  Conditions:
-    None
-  Input:
-    path - The path of directories to create (ROM)
-  Return Values:
-    0 -   The specified directory was created successfully
-    EOF - The specified directory could not be created
-  Side Effects:
-    Will create all non-existent directories in the path. The FSerrno 
-    variable will be changed.
-  Description:
-    Creates a directory as per the path mentioned in the input string on 
-    PIC18 devices.'FSmkdirpgm' creates the directories as per the input
-    string path.This function doesn't move the current working
-    directory setting.
-  Remarks:
-    This function is for use with PIC18 when passing arugments in ROM
-  **************************************************************************/
-
-        int FSmkdirpgm (const rom char * path);
-
-
-/**************************************************************************
-  Function:
-    int FSrmdirpgm (const rom char * path)
-  Summary:
-    Deletes the directory as per the ascii input path (PIC18).
-  Conditions:
-    None.
-  Input:
-    path -      The path of the directory to remove (ROM)
-    rmsubdirs - 
-              - TRUE -  All sub-dirs and files in the target dir will be removed
-              - FALSE - FSrmdir will not remove non-empty directories
-  Return Values:
-    0 -   The specified directory was deleted successfully
-    EOF - The specified directory could not be deleted
-  Side Effects:
-    The FSerrno variable will be changed.
-  Description:
-    Deletes the directory as per the ascii input path (PIC18).
-    This function deletes the directory as specified in the path.
-    This function wont delete the current working directory.
-  Remarks:
-    This function is for use with PIC18 when passing arguments in ROM.
-  **************************************************************************/
-
-        int FSrmdirpgm (const rom char * path, unsigned char rmsubdirs);
-
-
-/*****************************************************************
-  Function:
-    int FSrenamepgm(const rom char * fileName, FSFILE * fo)
-  Summary:
-    Renames the file with the ascii ROM string(PIC18)
-  Conditions:
-    File opened.
-  Input:
-    fileName -  The new name of the file (in ROM)
-    fo -        The file to rename
-  Return Values:
-    0 -  File renamed successfully
-    -1 - File could not be renamed
-  Side Effects:
-    The FSerrno variable will be changed.
-  Description:
-    Renames the file with the ascii ROM string(PIC18).The Fsrenamepgm
-    function will copy the rom fileName specified by the user into a 
-    RAM array and pass that array into the FSrename function.
-  Remarks:
-    This function is for use with PIC18 when passing arguments in ROM.                       
-  *****************************************************************/
-
-        int FSrenamepgm (const rom char * fileName, FSFILE * fo);
-    #endif
-#endif
-
 
 /************************************************************
   Function:
@@ -663,7 +378,6 @@ FSFILE * wFSfopen(const unsigned short int * fileName, const char *mode);
     function that frees the memory and the line that clears
     the write flag.
   ************************************************************/
-
 int FSfclose(FSFILE *fo);
 
 
@@ -688,7 +402,6 @@ int FSfclose(FSFILE *fo);
   Remarks:
     None.
   *********************************************************/
-
 void FSrewind (FSFILE *fo);
 
 
@@ -721,8 +434,7 @@ void FSrewind (FSFILE *fo);
   Remarks:
     None.
   **************************************************************************/
-
-size_t FSfread(void *ptr, size_t size, size_t n, FSFILE *stream);
+UINT32 FSfread(void *ptr, UINT32 size, UINT32 n, FSFILE *stream);
 
 
 /**********************************************************************
@@ -756,7 +468,6 @@ size_t FSfread(void *ptr, size_t size, size_t n, FSFILE *stream);
   Remarks:
     None                                                               
   **********************************************************************/
-
 int FSfseek(FSFILE *stream, long offset, int whence);
 
 
@@ -780,7 +491,6 @@ int FSfseek(FSFILE *stream, long offset, int whence);
   Remarks:
     None                                                            
   *******************************************************************/
-
 long FSftell(FSFILE *fo);
 
 
@@ -806,7 +516,6 @@ long FSftell(FSFILE *fo);
   Remarks:
     None.
   ****************************************************/
-
 int FSfeof( FSFILE * stream );
 
 
@@ -860,7 +569,6 @@ int FSfeof( FSFILE * stream );
     Only devices with a sector size of 512 bytes are supported by the 
     format function                      
   *******************************************************************/
-
 int FSformat (char mode, long int serialNumber, char * volumeID);
 #endif
 
@@ -895,7 +603,6 @@ int FSformat (char mode, long int serialNumber, char * volumeID);
   Remarks:
     None                                                                
   ***************************************************************************/
-
 int FSattrib (FSFILE * file, unsigned char attributes);
 
 
@@ -922,7 +629,6 @@ int FSattrib (FSFILE * file, unsigned char attributes);
   Remarks:
     None                                                        
   ***************************************************************/
-
 int FSrename (const char * fileName, FSFILE * fo);
 
 #ifdef SUPPORT_LFN
@@ -951,7 +657,6 @@ int FSrename (const char * fileName, FSFILE * fo);
   Remarks:
     None
   ***************************************************************/
-
 int wFSrename (const unsigned short int * fileName, FSFILE * fo);
 #endif
 
@@ -978,7 +683,6 @@ int wFSrename (const unsigned short int * fileName, FSFILE * fo);
   Remarks:
     None                                       
   **********************************************************************/
-
 int FSremove (const char * fileName);
 
 #ifdef SUPPORT_LFN
@@ -1004,7 +708,6 @@ int FSremove (const char * fileName);
   Remarks:
     None
   **********************************************************************/
-
 int wFSremove (const unsigned short int * fileName);
 #endif
 
@@ -1039,14 +742,10 @@ int wFSremove (const unsigned short int * fileName);
   Remarks:
     None.
   *********************************************************************************/
-
-size_t FSfwrite(const void *data_to_write, size_t size, size_t n, FSFILE *stream);
-
+UINT32 FSfwrite(const void *data_to_write, UINT32 size, UINT32 n, FSFILE *stream);
 #endif
 
 #ifdef ALLOW_DIRS
-
-
 /**************************************************************************
   Function:
     int FSchdir (char * path)
@@ -1068,7 +767,6 @@ size_t FSfwrite(const void *data_to_write, size_t size, size_t n, FSFILE *stream
   Remarks:
     None                                            
   **************************************************************************/
-
 int FSchdir (char * path);
 
 #ifdef SUPPORT_LFN
@@ -1095,7 +793,6 @@ int FSchdir (char * path);
   Remarks:
     None                                            
   **************************************************************************/
-
 int wFSchdir (unsigned short int * path);
 #endif
 
@@ -1140,7 +837,6 @@ int wFSchdir (unsigned short int * path);
   Remarks:
     None                                                       
   **************************************************************/
-
 char * FSgetcwd (char * path, int numbchars);
 
 #ifdef SUPPORT_LFN
@@ -1185,7 +881,6 @@ char * FSgetcwd (char * path, int numbchars);
   Remarks:
     None                                                       
   **************************************************************/
-
 char * wFSgetcwd (unsigned short int * path, int numbchars);
 #endif
 
@@ -1212,7 +907,6 @@ char * wFSgetcwd (unsigned short int * path, int numbchars);
   Remarks:
     None                                            
   **************************************************************************/
-
 int FSmkdir (char * path);
 
 #ifdef SUPPORT_LFN
@@ -1237,7 +931,6 @@ int FSmkdir (char * path);
   Remarks:
     None                                            
   **************************************************************************/
-
 int wFSmkdir (unsigned short int * path);
 #endif
 
@@ -1264,7 +957,6 @@ int wFSmkdir (unsigned short int * path);
   Remarks:
     None.
   **************************************************************************/
-
 int FSrmdir (char * path, unsigned char rmsubdirs);
 
 #ifdef SUPPORT_LFN
@@ -1291,44 +983,11 @@ int FSrmdir (char * path, unsigned char rmsubdirs);
   Remarks:
     None.
   **************************************************************************/
-
 int wFSrmdir (unsigned short int * path, unsigned char rmsubdirs);
 #endif
 
 #endif
 
-#endif
-
-#ifdef USERDEFINEDCLOCK
-
-
-/***********************************************************************************************************
-  Function:
-    int SetClockVars (unsigned int year, unsigned char month, unsigned char day, unsigned char hour, unsigned char minute, unsigned char second)
-  Summary:
-    Manually set timestamp variables
-  Conditions:
-    USERDEFINEDCLOCK macro defined in FSconfig.h.
-  Input:
-    year -     The year (1980\-2107)
-    month -   The month (1\-12)
-    day -     The day of the month (1\-31)
-    hour -    The hour (0\-23)
-    minute -  The minute (0\-59)
-    second -  The second (0\-59)
-  Return Values:
-    None
-  Side Effects:
-    Modifies global timing variables
-  Description:
-    Lets the user manually set the timing variables.  The values passed in will be converted to the format
-    used by the FAT timestamps.
-  Remarks:
-    Call this before creating a file or directory (set create time) and
-    before closing a file (set last access time, last modified time)                                        
-  ***********************************************************************************************************/
-
-int SetClockVars (unsigned int year, unsigned char month, unsigned char day, unsigned char hour, unsigned char minute, unsigned char second);
 #endif
 
 
@@ -1378,7 +1037,6 @@ int SetClockVars (unsigned int year, unsigned char month, unsigned char day, uns
   Remarks:
     Call FindFirst or FindFirstpgm before calling FindNext
   ***********************************************************************************/
-
 int FindFirst (const char * fileName, unsigned int attr, SearchRec * rec);
 
 #ifdef SUPPORT_LFN
@@ -1426,7 +1084,6 @@ int FindFirst (const char * fileName, unsigned int attr, SearchRec * rec);
   Remarks:
     Call FindFirst or FindFirstpgm before calling FindNext
   ***********************************************************************************/
-
 int wFindFirst (const unsigned short int * fileName, unsigned int attr, SearchRec * rec);
 #endif
 
@@ -1461,47 +1118,8 @@ int wFindFirst (const unsigned short int * fileName, unsigned int attr, SearchRe
   Remarks:
     Call FindFirst or FindFirstpgm before calling this function
   **********************************************************************/
-
 int FindNext (SearchRec * rec); 
 #endif
-
-
-/**********************************************************************
-  Function:
-    // PIC24/30/33/32
-    int FSfprintf (FSFILE * fptr, const char * fmt, ...)
-    // PIC18
-    int FSfpritnf (FSFILE * fptr, const rom char * fmt, ...)
-  Summary:
-    Function to write formatted strings to a file
-  Conditions:
-    For PIC18, integer promotion must be enabled in the project build
-    options menu.  File opened in a write mode.
-  Input:
-    fptr - A pointer to the file to write to.
-    fmt -  A string of characters and format specifiers to write to
-           the file
-    ... -  Additional arguments inserted in the string by format
-           specifiers
-  Returns:
-    The number of characters written to the file
-  Side Effects:
-    The FSerrno variable will be changed.
-  Description:
-    Writes a specially formatted string to a file.
-  Remarks:
-    Consult AN1045 for a full description of how to use format
-    specifiers.        
-  **********************************************************************/
-
-#ifdef ALLOW_FSFPRINTF
-    #ifdef __18CXX
-        int FSfprintf (FSFILE *fptr, const rom char *fmt, ...);
-    #else
-        int FSfprintf (FSFILE *fptr, const char * fmt, ...);
-    #endif
-#endif
-
 
 /**************************************************************************
   Function:
@@ -1687,7 +1305,6 @@ int FindNext (SearchRec * rec);
   Remarks:
     None
   **************************************************************************/
-
 int FSerror (void);
 
 
@@ -1724,7 +1341,6 @@ int FSerror (void);
     This function can damage the device being used, and should not be called
     unless the user is sure about the size of the device and the first sector value.
   *********************************************************************************/
-
 int FSCreateMBR (unsigned long firstSector, unsigned long numSectors);
 
 
@@ -1858,7 +1474,6 @@ void FSGetDiskProperties(FS_DISK_PROPERTIES* properties);
   Remarks:
     None
   *************************************************************************/
-
 BYTE FILEget_next_cluster(FSFILE *fo, DWORD n);
 
 #endif

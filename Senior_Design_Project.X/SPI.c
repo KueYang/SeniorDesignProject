@@ -1,11 +1,12 @@
 #include <p32xxxx.h>
 #include <plib.h>
-#include "CONFIG.h"
 #include "STDDEF.h"
+#include "./FIO_Library/HardwareProfile.h"
 #include "TIMER.h"
 #include "SPI.h"
 
-#define SPI_BAUD_RATE   20000000
+#define SPI_BAUD_RATE       20000000
+#define SPI_CHANNEL         SPI_CHANNEL1	// the SPI channel to use
 
 void SPI_Init(void)
 {
@@ -17,35 +18,40 @@ void SPI_Init(void)
         PPSLock;
     });
     
-    //Configure SPI in I2S mode with 24-bit stereo audio.
-    UINT spi_con1 = 0, spi_con2 = 0;
-    spi_con1 = SPI_OPEN_MSTEN |     // Master mode enable
-                SPI_OPEN_SSEN |     // Enable slave select function
-            SPI_OPEN_CKP_HIGH |     // Clock polarity Idle High Active Low
-              SPI_OPEN_MODE16 |     // Data mode: 24b
-              SPI_OPEN_MODE32 |     // Data mode: 24b
-             SPI_OPEN_MCLKSEL |     // Clock selected is reference clock
-             SPI_OPEN_FSP_HIGH;     // Frame Sync Pulse is active high
-
-//    spi_con2 = SPI_OPEN2_AUDEN |    // Enable Audio mode
-//            SPI_OPEN2_AUDMOD_I2S;   // Enable I2S mode
-
-    //Configure and turn on the SPI1 module.
-    SpiChnOpenEx(SPI_CHANNEL1, spi_con1, spi_con2, (GetPeripheralClock()/SPI_BAUD_RATE));
+    SPI1CONbits.ON = 0;
+    SPI1CONbits.FRMEN = 0;
+    SPI1CONbits.FRMSYNC = 0;
+    SPI1CONbits.FRMPOL = 0;
+    SPI1CONbits.MSSEN = 1;
+    SPI1CONbits.FRMSYPW = 0;
+    SPI1CONbits.FRMCNT = 0b000;
+    SPI1CONbits.MCLKSEL = 0;
+    SPI1CONbits.SPIFE = 0;
+    SPI1CONbits.ENHBUF = 0;
+    SPI1CONbits.SIDL = 0;
+    SPI1CONbits.DISSDO = 0;
+    SPI1CONbits.MODE16 = 0;
+    SPI1CONbits.SMP = 0;
+    SPI1CONbits.CKE = 0;
+    SPI1CONbits.SSEN = 0;
+    SPI1CONbits.CKP = 0;
+    SPI1CONbits.MSTEN = 1;
+    SPI1CONbits.DISSDI = 0;
+    SPI1CONbits.STXISEL = 0b00;
+    SPI1CONbits.SRXISEL = 0b00;
+    SPI1CONbits.ON = 1;
 
     //Enable SPI1 interrupt.
 //    INTEnable(INT_SPI1, INT_ENABLED);
-//    INTSetVectorPriority(INT_SPI_1_VECTOR, INT_PRIORITY_LEVEL_4);
+//    INTSetVectorPriority(INT_SPI_1_VECTOR, INT_PRIORITY_LEVEL_2);
 //    INTSetVectorSubPriority(INT_SPI_1_VECTOR, INT_SUB_PRIORITY_LEVEL_0);
-    
-    SpiChnPutC(SPI_CHANNEL1, 0); //Dummy write to start the SPI
 }
 
 void SPI_Process()
 {
     /* Write a dummy byte to the shift register. */
-    BYTE data = SPI1_ReadWrite(0x00);
-    TIMER_MSecondDelay(50);
+    BYTE data = SPI1_ReadWrite(0xB);
+    TIMER_MSecondDelay(5000);
 }
 
 BYTE SPI1_ReadWrite(BYTE ch)

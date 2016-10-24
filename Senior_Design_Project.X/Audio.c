@@ -1,10 +1,7 @@
 #include <p32xxxx.h>
 #include <plib.h>
 #include "STDDEF.h"
-#include "SD_Library/FSDefs.h"
-#include "SD_Library/FSconfig.h"
-#include "SD_Library/FSIO.h"
-#include "SD_Library/SD-SPI.h"
+#include "./FIO_Library/FSIO.h"
 #include "Audio.h"
 
 BOOL AUDIO_OpenFile(char* file);

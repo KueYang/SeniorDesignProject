@@ -1,84 +1,16 @@
-/******************************************************************************
- *
- *               Microchip Memory Disk Drive File System
- *
- ******************************************************************************
- * FileName:        SD-SPI.c
- * Dependencies:    SD-SPI.h
- *                  string.h
- *                  FSIO.h
- *                  FSDefs.h
- * Processor:       PIC18/PIC24/dsPIC30/dsPIC33/PIC32
- * Compiler:        C18/C30/C32
- * Company:         Microchip Technology, Inc.
- *
- * Software License Agreement
- *
- * The software supplied herewith by Microchip Technology Incorporated
- * (the "Company") for its PICmicro® Microcontroller is intended and
- * supplied to you, the Company’s customer, for use solely and
- * exclusively on Microchip PICmicro Microcontroller products. The
- * software is owned by the Company and/or its supplier, and is
- * protected under applicable copyright laws. All rights are reserved.
- * Any use in violation of the foregoing restrictions may subject the
- * user to criminal sanctions under applicable laws, as well as to
- * civil liability for the breach of the terms and conditions of this
- * license.
- *
- * THIS SOFTWARE IS PROVIDED IN AN "AS IS" CONDITION. NO WARRANTIES,
- * WHETHER EXPRESS, IMPLIED OR STATUTORY, INCLUDING, BUT NOT LIMITED
- * TO, IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A
- * PARTICULAR PURPOSE APPLY TO THIS SOFTWARE. THE COMPANY SHALL NOT,
- * IN ANY CIRCUMSTANCES, BE LIABLE FOR SPECIAL, INCIDENTAL OR
- * CONSEQUENTIAL DAMAGES, FOR ANY REASON WHATSOEVER.
- *
-*****************************************************************************
- File Description:
-
- Change History:
-  Rev     Description
-  -----   -----------
-  1.2.5   Fixed bug in the calculation of the capacity for v1.0 devices
-  1.3.0   Improved media initialization sequence, for better card compatibility
-          (especially with SDHC cards).
-          Implemented SPI optimizations for data transfer rate improvement.
-          Added new MDD_SDSPI_AsyncReadTasks() and MDD_SDSPI_AsyncWriteTasks() 
-          API functions.  These are non-blocking, state machine based read/write
-          handlers capable of considerably improved data throughput, particularly
-          for multi-block reads and multi-block writes.
-  1.3.2   Modified MDD_SDSPI_AsyncWriteTasks() so pre-erase command only gets
-          used for multi-block write scenarios.   
-  1.3.4   1) Added support for dsPIC33E & PIC24E controllers.
-          2) #include "HardwareProfile.h" is moved up in the order.
-          3) "SPI_INTERRUPT_FLAG_ASM" macro has to be defined in "HardwareProfile.h" file
-             for PIC18 microcontrollers.Or else an error is generated while building
-             the code.
-                       "#define SPI_INTERRUPT_FLAG_ASM  PIR1, 3" is removed from SD-SPI.c
-          4) Replaced "__C30" usage with "__C30__" .
-  1.3.6   1) Modified "FSConfig.h" to "FSconfig.h" in '#include' directive.
-          2) Moved 'spiconvalue' variable definition to only C30 usage, as C32
-             is not using it.
-          3) Modified 'MDD_SDSPI_MediaDetect' function to ensure that CMD0 is sent freshly
-             after CS is asserted low. This minimizes the risk of SPI clock pulse master/slave
-             syncronization problems.
-
-********************************************************************/
-
 #include <p32xxxx.h>
 #include <plib.h>
-#include "GenericTypeDefs.h"
-#include "../HardwareProfile.h"
+#include "STDDEF.h"
+#include "HardwareProfile.h"
 #include "FSIO.h"
 #include "FSDefs.h"
 #include "SD-SPI.h"
-#include "string.h"
 #include "FSconfig.h"
-#include "../UART.h"
+#include "../TIMER.h"
 
 /******************************************************************************
  * Global Variables
  *****************************************************************************/
-
 // Description:  Used for the mass-storage library to determine capacity
 DWORD MDD_SDSPI_finalLBA;
 WORD gMediaSectorSize;
@@ -86,16 +18,7 @@ BYTE gSDMode;
 static MEDIA_INFORMATION mediaInformation;
 static ASYNC_IO ioInfo; //Declared global context, for fast/code efficient access
 
-
-#ifdef __18CXX
-    // Summary: Table of SD card commands and parameters
-    // Description: The sdmmc_cmdtable contains an array of SD card commands, the corresponding CRC code, the
-    //              response type that the card will return, and a parameter indicating whether to expect
-    //              additional data from the card.
-    const rom typMMC_CMD sdmmc_cmdtable[] =
-#else
-    const typMMC_CMD sdmmc_cmdtable[] =
-#endif
+const typMMC_CMD sdmmc_cmdtable[] =
 {
     // cmd                      crc     response
     {cmdGO_IDLE_STATE,          0x95,   R1,     NODATA},
@@ -120,37 +43,17 @@ static ASYNC_IO ioInfo; //Declared global context, for fast/code efficient acces
     {cmdSET_WR_BLK_ERASE_COUNT, 0xFF,   R1,     NODATA}
 };
 
-
-
-
 /******************************************************************************
  * Prototypes
  *****************************************************************************/
-extern void Delayms(BYTE milliseconds);
 BYTE MDD_SDSPI_ReadMedia(void);
 MEDIA_INFORMATION * MDD_SDSPI_MediaInitialize(void);
 MMC_RESPONSE SendMMCCmd(BYTE cmd, DWORD address);
 
-#if defined __C30__ || defined __C32__
-    void OpenSPIM ( unsigned int sync_mode);
-    void CloseSPIM( void );
-    unsigned char WriteSPIM( unsigned char data_out );
-#elif defined __18CXX
-    void OpenSPIM ( unsigned char sync_mode);
-    void CloseSPIM( void );
-    unsigned char WriteSPIM( unsigned char data_out );
-
-    unsigned char WriteSPIManual(unsigned char data_out);
-    BYTE ReadMediaManual (void);
-    MMC_RESPONSE SendMMCCmdManual(BYTE cmd, DWORD address);
-#endif
+void OpenSPIM ( unsigned int sync_mode);
+void CloseSPIM( void );
+unsigned char WriteSPIM( unsigned char data_out );
 void InitSPISlowMode(void);
-
-#if defined __18CXX
-//Private function prototypes
-static void PIC18_Optimized_SPI_Write_Packet(void);
-static void PIC18_Optimized_SPI_Read_Packet(void);
-#endif
 
 //-------------Function name redirects------------------------------------------
 //During the media initialization sequence, it is
@@ -163,18 +66,10 @@ static void PIC18_Optimized_SPI_Read_Packet(void);
 //speeds regardless of CPU frequency, and therefore bit-banged code is not 
 //necessary.  Therefore, we use function redirects where necessary, to point to
 //the proper SPI related code, given the processor type.
+#define SendMediaSlowCmd    SendMMCCmd
+#define WriteSPISlow        WriteSPIM
 
-#if defined __18CXX
-    #define SendMediaSlowCmd    SendMMCCmdManual
-    #define WriteSPISlow        WriteSPIManual
-#else
-    #define SendMediaSlowCmd    SendMMCCmd
-    #define WriteSPISlow        WriteSPIM
-#endif
 //------------------------------------------------------------------------------
-
-
-#ifdef __PIC32MX__
 /*********************************************************
   Function:
     static inline __attribute__((always_inline)) unsigned char SPICacutateBRG (unsigned int pb_clk, unsigned int spi_clk)
@@ -194,7 +89,6 @@ static void PIC18_Optimized_SPI_Read_Packet(void);
   Remarks:
     None                                                  
   *********************************************************/
-
 static inline __attribute__((always_inline)) unsigned char SPICalutateBRG(unsigned int pb_clk, unsigned int spi_clk)
 {
     unsigned int brg;
@@ -212,7 +106,6 @@ static inline __attribute__((always_inline)) unsigned char SPICalutateBRG(unsign
 
     return (unsigned char) brg;
 }
-#endif
 
 
 /*********************************************************
@@ -246,7 +139,6 @@ static inline __attribute__((always_inline)) unsigned char SPICalutateBRG(unsign
   Remarks:
     None                                                  
   *********************************************************/
-
 BYTE MDD_SDSPI_MediaDetect (void)
 {
 #ifndef MEDIA_SOFT_DETECT
@@ -378,7 +270,6 @@ BYTE MDD_SDSPI_MediaDetect (void)
   Remarks:
     None
   *********************************************************/
-
 WORD MDD_SDSPI_ReadSectorSize(void)
 {
     return gMediaSectorSize;
@@ -431,21 +322,32 @@ DWORD MDD_SDSPI_ReadCapacity(void)
   Remarks:
     None
   *********************************************************/
-
 void MDD_SDSPI_InitIO (void)
 {
+//    ANSELBbits.ANSB2 = 0;
+//    ANSELBbits.ANSB13 = 0;
+//    ANSELBbits.ANSB14 = 0;
+//    
+//    TRISBbits.TRISB2 = 0;   // SD_CS
+//    TRISBbits.TRISB11 = 1;  // SD_SDI
+//    TRISBbits.TRISB13 = 0;  // SD_SDO
+//    TRISBbits.TRISB14 = 0;  // SD_CLK
+//    
+//    PORTBbits.RB2 = 1;      // Initialize Chip Select line
+    
+    // Re-mapped pins RPB11 and RPB13 pins to SDI and SDO
+    mSysUnlockOpLock({
+        PPSUnLock;
+        PPSInput(2,SDI1,RPB11);     // Assign RPB11 as input pin for SDI
+        PPSOutput(3,RPB13,SDO1);    // Set RPB13 pin as output for SDO
+        PPSLock;
+    });
+    
     // Turn off the card
     SD_CD_TRIS = INPUT;            //Card Detect - input
     SD_CS = 1;                     //Initialize Chip Select line
     SD_CS_TRIS = OUTPUT;           //Card Select - output
     SD_WE_TRIS = INPUT;            //Write Protect - input
-
-#if defined	(__dsPIC33E__) || defined (__PIC24E__)
-    SD_CS_ANSEL = 0;
-    SD_SCK_ANSEL = 0;
-    SD_SDI_ANSEL = 0;
-    SD_SDO_ANSEL = 0;
-#endif    
 }
 
 
@@ -470,7 +372,6 @@ void MDD_SDSPI_InitIO (void)
   Remarks:
     None
   *********************************************************/
-
 BYTE MDD_SDSPI_ShutdownMedia(void)
 {
     // close the spi bus
@@ -510,7 +411,6 @@ BYTE MDD_SDSPI_ShutdownMedia(void)
   Remarks:
     None.
   *****************************************************************************/
-
 MMC_RESPONSE SendMMCCmd(BYTE cmd, DWORD address)
 {
     MMC_RESPONSE    response;
@@ -600,132 +500,6 @@ MMC_RESPONSE SendMMCCmd(BYTE cmd, DWORD address)
     return(response);
 }
 
-#ifdef __18CXX
-/*****************************************************************************
-  Function:
-    MMC_RESPONSE SendMMCCmdManual (BYTE cmd, DWORD address)
-  Summary:
-    Sends a command packet to the SD card with bit-bang SPI.
-  Conditions:
-    None.
-  Input:
-    Need input cmd index into a rom table of implemented commands.
-    Also needs 4 bytes of data as address for some commands (also used for
-    other purposes in other commands).
-  Return Values:
-    Assuming an "R1" type of response, each bit will be set depending upon status:
-    MMC_RESPONSE    - The response from the card
-                    - Bit 0 - Idle state
-                    - Bit 1 - Erase Reset
-                    - Bit 2 - Illegal Command
-                    - Bit 3 - Command CRC Error
-                    - Bit 4 - Erase Sequence Error
-                    - Bit 5 - Address Error
-                    - Bit 6 - Parameter Error
-                    - Bit 7 - Unused. Always 0.
-    Other response types (ex: R3/R7) have up to 5 bytes of response.  The first
-    byte is always the same as the R1 response.  The contents of the other bytes 
-    depends on the command.
-  Side Effects:
-    None.
-  Description:
-    SendMMCCmd prepares a command packet and sends it out over the SPI interface.
-    Response data of type 'R1' (as indicated by the SD/MMC product manual is returned.
-    This function is intended to be used when the clock speed of a PIC18 device is
-    so high that the maximum SPI divider can't reduce the clock below the maximum
-    SD card initialization sequence speed.
-  Remarks:
-    None.
-  ***************************************************************************************/
-MMC_RESPONSE SendMMCCmdManual(BYTE cmd, DWORD address)
-{
-    BYTE index;
-    MMC_RESPONSE    response;
-    CMD_PACKET  CmdPacket;
-    WORD timeout;
-    
-    SD_CS = 0;                           //Select card
-    
-    // Copy over data
-    CmdPacket.cmd        = sdmmc_cmdtable[cmd].CmdCode;
-    CmdPacket.address    = address;
-    CmdPacket.crc        = sdmmc_cmdtable[cmd].CRC;       // Calc CRC here
-    
-    CmdPacket.TRANSMIT_BIT = 1;             //Set Tranmission bit
-    
-    WriteSPIManual(CmdPacket.cmd);                //Send Command
-    WriteSPIManual(CmdPacket.addr3);              //Most Significant Byte
-    WriteSPIManual(CmdPacket.addr2);
-    WriteSPIManual(CmdPacket.addr1);
-    WriteSPIManual(CmdPacket.addr0);              //Least Significant Byte
-    WriteSPIManual(CmdPacket.crc);                //Send CRC
-
-    //Special handling for CMD12 (STOP_TRANSMISSION).  The very first byte after
-    //sending the command packet may contain bogus non-0xFF data.  This 
-    //"residual data" byte should not be interpreted as the R1 response byte.
-    if(cmd == STOP_TRANSMISSION)
-    {
-        ReadMediaManual(); //Perform dummy read to fetch the residual non R1 byte
-    } 
-
-    //Loop until we get a response from the media.  Delay (NCR) could be up 
-    //to 8 SPI byte times.  First byte of response is always the equivalent of 
-    //the R1 byte, even for R1b, R2, R3, R7 responses.
-    timeout = NCR_TIMEOUT;
-    do
-    {
-        response.r1._byte = ReadMediaManual();
-        timeout--;
-    }while((response.r1._byte == MMC_FLOATING_BUS) && (timeout != 0));
-    
-    
-    //Check if we should read more bytes, depending upon the response type expected.  
-    if(sdmmc_cmdtable[cmd].responsetype == R2)
-    {
-        response.r2._byte1 = response.r1._byte; //We already received the first byte, just make sure it is in the correct location in the struct.
-        response.r2._byte0 = ReadMediaManual(); //Fetch the second byte of the response.
-    }
-    else if(sdmmc_cmdtable[cmd].responsetype == R1b)
-    {
-        //Keep trying to read from the media, until it signals it is no longer
-        //busy.  It will continuously send 0x00 bytes until it is not busy.
-        //A non-zero value means it is ready for the next command.
-        timeout = 0xFFFF;
-        do
-        {
-            response.r1._byte = ReadMediaManual();
-            timeout--;
-        }while((response.r1._byte == 0x00) && (timeout != 0));
-
-        response.r1._byte = 0x00;
-    }
-    else if (sdmmc_cmdtable[cmd].responsetype == R7) //also used for response R3 type
-    {
-        //Fetch the other four bytes of the R3 or R7 response.
-        //Note: The SD card argument response field is 32-bit, big endian format.
-        //However, the C compiler stores 32-bit values in little endian in RAM.
-        //When writing to the _returnVal/argument bytes, make sure the order it 
-        //gets stored in is correct.      
-        response.r7.bytewise.argument._byte3 = ReadMediaManual();
-        response.r7.bytewise.argument._byte2 = ReadMediaManual();
-        response.r7.bytewise.argument._byte1 = ReadMediaManual();
-        response.r7.bytewise.argument._byte0 = ReadMediaManual();
-    }
-
-    WriteSPIManual(0xFF);    //Device requires at least 8 clock pulses after 
-                             //the response has been sent, before if can process
-                             //the next command.  CS may be high or low.
-
-    // see if we are expecting more data or not
-    if(!(sdmmc_cmdtable[cmd].moredataexpected))
-        SD_CS = 1;
-
-    return(response);
-}
-#endif
-
-
-
 /*****************************************************************************
   Function:
     BYTE MDD_SDSPI_SectorRead (DWORD sector_addr, BYTE * buffer)
@@ -789,11 +563,6 @@ BYTE MDD_SDSPI_SectorRead(DWORD sector_addr, BYTE* buffer)
     //compiler warnings.
     return FALSE;
 }    
-
- 
-
-
-
 
 /*****************************************************************************
   Function:
@@ -914,7 +683,6 @@ BYTE MDD_SDSPI_SectorRead(DWORD sector_addr, BYTE* buffer)
     than the media block size).  Example values that are allowed for info->wNumBytes
     are: 1, 2, 4, 8, 16, 32, 64, 128, 256, 512.
   *****************************************************************************/
-
 BYTE MDD_SDSPI_AsyncReadTasks(ASYNC_IO* info)
 {
     BYTE bData;
@@ -1033,35 +801,29 @@ BYTE MDD_SDSPI_AsyncReadTasks(ASYNC_IO* info)
                 //This operation directly dictates data thoroughput in the 
                 //application, therefore optimized code should be used for each 
                 //processor type.
-            	#if defined __C30__ || defined __C32__
-                {
-                    //PIC24/dsPIC/PIC32 architecture is efficient with pointers.
-                    //Therefore, this code can provide good SPI bus utilization, 
-                    //provided the compiler optimization level is 's' or '3'.
-                    BYTE* localPointer = ioInfo.pBuffer;
-                    WORD localCounter = ioInfo.wNumBytes;
-                    
-                    if(localCounter != 0x0000)
-                    {
-                        localPointer--;
-                        while(1)
-                        {
-                            SPIBUF = 0xFF;
-                            localPointer++;
-                            if((--localCounter) == 0x0000)
-                            {
-                               break; 
-                            } 
-                            while(!SPISTAT_RBF);
-                            *localPointer = (BYTE)SPIBUF;
-                        }
-                        while(!SPISTAT_RBF);
-                        *localPointer = (BYTE)SPIBUF;  
-                    }  
-                }    
-                #elif defined __18CXX
-                    PIC18_Optimized_SPI_Read_Packet();
-            	#endif   
+				//PIC24/dsPIC/PIC32 architecture is efficient with pointers.
+				//Therefore, this code can provide good SPI bus utilization, 
+				//provided the compiler optimization level is 's' or '3'.
+				BYTE* localPointer = ioInfo.pBuffer;
+				WORD localCounter = ioInfo.wNumBytes;
+				
+				if(localCounter != 0x0000)
+				{
+					localPointer--;
+					while(1)
+					{
+						SPIBUF = 0xFF;
+						localPointer++;
+						if((--localCounter) == 0x0000)
+						{
+						   break; 
+						} 
+						while(!SPISTAT_RBF);
+						*localPointer = (BYTE)SPIBUF;
+					}
+					while(!SPISTAT_RBF);
+					*localPointer = (BYTE)SPIBUF;  
+				}  
 
                 //Check if we have received a multiple of the media block 
                 //size (ex: 512 bytes).  If so, the next two bytes are going to 
@@ -1118,126 +880,6 @@ BYTE MDD_SDSPI_AsyncReadTasks(ASYNC_IO* info)
     //Should never get to here.  All pathways should have already returned.
     return ASYNC_READ_ERROR;
 }    
-
-
-
-
-#ifdef __18CXX
-/*****************************************************************************
-  Function:
-    static void PIC18_Optimized_SPI_Read_Packet(void)
-  Summary:
-    A private function intended for use internal to the SD-SPI.c file.
-    This function reads a specified number of bytes from the SPI module,
-    at high speed for optimum thoroughput, and copies them into the user
-    specified RAM buffer.
-    This function is only implemented and used on PIC18 devices.
-  Pre-Conditions:
-    The ioInfo.wNumBytes must be pre-initialized prior to calling 
-    PIC18_Optimized_SPI_Read_Packet().
-    Additionally, the ioInfo.pBuffer must also be pre-initialized, prior
-    to calling PIC18_Optimized_SPI_Read_Packet().
-  Input:
-    ioInfo.wNumBytes global variable, initialized to the number of bytes to read.
-    ioInfo.pBuffer global variable, initialize to point to the RAM location that
-        the read data should be copied to.
-  Return Values:
-    None (although the ioInfo.pBuffer RAM specified will contain new contents)
-  Side Effects:
-    None
-  Description:
-    A private function intended for use internal to the SD-SPI.c file.
-    This function reads a specified number of bytes from the SPI module,
-    at high speed for optimum thoroughput, and copies them into the user
-    specified RAM buffer.
-    This function is only implemented and used on PIC18 devices.
-  Remarks:
-    This function is speed optimized, using inline assembly language code, and
-    makes use of C compiler managed resources.  It is currently written to work
-    with the Microchip MPLAB C18 compiler, and may need modification is built
-    with a different PIC18 compiler.
-  *****************************************************************************/
-static void PIC18_Optimized_SPI_Read_Packet(void)
-{
-    static WORD FSR0Save;
-    static WORD PRODSave;
-
-    //Make sure the SPI_INTERRUPT_FLAG_ASM has been correctly defined, for the SPI
-    //module that is actually being used in the hardware.
-    #ifndef SPI_INTERRUPT_FLAG_ASM
-        #error "Please define SPI_INTERRUPT_FLAG_ASM.  Double click this message for more info."
-        //In the HardwareProfile - [platform name].h file for your project, please
-        //add a "#define SPI_INTERRUPT_FLAG_ASM  PIRx, y" definition, where
-        //PIRx is the PIR register holding the SSPxIF flag for the SPI module being used
-        //to interface with the SD/MMC card, and y is the bit number for the SSPxIF bit (ex: 0-7).
-    #endif
-
-    //Make sure at least one byte needs to be read.
-    if(ioInfo.wNumBytes == 0)
-    {
-        return;
-    }
-
-    //Context save C compiler managed registers that we will modify in this function.
-    FSR0Save = FSR0;    
-    PRODSave = PROD;    
-    
-    //Using PRODH and PRODL as convenient 16-bit access bank counter
-    PROD = ioInfo.wNumBytes;    //ioInfo.wNumBytes holds the total number of bytes
-                                //this function will read from SPI.
-    //Going to use the FSR0 directly.  This is non-conventional, but delivers
-    //better performance than using a normal C managed software RAM pointer.
-    FSR0 = (WORD)ioInfo.pBuffer;
-
-    //Initiate the first SPI operation
-    WREG = SPIBUF;
-    SPI_INTERRUPT_FLAG = 0;
-    SPIBUF = 0xFF;
-
-    //Highly speed efficient SPI read loop, written in inline assembly
-    //language for best performance.  Total number of bytes that will be fetched
-    //is exactly == the value of ioInfo.wNumBytes prior to calling this function.
-    _asm
-        bra     ASMSPIReadLoopEntryPoint
-    
-ASMSPIReadLoop:
-        //Wait until last hardware SPI transaction is complete
-        btfss   SPI_INTERRUPT_FLAG_ASM, 0
-        bra     -2
-        bcf     SPI_INTERRUPT_FLAG_ASM, 0
-
-        //Save received byte and start the next transfer
-        movf    SPIBUF, 0, 0    //Copy SPIBUF byte into WREG
-        setf    SPIBUF, 0       //Write 0xFF to SPIBUF, to start a SPI transaction
-        movwf   POSTINC0, 0     //Write the last received byte to the user's RAM buffer
-    
-ASMSPIReadLoopEntryPoint:
-        //Now decrement 16-bit counter for loop exit test condition
-        movlw   0x00
-        decf    PRODL, 1, 0     //Decrement LSB
-        subwfb  PRODH, 1, 0     //Decrement MSB, only if borrow from LSB decrement
-        //Check if anymore bytes remain to be sent
-        movf    PRODL, 0, 0     //copy PRODL to WREG
-        iorwf   PRODH, 0, 0     //Z bit will be set if both PRODL and PRODH == 0x00
-        bnz     ASMSPIReadLoop  //Go back and loop if our counter isn't = 0x0000.
-
-        //Wait until the very last SPI transaction is complete and save the byte
-        btfss   SPI_INTERRUPT_FLAG_ASM, 0
-        bra     -2
-        movff   SPIBUF, POSTINC0
-    _endasm
-
-    SPI_INTERRUPT_FLAG = 0;	 
-
-    //Context restore C compiler managed registers
-    PROD = PRODSave;
-    FSR0 = FSR0Save;    
-}    
-#endif
-
-
-
-
 
 /*****************************************************************************
   Function:
@@ -1461,25 +1103,19 @@ BYTE MDD_SDSPI_AsyncWriteTasks(ASYNC_IO* info)
             //Now send a packet of raw data bytes to the media, over SPI.
             //This code directly impacts data thoroughput in a significant way.  
             //Special care should be used to make sure this code is speed optimized.
-        	#if defined __C30__ || defined __C32__
-            {
-                //PIC24/dsPIC/PIC32 architecture is efficient with pointers and 
-                //local variables due to the large number of WREGs available.
-                //Therefore, this code gives good SPI bus utilization, provided
-                //the compiler optimization level is 's' or '3'.
-                BYTE* localPointer = ioInfo.pBuffer;    
-                WORD localCounter = ioInfo.wNumBytes;
-                do
-                {
-                    SPIBUF = *localPointer++;
-                    localCounter--;
-                    while(!SPISTAT_RBF);
-                    data_byte = SPIBUF; //Dummy read to clear SPISTAT_RBF
-                }while(localCounter);         
-            }                	    
-            #elif defined __18CXX   
-                PIC18_Optimized_SPI_Write_Packet();
-            #endif
+			//PIC24/dsPIC/PIC32 architecture is efficient with pointers and 
+			//local variables due to the large number of WREGs available.
+			//Therefore, this code gives good SPI bus utilization, provided
+			//the compiler optimization level is 's' or '3'.
+			BYTE* localPointer = ioInfo.pBuffer;    
+			WORD localCounter = ioInfo.wNumBytes;
+			do
+			{
+				SPIBUF = *localPointer++;
+				localCounter--;
+				while(!SPISTAT_RBF);
+				data_byte = SPIBUF; //Dummy read to clear SPISTAT_RBF
+			}while(localCounter);    
  
             //Check if we have finshed sending a 512 byte block.  If so,
             //need to receive 16-bit CRC, and retrieve the data_response token
@@ -1620,111 +1256,6 @@ BYTE MDD_SDSPI_AsyncWriteTasks(ASYNC_IO* info)
     return ASYNC_WRITE_BUSY;
 } 
 
-
-#ifdef __18CXX   
-/*****************************************************************************
-  Function:
-    static void PIC18_Optimized_SPI_Write_Packet(void)
-  Summary:
-    A private function intended for use internal to the SD-SPI.c file.
-    This function writes a specified number of bytes to the SPI module,
-    at high speed for optimum throughput, copied from the user specified RAM
-    buffer.
-    This function is only implemented and used on PIC18 devices.
-  Pre-Conditions:
-    The ioInfo.wNumBytes must be pre-initialized prior to calling 
-    PIC18_Optimized_SPI_Write_Packet().
-    Additionally, the ioInfo.pBuffer must also be pre-initialized, prior
-    to calling PIC18_Optimized_SPI_Write_Packet().
-  Input:
-    ioInfo.wNumBytes global variable, initialized to the number of bytes to send
-    ioInfo.pBuffer global variable, initialized to point to the RAM location that
-        contains the data to send out the SPI port
-  Return Values:
-    None
-  Side Effects:
-    None
-  Description:
-    A private function intended for use internal to the SD-SPI.c file.
-    This function writes a specified number of bytes to the SPI module,
-    at high speed for optimum throughput, copied from the user specified RAM
-    buffer.
-    This function is only implemented and used on PIC18 devices.
-  Remarks:
-    This function is speed optimized, using inline assembly language code, and
-    makes use of C compiler managed resources.  It is currently written to work
-    with the Microchip MPLAB C18 compiler, and may need modification if built
-    with a different PIC18 compiler.
-  *****************************************************************************/
-static void PIC18_Optimized_SPI_Write_Packet(void)
-{
-    static BYTE bData;
-    static WORD FSR0Save;
-    static WORD PRODSave;
-
-    //Make sure the SPI_INTERRUPT_FLAG_ASM has been correctly defined, for the SPI
-    //module that is actually being used in the hardware.
-    #ifndef SPI_INTERRUPT_FLAG_ASM
-        #error Please add "#define SPI_INTERRUPT_FLAG_ASM  PIRx, Y" to your hardware profile.  Replace x and Y with appropriate numbers for your SPI module interrupt flag.
-    #endif
-    
-    //Make sure at least one byte needs copying.
-    if(ioInfo.wNumBytes == 0)
-    {
-        return;
-    }    
-
-    //Context save C compiler managed registers.
-    FSR0Save = FSR0; 
-    PRODSave = PROD;
-    
-    //Using PRODH and PRODL as 16 bit loop counter.  These are convenient since
-    //they are always in the access bank.
-    PROD = ioInfo.wNumBytes;
-    //Using FSR0 directly, for optimal SPI loop speed.
-    FSR0 = (WORD)ioInfo.pBuffer; 
-                              
-    _asm
-        movf    POSTINC0, 0, 0  //Fetch next byte to send and store in WREG
-        bra     ASMSPIXmitLoopEntryPoint
-ASMSPIXmitLoop:    
-        movf    POSTINC0, 0, 0  //Pre-Fetch next byte to send and temporarily store in WREG
-        //Wait until last hardware SPI transaction is complete
-        btfss   SPI_INTERRUPT_FLAG_ASM, 0
-        bra     -2
-        
-ASMSPIXmitLoopEntryPoint:
-        //Start the next SPI transaction
-        bcf     SPI_INTERRUPT_FLAG_ASM, 0   //Clear interrupt flag
-        movwf   SPIBUF, 0       //Write next byte to transmit to SSPBUF
-        
-        //Now decrement byte counter for loop exit condition
-        movlw   0x00
-        decf    PRODL, 1, 0     //Decrement LSB
-        subwfb  PRODH, 1, 0     //Decrement MSB, only if borrow from LSB decrement
-        //Check if anymore bytes remain to be sent
-        movf    PRODL, 0, 0     //copy PRODL to WREG
-        iorwf   PRODH, 0, 0     //Z bit will be set if both PRODL and PRODH == 0x00
-        bnz     ASMSPIXmitLoop  //Go back and loop if our counter isn't = 0x0000.
-    _endasm
-
-    //Wait until the last SPI transaction is really complete.  
-    //Above loop jumps out after the last byte is started, but not finished yet.
-    while(!SPI_INTERRUPT_FLAG);
-
-    //Leave SPI module in a "clean" state, ready for next transaction.
-    bData = SPIBUF;         //Dummy read to clear BF flag.
-    SPI_INTERRUPT_FLAG = 0; //Clear interrupt flag.
-    //Restore C compiler managed registers that we modified
-    PROD = PRODSave;
-    FSR0 = FSR0Save;
-}    
-#endif    
-
-
-
-
-
 /*****************************************************************************
   Function:
     BYTE MDD_SDSPI_SectorWrite (DWORD sector_addr, BYTE * buffer, BYTE allowWriteToZero)
@@ -1789,9 +1320,6 @@ BYTE MDD_SDSPI_SectorWrite(DWORD sector_addr, BYTE* buffer, BYTE allowWriteToZer
     return TRUE;
 }    
 
-
-
-
 /*******************************************************************************
   Function:
     BYTE MDD_SDSPI_WriteProtectState
@@ -1813,47 +1341,9 @@ BYTE MDD_SDSPI_SectorWrite(DWORD sector_addr, BYTE* buffer, BYTE allowWriteToZer
   Remarks:
     None
 *******************************************************************************/
-
 BYTE MDD_SDSPI_WriteProtectState(void)
 {
     return(SD_WE);
-}
-
-
-/*******************************************************************************
-  Function:
-    void Delayms (BYTE milliseconds)
-  Summary:
-    Delay.
-  Conditions:
-    None.
-  Input:
-    BYTE milliseconds - Number of ms to delay
-  Return:
-    None.
-  Side Effects:
-    None.
-  Description:
-    The Delayms function will delay a specified number of milliseconds.  Used for SPI
-    timing.
-  Remarks:
-    Depending on compiler revisions, this function may not delay for the exact 
-    time specified.  This shouldn't create a significant problem.
-*******************************************************************************/
-
-void Delayms(BYTE milliseconds)
-{
-    BYTE    ms;
-    DWORD   count;
-    
-    ms = milliseconds;
-    while (ms--)
-    {
-        count = MILLISECDELAY;
-        while (count--);
-    }
-    Nop();
-    return;
 }
 
 
@@ -1875,18 +1365,9 @@ void Delayms(BYTE milliseconds)
   Remarks:
     None.
 *******************************************************************************/
-
 void CloseSPIM (void)
 {
-#if defined __C30__ || defined __C32__
-
     SPISTAT &= 0x7FFF;
-
-#elif defined __18CXX
-
-    SPICON1 &= 0xDF;
-
-#endif
 }
 
 
@@ -1913,28 +1394,10 @@ void CloseSPIM (void)
 
 unsigned char WriteSPIM( unsigned char data_out )
 {
-#ifdef __PIC32MX__
     BYTE   clear;
-    putcSPI((BYTE)data_out);
-    clear = getcSPI();
-    return ( 0 );                // return non-negative#
-#elif defined __18CXX
-    BYTE clear;
-    clear = SPIBUF;
-    SPI_INTERRUPT_FLAG = 0;
-    SPIBUF = data_out;
-    if (SPICON1 & 0x80)
-        return -1;
-    else
-        while (!SPI_INTERRUPT_FLAG);
-    return 0;
-#else
-    BYTE   clear;
-    SPIBUF = data_out;          // write byte to SSP1BUF register
-    while( !SPISTAT_RBF ); // wait until bus cycle complete
-    clear = SPIBUF;
-    return ( 0 );                // return non-negative#
-#endif
+    SpiChnPutC(SPI_CHANNEL1, (BYTE)data_out);
+    clear =  SpiChnGetC(SPI_CHANNEL1);
+    return ( 0 ); 
 }
 
 
@@ -1960,26 +1423,8 @@ unsigned char WriteSPIM( unsigned char data_out )
   ***************************************************************************************/
 BYTE MDD_SDSPI_ReadMedia(void)
 {
-
-#ifdef __C32__
-
-    putcSPI((BYTE)0xFF);
-    return (BYTE)getcSPI();
-
-#elif defined __18CXX
-
-    BYTE clear;
-    clear = SPIBUF;
-    SPI_INTERRUPT_FLAG = 0;
-    SPIBUF = 0xFF;
-    while (!SPI_INTERRUPT_FLAG);
-    return SPIBUF;
-
-#else
-    SPIBUF = 0xFF;                              //Data Out - Logic ones
-    while(!SPISTAT_RBF);                     //Wait until cycle complete
-    return(SPIBUF);                             //Return with byte read
-#endif
+    SpiChnPutC(SPI_CHANNEL1, (BYTE)0xFF);
+    return (BYTE) SpiChnGetC(SPI_CHANNEL1);
 }
 
 /*****************************************************************************
@@ -2000,149 +1445,20 @@ BYTE MDD_SDSPI_ReadMedia(void)
   Remarks:
     None.
   ***************************************************************************************/
-
-#ifdef __18CXX
-void OpenSPIM (unsigned char sync_mode)
-#else
 void OpenSPIM( unsigned int sync_mode)
-#endif
 {
     SPISTAT = 0x0000;               // power on state 
 
     //SPI module initilization depends on processor type
-    #ifdef __PIC32MX__
-        #if (GetSystemClock() <= 20000000)
-            SPIBRG = SPICalutateBRG(GetPeripheralClock(), 10000);
-        #else
-            SPIBRG = SPICalutateBRG(GetPeripheralClock(), SPI_FREQUENCY);
-        #endif
-        SPICON1bits.CKP = 1;
-        SPICON1bits.CKE = 0;
-    #elif defined __C30__ //must be PIC24 or dsPIC device
-        SPICON1 = 0x0000;              // power on state
-        SPICON1 |= sync_mode;          // select serial mode 
-        SPICON1bits.CKP = 1;
-        SPICON1bits.CKE = 0;
-    #else   //must be __18CXX (PIC18 processor)
-        SPICON1 = 0x00;         
-        SPICON1 |= sync_mode;   
-        SPISTATbits.CKE = 1;
-    #endif
+    SPIBRG = SPICalutateBRG(GetPeripheralClock(), SPI_FREQUENCY);
+	SPICON1bits.CKP = 1;
+	SPICON1bits.CKE = 0;
 
     SPICLOCK = 0;
     SPIOUT = 0;                  // define SDO1 as output (master or slave)
     SPIIN = 1;                  // define SDI1 as input (master or slave)
     SPIENABLE = 1;             // enable synchronous serial port
 }
-
-
-#ifdef __18CXX
-// Description: Delay value for the manual SPI clock
-#define MANUAL_SPI_CLOCK_VALUE             1
-/*****************************************************************************
-  Function:
-    unsigned char WriteSPIManual (unsigned char data_out)
-  Summary:
-    Write a character to the SD card with bit-bang SPI.
-  Conditions:
-    Make sure the SDI pin is pre-configured as a digital pin, if it is 
-    multiplexed with analog functionality.
-  Input:
-    data_out - Data to send.
-  Return:
-    0.
-  Side Effects:
-    None.
-  Description:
-    Writes a character to the SD card.
-  Remarks:
-    The WriteSPIManual function is for use on a PIC18 when the clock speed is so
-    high that the maximum SPI clock divider cannot reduce the SPI clock speed below
-    the maximum SD card initialization speed.
-  ***************************************************************************************/
-unsigned char WriteSPIManual(unsigned char data_out)
-{
-    unsigned char i;
-    unsigned char clock;
-
-    SPICLOCKLAT = 0;
-    SPIOUTLAT = 1;
-    SPICLOCK = OUTPUT;
-    SPIOUT = OUTPUT;
-
-	//Loop to send out 8 bits of SDO data and associated SCK clock.
-	for(i = 0; i < 8; i++)
-	{
-		SPICLOCKLAT = 0;
-		if(data_out & 0x80)
-			SPIOUTLAT = 1;
-		else
-			SPIOUTLAT = 0;
-		data_out = data_out << 1;				//Bit shift, so next bit to send is in MSb position
-    	clock = MANUAL_SPI_CLOCK_VALUE;
-    	while (clock--);
-    	SPICLOCKLAT = 1;
-    	clock = MANUAL_SPI_CLOCK_VALUE;
-    	while (clock--);    			
-	}	
-    SPICLOCKLAT = 0;
-
-    return 0; 
-}
-
-
-/*****************************************************************************
-  Function:
-    BYTE ReadMediaManual (void)
-  Summary:
-    Reads a byte of data from the SD card.
-  Conditions:
-    None.
-  Input:
-    None.
-  Return:
-    The byte read.
-  Side Effects:
-    None.
-  Description:
-    The MDD_SDSPI_ReadMedia function will read one byte from the SPI port.
-  Remarks:
-    This function replaces ReadSPI, since some implementations of that function
-    will initialize SSPBUF/SPIBUF to 0x00 when reading.  The card expects 0xFF.
-    This function is for use on a PIC18 when the clock speed is so high that the
-    maximum SPI clock prescaler cannot reduce the SPI clock below the maximum SD card
-    initialization speed.
-  ***************************************************************************************/
-BYTE ReadMediaManual (void)
-{
-    unsigned char i;
-    unsigned char clock;
-    unsigned char result = 0x00;
-
-    SPIOUTLAT = 1;
-    SPIOUT = OUTPUT;
-    SPIIN = INPUT;
-    SPICLOCKLAT = 0;
-    SPICLOCK = OUTPUT;
- 
- 	//Loop to send 8 clock pulses and read in the returned bits of data. Data "sent" will be = 0xFF
-	for(i = 0; i < 8u; i++)
-	{
-		SPICLOCKLAT = 0;
-    	clock = MANUAL_SPI_CLOCK_VALUE;
-    	while (clock--);
-    	SPICLOCKLAT = 1;
-    	clock = MANUAL_SPI_CLOCK_VALUE;
-    	while (clock--);
-		result = result << 1;	//Bit shift the previous result.  We receive the byte MSb first. This operation makes LSb = 0.  
-    	if(SPIINPORT)
-    		result++;			//Set the LSb if we detected a '1' on the SPIINPORT pin, otherwise leave as 0.
-	}	
-    SPICLOCKLAT = 0;
-
-    return result;
-}//end ReadMedia
-#endif      // End __18CXX
 
 /*****************************************************************************
   Function:
@@ -2168,55 +1484,11 @@ BYTE ReadMediaManual (void)
     None.
   ***************************************************************************************/
 void InitSPISlowMode(void)
-{
-    #if defined __C30__ || defined __C32__
-    	#ifdef __PIC32MX__
-    		OpenSPI(SPI_START_CFG_1, SPI_START_CFG_2);
-    	    SPIBRG = SPICalutateBRG(400000, 400000);
-    	#else //else C30 = PIC24/dsPIC devices
-    		WORD spiconvalue = 0x0003;
-            WORD timeout;
-    	    // Calculate the prescaler needed for the clock
-    	    timeout = GetSystemClock() / 400000;
-    	    // if timeout is less than 400k and greater than 100k use a 1:1 prescaler
-    	    if (timeout == 0)
-    	    {
-    	        OpenSPIM (MASTER_ENABLE_ON | PRI_PRESCAL_1_1 | SEC_PRESCAL_1_1);
-    	    }
-    	    else
-    	    {
-    	        while (timeout != 0)
-    	        {
-    	            if (timeout > 8)
-    	            {
-    	                spiconvalue--;
-    	                // round up
-    	                if ((timeout % 4) != 0)
-    	                    timeout += 4;
-    	                timeout /= 4;
-    	            }
-    	            else
-    	            {
-    	                break;
-    	            }
-    	        }
-    	        
-    	        timeout--;
-    	    
-    	        OpenSPIM (MASTER_ENABLE_ON | spiconvalue | ((~(timeout << 2)) & 0x1C));
-    	    }
-    	#endif   //#ifdef __PIC32MX__ (and corresponding #else)    
-    #else //must be PIC18 device
-        //Make sure the SPI module doesn't control the bus, will use 
-        //bit-banged SPI instead, for slow mode initialization operation
-        SPICON1 = 0x00;
-        SPICLOCKLAT = 0;
-        SPIOUTLAT = 1;
-        SPICLOCK = OUTPUT;
-        SPIOUT = OUTPUT;
-    #endif //#if defined __C30__ || defined __C32__
+{   
+    SpiChnOpen(SPI_CHANNEL1, SPI_START_CFG_1, GetPeripheralClock()/SPI_FREQUENCY);
+//	OpenSPI(SPI_START_CFG_1, SPI_START_CFG_2);
+	SPIBRG = SPICalutateBRG(GetPeripheralClock(), 400000);
 }    
-
 
 
 /*****************************************************************************
@@ -2276,7 +1548,6 @@ If v2.0+ device:
 10. The card is now ready to perform application data transfers.
 --------------------------------------------------------------------------------
 ********************************************************************************/
-
 MEDIA_INFORMATION *  MDD_SDSPI_MediaInitialize(void)
 {
     WORD timeout;
@@ -2286,10 +1557,6 @@ MEDIA_INFORMATION *  MDD_SDSPI_MediaInitialize(void)
 	DWORD c_size;
 	BYTE c_size_mult;
 	BYTE block_len;
-	
-	#ifdef __DEBUG_UART
-	InitUART();
-	#endif
  
     //Initialize global variables.  Will get updated later with valid data once
     //the data is known.
@@ -2303,23 +1570,19 @@ MEDIA_INFORMATION *  MDD_SDSPI_MediaInitialize(void)
     //MMC media powers up in the open-drain mode and cannot handle a clock faster
     //than 400kHz. Initialize SPI port to <= 400kHz
     InitSPISlowMode();    
-    
-    #ifdef __DEBUG_UART  
-    PrintROMASCIIStringUART("\r\n\r\nInitializing Media\r\n"); 
-    #endif
 
-    UART_sendString("\r\n\r\nInitializing Media\r\n");
+//    UART_sendString("\r\n\r\nInitializing Media\r\n");
 
     //Media wants the longer of: Vdd ramp time, 1 ms fixed delay, or 74+ clock pulses.
     //According to spec, CS should be high during the 74+ clock pulses.
     //In practice it is preferrable to wait much longer than 1ms, in case of
     //contact bounce, or incomplete mechanical insertion (by the time we start
     //accessing the media). 
-    Delayms(30);
+//    TIMER_MSecondDelay(30);
     SD_CS = 1;
     //Generate 80 clock pulses.
     for(timeout=0; timeout<10u; timeout++)
-        WriteSPISlow(0xFF);
+        WriteSPISlow(0x26);
 
 
     // Send CMD0 (with CS = 0) to reset the media and put SD cards into SPI mode.
@@ -2331,7 +1594,7 @@ MEDIA_INFORMATION *  MDD_SDSPI_MediaInitialize(void)
         //minimizing risk of SPI clock pulse master/slave syncronization problems, 
         //due to possible application noise on the SCK line.
         SD_CS = 1;
-        WriteSPISlow(0xFF);   //Send some "extraneous" clock pulses.  If a previous
+        WriteSPISlow(0x26);   //Send some "extraneous" clock pulses.  If a previous
                               //command was terminated before it completed normally,
                               //the card might not have received the required clocking
                               //following the transfer.
@@ -2351,18 +1614,12 @@ MEDIA_INFORMATION *  MDD_SDSPI_MediaInitialize(void)
     //we can try to recover by issuing CMD12 (STOP_TRANSMISSION).
     if(timeout == 0)
     {    
-        UART_sendString("Reset Failed... \r\n");
-        #ifdef __DEBUG_UART  
-        PrintROMASCIIStringUART("Media failed CMD0 too many times. R1 response byte = ");
-        PrintRAMBytesUART(((unsigned char*)&response + 1), 1);
-        UARTSendLineFeedCarriageReturn();
-        PrintROMASCIIStringUART("Trying CMD12 to recover.\r\n");
-        #endif
-        UART_sendString("Media failed CMD0 too many times. \n\r ");
-        UART_sendString("Trying CMD12 to recover. \r\n");
+//        UART_sendString("Reset Failed... \r\n");
+//        UART_sendString("Media failed CMD0 too many times. \n\r ");
+//        UART_sendString("Trying CMD12 to recover. \r\n");
 
         SD_CS = 1;
-        WriteSPISlow(0xFF);       //Send some "extraneous" clock pulses.  If a previous
+        WriteSPISlow(0x26);       //Send some "extraneous" clock pulses.  If a previous
                                   //command was terminated before it completed normally,
                                   //the card might not have received the required clocking
                                   //following the transfer.
@@ -2381,27 +1638,18 @@ MEDIA_INFORMATION *  MDD_SDSPI_MediaInitialize(void)
             //of the SD card, there is nothing that can be done with this hardware.
             //Therefore, we just give up now.  The user needs to physically 
             //power cycle the media and/or the whole board.
-            #ifdef __DEBUG_UART  
-            PrintROMASCIIStringUART("Media still failed CMD0. Cannot initialize card, returning.\r\n");
-            #endif   
             UART_sendString("Media still failed CMD0. Cannot initialize card, returning.\r\n");
             mediaInformation.errorCode = MEDIA_CANNOT_INITIALIZE;
             return &mediaInformation;
         }            
         else
         {
-            //Card successfully processed CMD0 and is now in the idle state.
-            #ifdef __DEBUG_UART  
-            PrintROMASCIIStringUART("Media successfully processed CMD0 after CMD12.\r\n");
-            #endif        
+            //Card successfully processed CMD0 and is now in the idle state.     
             UART_sendString("Media successfully processed CMD0 after CMD12.\r\n");
         }    
     }//if(timeout == 0) [for the CMD0 transmit loop]
     else
-    {
-        #ifdef __DEBUG_UART  
-        PrintROMASCIIStringUART("Media successfully processed CMD0.\r\n");
-        #endif        
+    {     
         UART_sendString("Media successfully processed CMD0.\r\n");
     }       
     
@@ -2420,20 +1668,12 @@ MEDIA_INFORMATION *  MDD_SDSPI_MediaInitialize(void)
         //If we get to here, the device supported the CMD8 command and didn't complain about our host
         //voltage range.
         //Most likely this means it is either a v2.0 spec standard or high capacity SD card (SDHC)
-        #ifdef __DEBUG_UART  
-        PrintROMASCIIStringUART("Media successfully processed CMD8. Response = ");
-        PrintRAMBytesUART(((unsigned char*)&response + 1), 4);
-        UARTSendLineFeedCarriageReturn();
-        #endif
-
         UART_sendString("Media successfully processed CMD8.\r\n");
 
 		//Send CMD58 (Read OCR [operating conditions register]).  Reponse type is R3, which has 5 bytes.
 		//Byte 4 = normal R1 response byte, Bytes 3-0 are = OCR register value.
-        #ifdef __DEBUG_UART  
-        PrintROMASCIIStringUART("Sending CMD58.\r\n");
-        #endif
         UART_sendString("Sending CMD58.\r\n");
+		
         response = SendMediaSlowCmd(READ_OCR, 0x0);
         //Now that we have the OCR register value in the reponse packet, we could parse
         //the register contents and learn what voltage the SD card wants to run at.
@@ -2458,18 +1698,12 @@ MEDIA_INFORMATION *  MDD_SDSPI_MediaInitialize(void)
 			//for read/write and other commands.
 			if(response.r1._byte == 0)
 			{
-    		    #ifdef __DEBUG_UART  
-                PrintROMASCIIStringUART("Media successfully processed CMD55/ACMD41 and is no longer busy.\r\n");
-				#endif
                 UART_sendString("Media successfully processed CMD55/ACMD41 and is no longer busy.\r\n");
 				break;  //Break out of for() loop.  Card is finished initializing.
             }				
 		}		
 		if(timeout >= 0xFFFF)
 		{
-            #ifdef __DEBUG_UART  
-            PrintROMASCIIStringUART("Media Timeout on CMD55/ACMD41.\r\n");
-            #endif
             UART_sendString("Media Timeout on CMD55/ACMD41.\r\n");
     		mediaInformation.errorCode = MEDIA_CANNOT_INITIALIZE;
         }				
@@ -2484,19 +1718,11 @@ MEDIA_INFORMATION *  MDD_SDSPI_MediaInitialize(void)
 		if(response.r7.bytewise.argument._returnVal & 0x40000000)    //Note the HCS bit is only valid when the busy bit is also set (indicating device ready).
 		{
 			gSDMode = SD_MODE_HC;
-			
-		    #ifdef __DEBUG_UART  
-            PrintROMASCIIStringUART("Media successfully processed CMD58: SD card is SDHC v2.0 (or later) physical spec type.\r\n");
-            #endif
             UART_sendString("Media successfully processed CMD58: SD card is SDHC v2.0 (or later) physical spec type.\r\n");
         }				
         else
         {
             gSDMode = SD_MODE_NORMAL;
-
-            #ifdef __DEBUG_UART  
-            PrintROMASCIIStringUART("Media successfully processed CMD58: SD card is standard capacity v2.0 (or later) spec.\r\n");
-            #endif
             UART_sendString("Media successfully processed CMD58: SD card is standard capacity v2.0 (or later) spec.\r\n");
         } 
         //SD Card should now be finished with initialization sequence.  Device should be ready
@@ -2507,15 +1733,11 @@ MEDIA_INFORMATION *  MDD_SDSPI_MediaInitialize(void)
 	{
         //The CMD8 wasn't supported.  This means the card is not a v2.0 card.
         //Presumably the card is v1.x device, standard capacity (not SDHC).
-
-        #ifdef __DEBUG_UART  
-        PrintROMASCIIStringUART("CMD8 Unsupported: Media is most likely MMC or SD 1.x device.\r\n");
-        #endif
         UART_sendString("CMD8 Unsupported: Media is most likely MMC or SD 1.x device.\r\n");
 
 
         SD_CS = 1;                              // deselect the devices
-        Delayms(1);
+//        TIMER_MSecondDelay(1);
         SD_CS = 0;                              // select the device
 
         //The CMD8 wasn't supported.  This means the card is definitely not a v2.0 SDHC card.
@@ -2531,9 +1753,6 @@ MEDIA_INFORMATION *  MDD_SDSPI_MediaInitialize(void)
         // see if it failed
         if(timeout == 0)
         {
-            #ifdef __DEBUG_UART  
-            PrintROMASCIIStringUART("CMD1 failed.\r\n");
-            #endif
             UART_sendString("CMD1 failed.\r\n");
 
             mediaInformation.errorCode = MEDIA_CANNOT_INITIALIZE;
@@ -2541,9 +1760,6 @@ MEDIA_INFORMATION *  MDD_SDSPI_MediaInitialize(void)
         }
         else
         {
-            #ifdef __DEBUG_UART  
-            PrintROMASCIIStringUART("CMD1 Successfully processed, media is no longer busy.\r\n");
-            #endif
             UART_sendString("CMD1 Successfully processed, media is no longer busy.\r\n");
             
             //Set read/write block length to 512 bytes.  Note: commented out since
@@ -2578,21 +1794,11 @@ MEDIA_INFORMATION *  MDD_SDSPI_MediaInitialize(void)
     }while((response.r1._byte != 0x00) && (timeout != 0));
     if(timeout != 0x00)
     {
-        #ifdef __DEBUG_UART  
-        PrintROMASCIIStringUART("CMD9 Successfully processed: Read CSD register.\r\n");
-        PrintROMASCIIStringUART("CMD9 response R1 byte = ");
-        PrintRAMBytesUART((unsigned char*)&response, 1); 
-        UARTSendLineFeedCarriageReturn();
-        #endif
         UART_sendString("CMD9 Successfully processed: Read CSD register.\r\n");
     }    
     else
     {
         //Media failed to respond to the read CSD register operation.
-        #ifdef __DEBUG_UART  
-        PrintROMASCIIStringUART("Timeout occurred while processing CMD9 to read CSD register.\r\n");
-        #endif
-
         UART_sendString("Timeout occurred while processing CMD9 to read CSD register.\r\n");
         
         mediaInformation.errorCode = MEDIA_CANNOT_INITIALIZE;
@@ -2616,14 +1822,6 @@ MEDIA_INFORMATION *  MDD_SDSPI_MediaInitialize(void)
 			index = 0;
 		}
 	}
-
-    #ifdef __DEBUG_UART  
-    PrintROMASCIIStringUART("CSD data structure contains: ");
-    PrintRAMBytesUART((unsigned char*)&CSDResponse, 20); 
-    UARTSendLineFeedCarriageReturn();
-    #endif
-    
-
 
 	//Extract some fields from the response for computing the card capacity.
 	//Note: The structure format depends on if it is a CSD V1 or V2 device.
@@ -2698,11 +1896,6 @@ MEDIA_INFORMATION *  MDD_SDSPI_MediaInitialize(void)
 
     //Deselect media while not actively accessing the card.
     SD_CS = 1;
-
-    #ifdef __DEBUG_UART  
-    PrintROMASCIIStringUART("Returning from MediaInitialize() function.\r\n");
-    #endif
-
 
     UART_sendString("Returning from MediaInitialize() function.\r\n");
     return &mediaInformation;
