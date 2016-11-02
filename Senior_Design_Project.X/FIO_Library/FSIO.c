@@ -250,6 +250,13 @@ int FSInit(void)
 	#endif
 #endif
 
+        /* Clears slots for opening files. */
+        int i;
+        for(i = 0; i <FS_MAX_FILES_OPEN; i++)
+        {
+            gFileSlotOpen[i] = TRUE;
+        }
+
         FSerrno = 0;
         return TRUE;
     }
@@ -3945,71 +3952,9 @@ int FSfclose(FSFILE   *fo)
     WORD        fIndex;
     WORD        fHandle;
     int        error = 72;
-#ifdef ALLOW_WRITES
-    DIRENTRY    dir;
-#endif
 
     FSerrno = CE_GOOD;
     fHandle = fo->entry;
-
-#ifdef ALLOW_WRITES
-    if(fo->flags.write)
-    {
-        if (gNeedDataWrite)
-        {
-            if (flushData())
-            {
-                FSerrno = CE_WRITE_ERROR;
-                return EOF;
-            }
-        }
-
-        // Write the current FAT sector to the disk
-        WriteFAT (fo->dsk, 0, 0, TRUE);
-
-        // Invalidate the currently cached FAT entry so that the next read will
-        //   result in an acutal read from the physical media instead of a read
-        //   from the RAM cache.
-        gLastFATSectorRead = 0;
-
-        // Read the FAT entry from the physical media.  This is required because
-        //   some physical media cache the entries in RAM and only write them 
-        //   after a time expires for until the sector is accessed again.
-        ReadFAT (fo->dsk, fo->ccls);
-
-        // Get the file entry
-        dir = LoadDirAttrib(fo, &fHandle);
-
-        if (dir == NULL)
-        {
-            FSerrno = CE_BADCACHEREAD;
-            error = EOF;
-            return error;
-        }
-
-        dir->DIR_FileSize = fo->size;
-
-        dir->DIR_Attr = fo->attributes;
-
-        // just write the last entry in
-        if(Write_File_Entry(fo,&fHandle))
-        {
-            // Read the folder entry from the physical media.  This is required because
-            //   some physical media cache the entries in RAM and only write them 
-            //   after a time expires for until the sector is accessed again.
-            dir = LoadDirAttrib(fo, &fHandle);
-            error = 0;
-        }
-        else
-        {
-            FSerrno = CE_WRITE_ERROR;
-            error = EOF;
-        }
-
-        // Clear the write acess to file
-        fo->flags.write = FALSE;
-    }
-#endif
 
     // Clear the read acess to file
     fo->flags.read = FALSE;
@@ -4729,11 +4674,11 @@ FSFILE * wFSfopen( const unsigned short int * fileName, const char *mode )
   *********************************************************************/
 FSFILE * FSfopen( const char * fileName, const char *mode )
 {
-    FILEOBJ    filePtr;
-    BYTE   ModeC;
-    WORD    fHandle;
-    WORD    fIndex;
-    CETYPE   final;
+    FILEOBJ     filePtr;
+    BYTE        ModeC;
+    WORD        fHandle;
+    WORD        fIndex;
+    CETYPE      final;
 
     //Read the mode character
     ModeC = mode[0];
@@ -4800,119 +4745,13 @@ FSFILE * FSfopen( const char * fileName, const char *mode )
         // File is Found
         switch(ModeC)
         {
-#ifdef ALLOW_WRITES
-            case 'w':
-            case 'W':
-            {
-                // File exists, we want to create a new one, remove it first
-                fHandle = filePtr->entry;
-                final = FILEerase(filePtr, &fHandle, TRUE);
-
-                if (final == CE_GOOD)
-                {
-                    // now create a new one
-                    final = CreateFileEntry (filePtr, &fHandle, 0, TRUE);
-
-                    if (final == CE_GOOD)
-                    {
-                        final = FILEopen (filePtr, &fHandle, 'w');
-
-                        if (filePtr->attributes & ATTR_DIRECTORY)
-                        {
-                            FSerrno = CE_INVALID_ARGUMENT;
-                            final = 0xFF;
-                        }
-
-                        if (final == CE_GOOD)
-                        {
-                            final = FSfseek (filePtr, 0, SEEK_END);
-                            if (mode[1] == '+')
-                                filePtr->flags.read = 1;
-                        }
-                    }
-                }
-                break;
-            }
-
-            case 'A':
-            case 'a':
-            {
-                if(filePtr->size != 0)
-                {
-                    fHandle = filePtr->entry;
-
-                    final = FILEopen (filePtr, &fHandle, 'w');
-
-                    if (filePtr->attributes & ATTR_DIRECTORY)
-                    {
-                        FSerrno = CE_INVALID_ARGUMENT;
-                        final = 0xFF;
-                    }
-
-                    if (final == CE_GOOD)
-                    {
-                        final = FSfseek (filePtr, 0, SEEK_END);
-                        if (final != CE_GOOD)
-                            FSerrno = CE_SEEK_ERROR;
-                        else
-                            ReadFAT (&gDiskData, filePtr->ccls);
-                        if (mode[1] == '+')
-                            filePtr->flags.read = 1;
-                    }
-                }
-                else
-                {
-                    fHandle = filePtr->entry;
-                    final = FILEerase(filePtr, &fHandle, TRUE);
-
-                    if (final == CE_GOOD)
-                    {
-                        // now create a new one
-                        final = CreateFileEntry (filePtr, &fHandle, 0, TRUE);
-
-                        if (final == CE_GOOD)
-                        {
-                            final = FILEopen (filePtr, &fHandle, 'w');
-
-                            if (filePtr->attributes & ATTR_DIRECTORY)
-                            {
-                                FSerrno = CE_INVALID_ARGUMENT;
-                                final = 0xFF;
-                            }
-
-                            if (final == CE_GOOD)
-                            {
-                                final = FSfseek (filePtr, 0, SEEK_END);
-                                if (final != CE_GOOD)
-                                    FSerrno = CE_SEEK_ERROR;
-                                if (mode[1] == '+')
-                                    filePtr->flags.read = 1;
-                            }
-                        }
-                    }
-                }
-                break;
-            }
-#endif
             case 'R':
             case 'r':
             {
                 fHandle = filePtr->entry;
-
                 final = FILEopen (filePtr, &fHandle, 'r');
-#ifdef ALLOW_WRITES
-                if ((final == CE_GOOD) && (mode[1] == '+') )
-                {
-                    // Refresh FAT Table Entry
-                    ReadFAT (&gDiskData, filePtr->ccls);
-                    // In r+ mode, allow write acess to file
-                    if(!(filePtr->attributes & ATTR_DIRECTORY))
-                        filePtr->flags.write = 1;
-                }
-#endif
                 break;
             }
-
             default:
                 FSerrno = CE_INVALID_ARGUMENT;
                 final = 0xFF;;  //indicate error condition
@@ -4921,42 +4760,8 @@ FSFILE * FSfopen( const char * fileName, const char *mode )
     }
     else
     {
-#ifdef ALLOW_WRITES
-        // the file was not found, reset to the default asked
-        FileObjectCopy(filePtr, &gFileTemp);
-
-        // File is not Found
-        if((ModeC == 'w') || (ModeC == 'W') || (ModeC == 'a') || (ModeC == 'A'))
-        {
-            // use the user requested name
-            fHandle = 0;
-            final = CreateFileEntry (filePtr, &fHandle, 0, TRUE);
-
-            if (final == CE_GOOD)
-            {
-                final = FILEopen (filePtr, &fHandle, 'w');
-                if (filePtr->attributes & ATTR_DIRECTORY)
-                {
-                    FSerrno = CE_INVALID_ARGUMENT;
-                    final = 0xFF;
-                }
-
-                if (final == CE_GOOD)
-                {
-                    final = FSfseek (filePtr, 0, SEEK_END);
-                    if (final != CE_GOOD)
-                        FSerrno = CE_SEEK_ERROR;
-                    if (mode[1] == '+')
-                        filePtr->flags.read = 1;
-                }
-            }
-        }
-        else
-#endif
-		{
-            final = CE_FILE_NOT_FOUND;
-        	FSerrno = CE_FILE_NOT_FOUND;
-    	}
+        final = CE_FILE_NOT_FOUND;
+        FSerrno = CE_FILE_NOT_FOUND;
     }
 
     if (MDD_SDSPI_WriteProtectState())
@@ -5003,172 +4808,6 @@ long FSftell (FSFILE * fo)
     return (fo->seek);
 }
 
-#ifdef ALLOW_WRITES
-
-/*********************************************************************
-  Function:
-    int FSremove (const char * fileName)
-  Summary:
-    Deletes the file on PIC24/PIC32/dsPIC device.The 'fileName' is in ascii format.
-  Conditions:
-    File not opened, file exists
-  Input:
-    fileName -  Name of the file to erase
-  Return Values:
-    0 -   File removed 
-    EOF - File was not removed
-  Side Effects:
-    The FSerrno variable will be changed.
-  Description:
-    Deletes the file on PIC24/PIC32/dsPIC device.The 'fileName' is in ascii format.
-    The FSremove function will attempt to find the specified file with the FILEfind
-    function.  If the file is found, it will be erased using the FILEerase function.
-    The user can also provide ascii alias name of the ascii long file name as the
-    input to this function to get it erased from the memory.
-  Remarks:
-    None                                       
-  **********************************************************************/
-int FSremove (const char * fileName)
-{
-    FILEOBJ fo = &tempCWDobj;
-
-	#ifdef SUPPORT_LFN
-		FSFILE cwdTemp;
-		char tempArray[514];
-		LFN_ENTRY *lfno;
-		WORD prevHandle;
-		unsigned short int i = 0;
-	#endif
-    FSerrno = CE_GOOD;
-
-    if (MDD_SDSPI_WriteProtectState())
-    {
-        FSerrno = CE_WRITE_PROTECTED;
-        return (-1);
-    }
-
-    //Format the source string
-	#if defined(SUPPORT_LFN)
-		fo->utf16LFNptr = (unsigned short int *)&tempArray[0];
-	#endif
-
-    if( !FormatFileName(fileName, fo, 0) )
-    {
-        FSerrno = CE_INVALID_FILENAME;
-        return -1;
-    }
-
-    fo->dsk = &gDiskData;
-    fo->cluster = 0;
-    fo->ccls    = 0;
-    fo->entry = 0;
-    fo->attributes = ATTR_ARCHIVE;
-
-#ifndef ALLOW_DIRS
-    // start at the root directory
-    fo->dirclus    = FatRootDirClusterValue;
-    fo->dirccls    = FatRootDirClusterValue;
-#else
-    fo->dirclus = cwdptr->dirclus;
-    fo->dirccls = cwdptr->dirccls;
-#endif
-
-    // copy file object over
-    FileObjectCopy(&gFileTemp, fo);
-
-    // See if the file is found
-    if (FILEfind (fo, &gFileTemp, LOOK_FOR_MATCHING_ENTRY, 0) != CE_GOOD)
-    {
-        FSerrno = CE_FILE_NOT_FOUND;
-        return -1;
-    }
-
-    if (fo->attributes & ATTR_DIRECTORY)
-    {
-        FSerrno = CE_DELETE_DIR;
-        return -1;
-    }
-
-	// Find the long file name assosciated with the short file name if present
-	#ifdef SUPPORT_LFN
-	if(!fo->utf16LFNlength)
-	{
-		FileObjectCopy (&cwdTemp, fo);
-		prevHandle = fo->entry - 1;
-
-		lfno = (LFN_ENTRY *)Cache_File_Entry (fo, &prevHandle, FALSE);
-
-
-	   	while((lfno->LFN_Attribute == ATTR_LONG_NAME) && (lfno->LFN_SequenceNo != DIR_DEL)
-
-	   			&& (lfno->LFN_SequenceNo != DIR_EMPTY))
-
-	   	{
-
-
-			i = i + MAX_UTF16_CHARS_IN_LFN_ENTRY;
-
-	   		prevHandle = prevHandle - 1;
-
-	   		lfno = (LFN_ENTRY *)Cache_File_Entry (fo, &prevHandle, FALSE);
-
-	   	}
-
-
-
-	   	FileObjectCopy (fo, &cwdTemp);
-
-		// Find the length of LFN file
-		fo->utf16LFNlength = i;
-
-	}
-	#endif
-
-	// Erase the file
-    if( FILEerase(fo, &fo->entry, TRUE) == CE_GOOD )
-        return 0;
-    else
-    {
-        FSerrno = CE_ERASE_FAIL;
-        return -1;
-    }
-}
-
-/*********************************************************************
-  Function:
-    int wFSremove (const unsigned short int * fileName)
-  Summary:
-    Deletes the file on PIC24/PIC32/dsPIC device.The 'fileName' is in UTF16 format.
-  Conditions:
-    File not opened, file exists
-  Input:
-    fileName -  Name of the file to erase
-  Return Values:
-    0 -   File removed
-    EOF - File was not removed
-  Side Effects:
-    The FSerrno variable will be changed.
-  Description:
-    Deletes the file on PIC24/PIC32/dsPIC device.The 'fileName' is in UTF16 format.
-    The wFSremove function will attempt to find the specified UTF16 file
-    name with the FILEfind function. If the file is found, it will be erased
-    using the FILEerase function.
-  Remarks:
-    None
-  **********************************************************************/
-#ifdef SUPPORT_LFN
-int wFSremove (const unsigned short int * fileName)
-{
-	int result;
-	utfModeFileName = TRUE;
-	result = FSremove ((const char *)fileName);
-	utfModeFileName = FALSE;
-	return result;
-}
-#endif
-
-#endif
-
 /*********************************************************
   Function:
     void FSrewind (FSFILE * fo)
@@ -5192,10 +4831,6 @@ int wFSremove (const unsigned short int * fileName)
   *********************************************************/
 void FSrewind (FSFILE * fo)
 {
-#ifdef ALLOW_WRITES
-    if (gNeedDataWrite)
-        flushData();
-#endif
     fo->seek = 0;
     fo->pos = 0;
     fo->sec = 0;

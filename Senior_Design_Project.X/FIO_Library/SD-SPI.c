@@ -49,6 +49,7 @@ const typMMC_CMD sdmmc_cmdtable[] =
 BYTE MDD_SDSPI_ReadMedia(void);
 MEDIA_INFORMATION * MDD_SDSPI_MediaInitialize(void);
 MMC_RESPONSE SendMMCCmd(BYTE cmd, DWORD address);
+void Delayms(BYTE milliseconds);
 
 void OpenSPIM ( unsigned int sync_mode);
 void CloseSPIM( void );
@@ -1391,12 +1392,15 @@ void CloseSPIM (void)
   Remarks:
     None.
   ***************************************************************************************/
-
 unsigned char WriteSPIM( unsigned char data_out )
 {
     BYTE   clear;
-    SpiChnPutC(SPI_CHANNEL1, (BYTE)data_out);
-    clear =  SpiChnGetC(SPI_CHANNEL1);
+    putcSPI((BYTE)data_out);
+    clear = getcSPI();
+//    BYTE   dummy;
+//    dummy = SPI1BUF;                    // dummy read of the SPI1BUF register to clear the SPIRBF flag
+//	SPI1BUF = (BYTE)data_out;                 // write the data out to the SPI peripheral
+//    while (!SPI1STATbits.SPIRBF);   	// wait for the data to be sent out
     return ( 0 ); 
 }
 
@@ -1485,11 +1489,24 @@ void OpenSPIM( unsigned int sync_mode)
   ***************************************************************************************/
 void InitSPISlowMode(void)
 {   
-    SpiChnOpen(SPI_CHANNEL1, SPI_START_CFG_1, GetPeripheralClock()/SPI_FREQUENCY);
-//	OpenSPI(SPI_START_CFG_1, SPI_START_CFG_2);
+	OpenSPI(SPI_START_CFG_1, SPI_START_CFG_2);
 	SPIBRG = SPICalutateBRG(GetPeripheralClock(), 400000);
 }    
 
+void Delayms(BYTE milliseconds)
+{
+    BYTE    ms;
+    DWORD   count;
+    
+    ms = milliseconds;
+    while (ms--)
+    {
+        count = MILLISECDELAY;
+        while (count--);
+    }
+    Nop();
+    return;
+}
 
 /*****************************************************************************
   Function:
@@ -1571,22 +1588,21 @@ MEDIA_INFORMATION *  MDD_SDSPI_MediaInitialize(void)
     //than 400kHz. Initialize SPI port to <= 400kHz
     InitSPISlowMode();    
 
-//    UART_sendString("\r\n\r\nInitializing Media\r\n");
+    UART_sendString("\r\n\r\nInitializing Media\r\n");
 
     //Media wants the longer of: Vdd ramp time, 1 ms fixed delay, or 74+ clock pulses.
     //According to spec, CS should be high during the 74+ clock pulses.
     //In practice it is preferrable to wait much longer than 1ms, in case of
     //contact bounce, or incomplete mechanical insertion (by the time we start
     //accessing the media). 
-//    TIMER_MSecondDelay(30);
+    Delayms(30);
     SD_CS = 1;
     //Generate 80 clock pulses.
     for(timeout=0; timeout<10u; timeout++)
-        WriteSPISlow(0x26);
-
+        WriteSPISlow(0xFF);
 
     // Send CMD0 (with CS = 0) to reset the media and put SD cards into SPI mode.
-    timeout = 100;
+    timeout = 10;
     do
     {
         //Toggle chip select, to make media abandon whatever it may have been doing
@@ -1594,7 +1610,7 @@ MEDIA_INFORMATION *  MDD_SDSPI_MediaInitialize(void)
         //minimizing risk of SPI clock pulse master/slave syncronization problems, 
         //due to possible application noise on the SCK line.
         SD_CS = 1;
-        WriteSPISlow(0x26);   //Send some "extraneous" clock pulses.  If a previous
+        WriteSPISlow(0xFF);   //Send some "extraneous" clock pulses.  If a previous
                               //command was terminated before it completed normally,
                               //the card might not have received the required clocking
                               //following the transfer.
@@ -1614,12 +1630,12 @@ MEDIA_INFORMATION *  MDD_SDSPI_MediaInitialize(void)
     //we can try to recover by issuing CMD12 (STOP_TRANSMISSION).
     if(timeout == 0)
     {    
-//        UART_sendString("Reset Failed... \r\n");
-//        UART_sendString("Media failed CMD0 too many times. \n\r ");
-//        UART_sendString("Trying CMD12 to recover. \r\n");
+        UART_sendString("Reset Failed... \r\n");
+        UART_sendString("Media failed CMD0 too many times. \n\r ");
+        UART_sendString("Trying CMD12 to recover. \r\n");
 
         SD_CS = 1;
-        WriteSPISlow(0x26);       //Send some "extraneous" clock pulses.  If a previous
+        WriteSPISlow(0xFF);       //Send some "extraneous" clock pulses.  If a previous
                                   //command was terminated before it completed normally,
                                   //the card might not have received the required clocking
                                   //following the transfer.
@@ -1737,7 +1753,7 @@ MEDIA_INFORMATION *  MDD_SDSPI_MediaInitialize(void)
 
 
         SD_CS = 1;                              // deselect the devices
-//        TIMER_MSecondDelay(1);
+        Delayms(1);
         SD_CS = 0;                              // select the device
 
         //The CMD8 wasn't supported.  This means the card is definitely not a v2.0 SDHC card.

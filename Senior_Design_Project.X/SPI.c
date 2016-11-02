@@ -49,9 +49,18 @@ void SPI_Init(void)
 
 void SPI_Process()
 {
+    PORTBbits.RB2 = 0;
     /* Write a dummy byte to the shift register. */
-    BYTE data = SPI1_ReadWrite(0xB);
-    TIMER_MSecondDelay(5000);
+    BYTE data = SPI1_ReadWrite(0x40);
+    data = SPI1_ReadWrite(0x00);
+    data = SPI1_ReadWrite(0x00);
+    data = SPI1_ReadWrite(0x00);
+    data = SPI1_ReadWrite(0x00);
+    data = SPI1_ReadWrite(0x95);
+    data = SPI1_ReadWrite(0xFF);
+    data = SPI1_ReadWrite(0xFF);
+    PORTBbits.RB2 = 1;
+//    TIMER_MSecondDelay(1000);
 }
 
 BYTE SPI1_ReadWrite(BYTE ch)

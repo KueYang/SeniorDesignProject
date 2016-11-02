@@ -59,6 +59,7 @@ int main(int argc, char** argv) {
     INTEnableInterrupts();
    
   
+    PORTBbits.RB2 = 1;
     while(1)
     {
 //        TIMER_Process();
