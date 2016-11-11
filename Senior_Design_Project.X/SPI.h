@@ -7,8 +7,7 @@ extern "C" {
     
 void SPI_Init(void);
 void SPI_Process();
-BYTE SPI1_ReadWrite(BYTE);
-
+BYTE SPI2_ReadWrite(BYTE);
 
 #ifdef	__cplusplus
 }

@@ -230,9 +230,6 @@ void __ISR(_UART1_VECTOR, IPL4AUTO) IntUart1Handler(void)
 
                 // Writes data to receive buffer.
                 UART_putNextChar(&rxBuffer, data);
-
-                // Toggle LED to indicate UART activity
-                mPORTBToggleBits(BIT_5);
                 
                 // Sets a flag for end of receiving a command.
                 if(data == '\r')

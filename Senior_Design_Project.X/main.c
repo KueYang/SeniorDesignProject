@@ -34,7 +34,7 @@
 /* Programming Configurations */
 #pragma config IESO = OFF           // Internal/External Switch Over, disabled
 #pragma config JTAGEN = OFF         // JTAG Disabled
-#pragma config ICESEL = ICS_PGx1    // ICE1/ICD1 Comm Channel Select
+#pragma config ICESEL = ICS_PGx3    // ICE3/ICD3 Comm Channel Select
 #pragma config PWP = OFF            // Program Flash Write Protect
 #pragma config CP = OFF             // Code Protection Disabled
 
@@ -50,7 +50,7 @@ int main(int argc, char** argv) {
     IO_Init();
     TIMER_Init();
 //    ADC_Init();
-//    SPI_Init();
+    SPI_Init();
     UART_Init();
     AUDIO_Init();
     
@@ -58,12 +58,10 @@ int main(int argc, char** argv) {
     INTConfigureSystem(INT_SYSTEM_CONFIG_MULT_VECTOR);
     INTEnableInterrupts();
    
-  
-    PORTBbits.RB2 = 1;
     while(1)
     {
 //        TIMER_Process();
-        UART_Process();
+//        UART_Process();
 //        SPI_Process();
         AUDIO_Process();
     }

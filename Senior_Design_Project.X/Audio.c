@@ -1,121 +1,101 @@
 #include <p32xxxx.h>
 #include <plib.h>
 #include "STDDEF.h"
-#include "./FIO_Library/FSIO.h"
+#include "TIMER.h"
+#include "FILES.h"
+#include "DAC.h"
 #include "Audio.h"
 
-#define FILENAME_LENGTH     32
+/* Functions to read and handle Wav Files. */
+UINT8 AUDIO_GetHeader(void);
 
-BOOL AUDIO_OpenFile(const char* file);
-BOOL AUDIO_CloseFile(void);
-BOOL AUDIO_FindFile(const char* file);
-BOOL AUDIO_ListFiles(void);
-BOOL AUDIO_ReadFile(UINT32 blocks);
-BOOL AUDIO_ReadToEndOfFile(void);
+/* Functions to handle DAC. */
+void AUDIO_InitDAC(void);
 BOOL AUDIO_WriteToDAC(void);
 
-FSFILE* pointer;
-BYTE file_attributes;
-SearchRec rec;
-BYTE receiveBuffer[256];
-UINT8 attributes = 0x3f;
+FSFILE* pointer;            // Variable used to point to the current file.
+SearchRec rec;              // Variable used to search for files.
+BYTE receiveBuffer[256];    // Variable stores bytes that are read from the file.
 
 void AUDIO_Init(void)
 {
-//    while (!MDD_SDSPI_MediaDetect());
+    // Checks to make sure that the SD card is attached
+    while (!MDD_SDSPI_MediaDetect())
+    {
+        // Toggles LED until SD card is detected
+        PORTBbits.RB5 = 1;
+        TIMER_MSecondDelay(1000);
+        PORTBbits.RB5 = 0;
+        TIMER_MSecondDelay(1000);
+    }
 
-    // Initialize the library
-    while (!FSInit());
+    // Initializes the File Library
+    FILES_Init();
+    FILES_OpenFile("S1ELOW.WAV", pointer, &rec);
     
-    // Files and Search configurations.
-    file_attributes = ATTR_ARCHIVE | ATTR_READ_ONLY | ATTR_HIDDEN;
-    
-    // List all files in sd card
-    AUDIO_ListFiles();
-    
-    // Open the open string note file in read mode
-    if(AUDIO_OpenFile("S1ELOW.WAV"))
-    {
-        UART_sendString("Successfully opened the file.");
-    }
-    else
-    {
-        UART_sendString("Failed to open file.");
-    }
+   // Initializes the DAC
+    DAC_Init();
 }
 
 void AUDIO_Process(void)
 {
-    
+    TIMER_MSecondDelay(1000);
+    DAC_Init();
 }
 
-BOOL AUDIO_OpenFile(const char* file)
+/*
+ * Reads the header of the wave file. 
+ */
+UINT8 AUDIO_GetHeader(void)
 {
-    // Checks if the file exists
-    if(AUDIO_FindFile(file))
+    if(FILES_ReadFile(receiveBuffer, 1, WAV_HEADER_SIZE, pointer))
     {
-        pointer = FSfopen(file, "r");
-        if (pointer == NULL)
+        if((receiveBuffer[WAV_CHUNK_ID] != 'R')|
+                (receiveBuffer[WAV_CHUNK_ID+1] != 'I')|
+                (receiveBuffer[WAV_CHUNK_ID+2] != 'F')|
+                (receiveBuffer[WAV_CHUNK_ID+3] != 'F'))
         {
-            return FALSE;
+            return WAV_CHUNK_ID_ERROR;
         }
+        else if((receiveBuffer[WAV_FORMAT_ERROR] != 'W')|
+                (receiveBuffer[WAV_FORMAT_ERROR+1] != 'A')|
+                (receiveBuffer[WAV_FORMAT_ERROR+2] != 'V')|
+                (receiveBuffer[WAV_FORMAT_ERROR+3] != 'E'))
+        {
+            return WAV_FORMAT_ERROR;
+        }
+        else if((receiveBuffer[WAV_CHUNK1_SUB_ID] != 'f')|
+                (receiveBuffer[WAV_CHUNK1_SUB_ID+1] != 'm')|
+                (receiveBuffer[WAV_CHUNK1_SUB_ID+2] != 't'))
+        {
+            return WAV_SUB_CHUNK1_ID_ERROR;
+        }
+        else if((receiveBuffer[WAV_CHUNK2_SUB_ID] != 'd')|
+                (receiveBuffer[WAV_CHUNK2_SUB_ID+1] != 'a')|
+                (receiveBuffer[WAV_CHUNK2_SUB_ID+2] != 't')|
+                (receiveBuffer[WAV_CHUNK2_SUB_ID+2] != 'a'))
+        {
+            return WAV_SUB_CHUNK2_ID_ERROR;
+        }
+        return WAV_SUCCESS;
+    }
+    return WAV_HEADER_SIZE_ERROR;
+}
+
+UINT32 AUDIO_GetDataSize(void)
+{
+    return (receiveBuffer[WAV_DATA-1] << 24) | 
+            (receiveBuffer[WAV_DATA-2] << 16) |
+            (receiveBuffer[WAV_DATA-3] << 8) |
+            (receiveBuffer[WAV_DATA-4]);
+}
+
+BOOL AUDIO_GetAudioData(void)
+{
+    if(FILES_ReadFile(receiveBuffer, 1, AUDIO_GetDataSize(), pointer))
+    {
         return TRUE;
     }
     return FALSE;
 }
 
-BOOL AUDIO_CloseFile(void)
-{
-   if(FSfclose(pointer))
-   {
-       return FALSE;
-   }
-   return TRUE;
-}
-
-BOOL AUDIO_ListFiles(void)
-{
-    char buf[FILENAME_LENGTH];
-    
-    UART_sendString("\n\rShowing all WAV files in root directory:\n\r");
-    if (FindFirst("*.WAV", file_attributes, &rec) == 0) { // file found
-        snprintf(buf, FILENAME_LENGTH, "%s\t%u KB \n\r", rec.filename, rec.filesize/1000);
-        UART_sendString(&buf[0]);
-        while (FindNext(&rec) == 0) { // more files found
-            snprintf(buf, FILENAME_LENGTH, "%s\t%u KB \n\r", rec.filename, rec.filesize/1000);
-            UART_sendString(&buf[0]);
-        }
-    }
-}
-
-BOOL AUDIO_FindFile(const char* file)
-{
-   if(FindFirst(file, file_attributes, &rec) == 0)
-   {
-       return TRUE;
-   }
-   return FALSE;
-}
-
-BOOL AUDIO_ReadFile(UINT32 blocks)
-{
-    /* Reads 4-Byte blocks from the file and stores it in the receive buffer. */
-    if(FSfread(receiveBuffer, 4, blocks, pointer) != 1)
-    {
-        return FALSE;
-    }
-    return TRUE;
-}
-
-BOOL AUDIO_ReadToEndOfFile(void)
-{
-    while(!FSfeof(pointer))
-    {
-        FSfread(receiveBuffer, 4, 1, pointer);
-    }
-}
-
-BOOL AUDIO_WriteToDAC(void)
-{
-    
-}

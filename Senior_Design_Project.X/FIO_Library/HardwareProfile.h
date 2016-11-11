@@ -30,14 +30,14 @@
 #define SPI_FREQUENCY			(20000000)
 
 // Description: SD-SPI Chip Select Output bit
-#define SD_CS               LATBbits.LATB2
+#define SD_CS               LATBbits.LATB10
 // Description: SD-SPI Chip Select TRIS bit
-#define SD_CS_TRIS          TRISBbits.TRISB2
+#define SD_CS_TRIS          TRISBbits.TRISB10
 
 // Description: SD-SPI Card Detect Input bit
-#define SD_CD               PORTBbits.RB7
+#define SD_CD               PORTBbits.RB9
 // Description: SD-SPI Card Detect TRIS bit
-#define SD_CD_TRIS          TRISBbits.TRISB7
+#define SD_CD_TRIS          TRISBbits.TRISB9
 
 // Description: SD-SPI Write Protect Check Input bit
 #define SD_WE               PORTBbits.RB8
