@@ -4,6 +4,13 @@
     <logicalFolder name="HeaderFiles"
                    displayName="Header Files"
                    projectFiles="true">
+      <logicalFolder name="f1" displayName="SD_Card_Library" projectFiles="true">
+        <itemPath>FIO_Library/SD-SPI.h</itemPath>
+        <itemPath>FIO_Library/FSIO.h</itemPath>
+        <itemPath>FIO_Library/FSDefs.h</itemPath>
+        <itemPath>FIO_Library/FSconfig.h</itemPath>
+        <itemPath>FIO_Library/HardwareProfile.h</itemPath>
+      </logicalFolder>
       <itemPath>STDDEF.h</itemPath>
       <itemPath>ADC.h</itemPath>
       <itemPath>I2C.h</itemPath>
@@ -13,11 +20,8 @@
       <itemPath>UART.h</itemPath>
       <itemPath>FIFO.h</itemPath>
       <itemPath>Audio.h</itemPath>
-      <itemPath>FIO_Library/FSDefs.h</itemPath>
-      <itemPath>FIO_Library/FSIO.h</itemPath>
-      <itemPath>FIO_Library/FSconfig.h</itemPath>
-      <itemPath>FIO_Library/HardwareProfile.h</itemPath>
-      <itemPath>FIO_Library/SD-SPI.h</itemPath>
+      <itemPath>FILES.h</itemPath>
+      <itemPath>DAC.h</itemPath>
     </logicalFolder>
     <logicalFolder name="LinkerScript"
                    displayName="Linker Files"
@@ -36,6 +40,8 @@
       <itemPath>FIFO.c</itemPath>
       <itemPath>Audio.c</itemPath>
       <itemPath>FIO_Library/FSIO.c</itemPath>
+      <itemPath>FILES.c</itemPath>
+      <itemPath>DAC.c</itemPath>
       <itemPath>FIO_Library/SD-SPI.c</itemPath>
     </logicalFolder>
     <logicalFolder name="ExternalFiles"

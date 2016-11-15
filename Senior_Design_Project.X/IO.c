@@ -24,6 +24,10 @@ void IO_Init(void)
     TRISBbits.TRISB2 = 1;   // SD_SDI2
     TRISBbits.TRISB1 = 0;   // SD_SDO2
     TRISBbits.TRISB15 = 0;  // SD_CLK2
-    
-    // I2C IO
 }
+
+void IO_Process(void)
+{
+    
+}
+

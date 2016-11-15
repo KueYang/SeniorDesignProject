@@ -17,7 +17,8 @@
 #pragma config UPLLIDIV = DIV_1     // USB PLL Input Divider
 #pragma config UPLLEN = OFF         // USB PLL Enable, disabled
 
-/* Clock Configuration Bit Settings:
+/* 
+ * Clock Configuration Bit Settings:
  * SYSCLK = 40 MHz (8 MHz Crystal / FPLLIDIV * FPLLMUL / FPLLODIV)
  * PBCLK = 40 MHz (SYSCLK / FPBDIV)
  * Internal RC Osc w/PLL (XT+,HS+,EC+PLL)
@@ -42,7 +43,7 @@
 #pragma config FWDTEN = OFF         // Watchdog Timer Disabled
 #pragma config WDTPS = PS32         // Watchdog Timer Post-scaler
 
-int main(int argc, char** argv) {
+int main(void) {
     /* Configures the system. */
     SYSTEMConfig(SYS_FREQ, SYS_CFG_WAIT_STATES | SYS_CFG_PCACHE);
     

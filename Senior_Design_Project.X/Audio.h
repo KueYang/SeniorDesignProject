@@ -5,6 +5,11 @@
 extern "C" {
 #endif
 
+#define PIC1                // Defines the PIC that is being programmed
+    
+/* Defines the max number of audio files to be open. */
+#define MAX_NUM_OF_FILES        19
+    
 /* WAV File Header Definitions. */
 #define WAV_HEADER_SIZE         44
 #define WAV_CHUNK_ID            0 
@@ -30,7 +35,7 @@ extern "C" {
 #define WAV_SUB_CHUNK1_ID_ERROR     5
 #define WAV_SUB_CHUNK1_SIZE_ERROR   6
 #define WAV_SUB_CHUNK2_ID_ERROR     7
-    
+
 void AUDIO_Init(void);
 void AUDIO_Process(void);
 
