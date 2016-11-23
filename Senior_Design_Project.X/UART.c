@@ -1,7 +1,7 @@
 #include <p32xxxx.h>
 #include <plib.h>
-#include "CONFIG.h"
 #include "STDDEF.h"
+#include "./FIO_Library/HardwareProfile.h"
 #include "Timer.h"
 #include "FIFO.h"
 #include "UART.h"
@@ -12,8 +12,6 @@
 #define CMD_SIZE                16
 #define DESCRIPTION_SIZE        (WRITE_BUFFER_SIZE-CMD_SIZE)
 
-void UART_sendString(const char *string);
-void UART_sendCharacter(const char character);
 BOOL UART_isBufferEmpty(FIFO* buffer);
 char UART_getNextChar(FIFO* buffer);
 void UART_putNextChar(FIFO* buffer, char ch);
@@ -88,17 +86,20 @@ void UART_processCommand(void)
         /* Parses command from receive buffer. */
         numOfArgs = MON_parseCommand(&cmdStr, &rxBuffer);
         
-        /* Calls the command handler if the returned command isn't empty. */
-        COMMANDS command = MON_getCommand(cmdStr.name);
-        if(command.name != NULL)
+        if(numOfArgs != -1)
         {
-            command.handler();
+            /* Calls the command handler if the returned command isn't empty. */
+            COMMANDS command = MON_getCommand(cmdStr.name);
+            if(command.name != NULL)
+            {
+                command.handler();
+            }
+
+            /* Clears command variable. */
+            memset(&cmdStr.name[0], 0, sizeof(cmdStr.name));
+            memset(&cmdStr.arg1[0], 0, sizeof(cmdStr.arg1));
+            memset(&cmdStr.arg2[0], 0, sizeof(cmdStr.arg2));
         }
-        
-        /* Clears command variable. */
-        memset(&cmdStr.name[0], 0, sizeof(cmdStr.name));
-        memset(&cmdStr.arg1[0], 0, sizeof(cmdStr.arg1));
-        memset(&cmdStr.arg2[0], 0, sizeof(cmdStr.arg2));
         
         /* Prepares for the next command. */
         UART_sendString("\n\r> ");
@@ -115,6 +116,12 @@ int MON_parseCommand(COMMANDSTR* cmd, FIFO* buffer)
     
     /* Pops off the first character in the receive buffer. */
     char ch = UART_getNextChar(buffer);
+    /* Checks for a return character and empty space. */
+    if(ch == '\r' || ch == ' ')
+    {
+        return -1;
+    
+    }
     int count = 0;
     int numOfBytes[3] = {0,0,0};
     /* Grabs the first command from the fifo buffer. */
@@ -223,9 +230,6 @@ void __ISR(_UART1_VECTOR, IPL4AUTO) IntUart1Handler(void)
 
                 // Writes data to receive buffer.
                 UART_putNextChar(&rxBuffer, data);
-
-                // Toggle LED to indicate UART activity
-                mPORTBToggleBits(BIT_5);
                 
                 // Sets a flag for end of receiving a command.
                 if(data == '\r')

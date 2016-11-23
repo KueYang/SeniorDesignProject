@@ -1,52 +1,59 @@
 #include <p32xxxx.h>
 #include <plib.h>
 #include "STDDEF.h"
+#include "TIMER.h"
 #include "SPI.h"
 
-// Definitions.
-#define SAMPLE_RATE 8000    //8(kHz)
-#define FRAME_SIZE 	(SAMPLE_RATE/1000)
-#define RODIV		3
-#define REFTRIM		464
-
-typedef struct audio {
-    UINT64 audioWord;
-}AudioMono;
-
-AudioMono* txBuffer;
+void SPI2_Init(void);
 
 void SPI_Init(void)
 {
-    UINT spi_con1 = 0, spi_con2 = 0;
-    UINT baud_rate = SAMPLE_RATE * 64;
-    UINT mclk = SAMPLE_RATE * 256;
+    SPI2_Init();
+}
+
+void SPI2_Init(void)
+{
+    // Re-mapped pins RPA4 and RPB8 pins to SDI2 and SDO2
+    mSysUnlockOpLock({
+        PPSUnLock;
+        PPSInput(3,SDI2,RPB2);     // Assign RPA4 as input pin for SDI
+        PPSOutput(2,RPB1,SDO2);    // Set RPB8 pin as output for SDO
+        PPSLock;
+    });
     
-    mOSCREFOTRIMSet(REFTRIM);
-    OSCREFConfig(OSC_REFOCON_USBPLL,            // USB-PLL clock output used as REFCLKO source
-            OSC_REFOCON_OE | OSC_REFOCON_ON,    // Enable and turn on the REFCLKO
-            RODIV);
-
-    //Configure SPI in I2S mode with 24-bit stereo audio.
-    spi_con1 = SPI_OPEN_MSTEN |     // Master mode enable
-                SPI_OPEN_SSEN |     // Enable slave select function
-            SPI_OPEN_CKP_HIGH |     // Clock polarity Idle High Actie Low
-              SPI_OPEN_MODE16 |     // Data mode: 24b
-              SPI_OPEN_MODE32 |     // Data mode: 24b
-             SPI_OPEN_MCLKSEL |     // Clock selected is reference clock
-             SPI_OPEN_FSP_HIGH;     // Frame Sync Pulse is active high
-
-    spi_con2 = SPI_OPEN2_AUDEN |    // Enable Audio mode
-            SPI_OPEN2_AUDMOD_I2S;   // Enable I2S mode
-
-    //Configure and turn on the SPI1 module.
-    SpiChnOpenEx(SPI_CHANNEL1, spi_con1, spi_con2, (mclk / baud_rate));
-
+    SPI2CONbits.ON = 0;         // Disables the SPI Module
+    
+    SPI2CONbits.FRMEN = 0;      // Framed SPI support disabled
+    SPI2CONbits.FRMSYNC = 0;    // Frame sync pulse output (Master Mode) 
+    SPI2CONbits.FRMPOL = 0;     // Frame Pulse active-low
+    SPI2CONbits.FRMSYPW = 0;    // Frame sync pulse is one clock wide
+    SPI2CONbits.FRMCNT = 0b000; // Generate frame sync pulse on every data character
+    SPI2CONbits.SPIFE = 0;      // Frame sync pulse precedes the first bit clock
+    
+    SPI2CONbits.MSSEN = 0;      // Slave select SPI support disabled
+    SPI2CONbits.MCLKSEL = 0;    // PBCLK is used by baud rate generator
+    SPI2CONbits.ENHBUF = 0;     // Enhanced Buffer mode disabled
+    SPI2CONbits.SIDL = 0;       // Continue module in idle mode
+    SPI2CONbits.DISSDO = 0;     // SDO2 controlled by module
+    SPI2CONbits.MODE16 = 0b00;  // 8-bit communication
+    SPI2CONbits.SMP = 1;        // Input data sampled at end of data output
+    SPI2CONbits.CKE = 0;        // Serial output data changes from idle to active clk
+    SPI2CONbits.SSEN = 0;       // Slave select disable
+    SPI2CONbits.CKP = 1;        // Clk is active low
+    SPI2CONbits.MSTEN = 1;      // Master mode enabled
+    SPI2CONbits.DISSDI = 0;     // SDI2 controlled by module
+    SPI2CONbits.STXISEL = 0b00; // Transmit interrupts on last transfer
+    SPI2CONbits.SRXISEL = 0b00; // Receive interrupts on last received
+    
+    SPI2BRG = 2;                // SPI clock speed at PBCLK/8
+    SPI2STATbits.SPIROV = 0;    // Clears Receive overflow flag
+    
+    SPI2CONbits.ON = 1;         // Enable SPI Module
+    
     //Enable SPI1 interrupt.
-    INTEnable(INT_SPI1, INT_ENABLED);
-    INTSetVectorPriority(INT_SPI_1_VECTOR, INT_PRIORITY_LEVEL_4);
-    INTSetVectorSubPriority(INT_SPI_1_VECTOR, INT_SUB_PRIORITY_LEVEL_0);
-    
-    SpiChnPutC(SPI_CHANNEL1, 0); //Dummy write to start the SPI
+//    INTEnable(INT_SPI1, INT_ENABLED);
+//    INTSetVectorPriority(INT_SPI_1_VECTOR, INT_PRIORITY_LEVEL_2);
+//    INTSetVectorSubPriority(INT_SPI_1_VECTOR, INT_SUB_PRIORITY_LEVEL_0);
 }
 
 void SPI_Process()
@@ -54,24 +61,22 @@ void SPI_Process()
     
 }
 
-BYTE SPI1_ReadWrtie(BYTE ch)
+BYTE SPI2_ReadWrite(BYTE ch)
 {
     BYTE dummy = 0;
 
-    dummy = SPI1BUF;                //Clears flag to read/wrtie to buffer
-    SPI1BUF = ch;                   //Write BYTE to the buffer
-    while (!SPI1STATbits.SPIRBF)    //Waits for transfer to be completed
-    dummy = SPI1BUF;                //Read a dummy byte from buffer
+    dummy = SPI2BUF;                //Clears flag to read/write to buffer
+    SPI2BUF = ch;                   //Write BYTE to the buffer
+    while (!SPI2STATbits.SPIRBF);   //Waits for transfer to be completed
+    dummy = SPI2BUF;                //Read a dummy byte from buffer
 
     return dummy;
 }
 
-/* SPI1 ISR */
-void __ISR(_SPI_1_VECTOR, IPL4AUTO) IntSpi1Handler(void) 
+/* SPI2 ISR */
+void __ISR(_SPI_2_VECTOR, IPL4AUTO) IntSpi2Handler(void) 
 {
-    SpiChnPutC(SPI_CHANNEL1, 0);
-    
-    INTClearFlag(INT_SPI1TX);
+    INTClearFlag(INT_SPI2TX);
 }
 
 

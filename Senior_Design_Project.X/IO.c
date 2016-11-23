@@ -2,26 +2,32 @@
 #include <plib.h>
 #include "IO.h"
 
-
 void IO_Init(void)
 {   
-    // Set RB13 and RB15 to Digital IO
-//    ANSELBbits.ANSB13 = 0;
-//    ANSELBbits.ANSB15 = 0;
+    ANSELA = 0; ANSELB = 0;                 // Disable analog inputs
+    CM1CON = 0; CM2CON = 0; CM3CON = 0;     // Disable analog comparators
     
-    mPORTAClearBits(BIT_0 | BIT_1 | BIT_2);
-    mPORTBClearBits(BIT_3 | BIT_5);
+    // Digital IO
+    TRISBbits.TRISB7 = 0;   // Used to test Timer
     
-    mPORTASetPinsDigitalIn(BIT_2);             //U1RX
-    mPORTASetPinsDigitalOut(BIT_0 | BIT_1);     //LED
-    mPORTBSetPinsDigitalOut(BIT_3 | BIT_5);    // U1TX
-
-//    
     // ADC IO
     
     // UART IO
+    TRISAbits.TRISA2 = 1;   // U1RX
+    TRISBbits.TRISB3 = 0;   // U1TX
     
     // SPI IO
-    
-    // I2C IO
+    TRISAbits.TRISA3 = 0;   // LDAC
+    TRISBbits.TRISB4 = 0;   // CLR
+    TRISAbits.TRISA4 = 0;   // SYNC
+    TRISBbits.TRISB5 = 0;   // LED SD Card Indication
+    TRISBbits.TRISB2 = 1;   // SD_SDI2
+    TRISBbits.TRISB1 = 0;   // SD_SDO2
+    TRISBbits.TRISB15 = 0;  // SD_CLK2
 }
+
+void IO_Process(void)
+{
+    
+}
+

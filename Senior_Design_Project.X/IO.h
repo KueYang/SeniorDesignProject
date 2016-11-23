@@ -6,6 +6,7 @@ extern "C" {
 #endif
 
 void IO_Init(void);
+void IO_Process(void);
 
 #ifdef	__cplusplus
 }
