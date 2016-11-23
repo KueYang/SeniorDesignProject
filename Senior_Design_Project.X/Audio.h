@@ -5,12 +5,19 @@
 extern "C" {
 #endif
 
-#define PIC1                // Defines the PIC that is being programmed
+/**
+ * Defines the PIC that is being programmed.
+ */
+#define PIC1
     
-/* Defines the max number of audio files to be open. */
+/**
+ * Defines the max number of audio files to be open.
+ */
 #define MAX_NUM_OF_FILES        19
     
-/* WAV File Header Definitions. */
+/** 
+ * WAV File Header Definitions. 
+ */
 #define WAV_HEADER_SIZE         44
 #define WAV_CHUNK_ID            0 
 #define WAV_CHUNK_SIZE          4
@@ -27,7 +34,9 @@ extern "C" {
 #define WAV_CHUNK2_SUB_SIZE     40
 #define WAV_DATA                44
 
-/* WAV File Errors */
+/** 
+ * WAV File Error Definitions  
+ */
 #define WAV_SUCCESS                 1
 #define WAV_HEADER_SIZE_ERROR       2
 #define WAV_CHUNK_ID_ERROR          3
@@ -36,7 +45,16 @@ extern "C" {
 #define WAV_SUB_CHUNK1_SIZE_ERROR   6
 #define WAV_SUB_CHUNK2_ID_ERROR     7
 
+/**
+ * @brief Initializes the Audio module.
+ * @return Void
+ */
 void AUDIO_Init(void);
+
+/**
+ * @brief Processes all audio data.
+ * @return Void
+ */
 void AUDIO_Process(void);
 
 #ifdef	__cplusplus

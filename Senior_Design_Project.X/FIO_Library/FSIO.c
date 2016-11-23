@@ -153,23 +153,6 @@ BOOL Alias_LFN_Object(FILEOBJ fo);
 BYTE Fill_LFN_Object(FILEOBJ fo, LFN_ENTRY *lfno, WORD *fHandle);
 #endif
 
-// Write functions
-#ifdef ALLOW_WRITES
-    BYTE Write_File_Entry( FILEOBJ fo, WORD * curEntry);
-    BYTE flushData (void);
-    CETYPE FILEerase( FILEOBJ fo, WORD *fHandle, BYTE EraseClusters);
-    BYTE FILEallocate_new_cluster( FILEOBJ fo, BYTE mode);
-    BYTE FAT_erase_cluster_chain (DWORD cluster, DISK * dsk);
-    DWORD FATfindEmptyCluster(FILEOBJ fo);
-    BYTE FindEmptyEntries(FILEOBJ fo, WORD *fHandle);
-    BYTE PopulateEntries(FILEOBJ fo, WORD *fHandle, BYTE mode);
-    CETYPE FILECreateHeadCluster( FILEOBJ fo, DWORD *cluster);
-    BYTE EraseCluster(DISK *disk, DWORD cluster);
-    CETYPE CreateFirstCluster(FILEOBJ fo);
-    DWORD WriteFAT (DISK *dsk, DWORD ccls, DWORD value, BYTE forceWrite);
-    CETYPE CreateFileEntry(FILEOBJ fo, WORD *fHandle, BYTE mode, BOOL createFirstCluster);
-#endif
-
 // Directory functions
 #ifdef ALLOW_DIRS
     BYTE GetPreviousEntry (FSFILE * fo);

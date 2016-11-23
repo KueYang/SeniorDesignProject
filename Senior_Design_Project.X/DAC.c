@@ -1,23 +1,41 @@
+/**
+ * @file DAC.c
+ * @author Kue Yang
+ * @date 11/22/2016
+ * @brief The DAC module.
+ */
+
 #include <p32xxxx.h>
 #include <plib.h>
 #include "STDDEF.h"
 #include "SPI.h"
 #include "DAC.h"
 
+/**
+ * @brief Initializes the DAC.
+ * @remark Requires the SPI module to be initialized.
+ * @return Void.
+ */
 void DAC_Init(void)
 {
-    LDAC = 0;
-    SYNC = 1;
-    DAC_WriteToDAC(POWER_ON_OFF, 0x0000, DAC_A | POWER_ON_NORMAL);
+    SYNC = 1;   // Sets the latch high.
+    DAC_WriteToDAC(POWER_ON_OFF_DAC_A , 0x000F & DAC_A);    // Turns on DAC A
 }
 
-BOOL DAC_WriteToDAC(BYTE cmd, BYTE addr, WORD data)
+/**
+ * @brief Writes data to the DAC.
+ * @remark Requires the DAC to be initialized. 
+ * @return Returns a boolean indicating if writing to the DAC is successful.
+ * @retval TRUE if the file was read successfully
+ * @retval FALSE if the file was read unsuccessfully
+ */
+BOOL DAC_WriteToDAC(BYTE cmd_addr, WORD data)
 {
    SYNC = 0;    // Shifts the latch low to initiate write
    
-   SPI2_ReadWrite(cmd);
-   SPI2_ReadWrite(addr);
-   SPI2_ReadWrite(data); //Sends the first 12 bits, ignore last 4 bits
+   SPI2_ReadWrite(cmd_addr);
+   SPI2_ReadWrite(data << 4);       // Sends the first 8 bits
+   SPI2_ReadWrite(data << 8);       // Sends the last 4 bits
    
    SYNC = 1;    // Shifts the latch high to end write
 }
