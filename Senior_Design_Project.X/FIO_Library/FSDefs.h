@@ -1,3 +1,10 @@
+/**
+ * @file FSDefs.h
+ * @author Kue Yang
+ * @date 11/22/2016
+ * @brief Defines the File System definitions. 
+ */
+
 #ifndef  _FSDEF__H
 #define  _FSDEF__H
 

@@ -13,24 +13,22 @@
 #include "DAC.h"
 #include "Audio.h"
 
-/**
- * @var The list of audio files that are to be used.
+/**  
+ * @privatesection
+ * @{
  */
+
+UINT8 AUDIO_GetHeader(void);
+UINT32 AUDIO_GetDataSize(void);
+BOOL AUDIO_GetAudioData(void);
+
+/** @var The list of audio files that are to be used. */
 FILES files[MAX_NUM_OF_FILES];
-
-/**
- * @var A buffer used to store data read from the audio file.
- */
+/** @var A buffer used to store data read from the audio file. */
 BYTE receiveBuffer[256];
-
-/**
- * @var The index used to specify the audio file that is being read.
- */
+/** @var The index used to specify the audio file that is being read. */
 int fileIndex;
-
-/* 
- * @var The file names of audio files for the specified pic.
- */
+/** @var The file names of audio files for the specified pic. */
 const char* fileNames[MAX_NUM_OF_FILES] = {
 #ifdef PIC1
     "S1_F0.WAV",
@@ -154,11 +152,7 @@ const char* fileNames[MAX_NUM_OF_FILES] = {
 #endif
 };
 
-/* Functions to read and handle Wav Files. */
-UINT8 AUDIO_GetHeader(void);
-UINT32 AUDIO_GetDataSize(void);
-BOOL AUDIO_GetAudioData(void);
-
+/** @} */
 
 /**
  * @brief Initializes the Audio module.
@@ -167,32 +161,32 @@ BOOL AUDIO_GetAudioData(void);
 void AUDIO_Init(void)
 {
     // Checks to make sure that the SD card is attached
-//    while (!MDD_SDSPI_MediaDetect())
-//    {
-//        // Toggles LED until SD card is detected
-//        PORTBbits.RB5 = 1;
-//        TIMER_MSecondDelay(1000);
-//        PORTBbits.RB5 = 0;
-//        TIMER_MSecondDelay(1000);
-//    }
+    while (!MDD_SDSPI_MediaDetect())
+    {
+        // Toggles LED until SD card is detected
+        PORTBbits.RB5 = 1;
+        TIMER_MSecondDelay(1000);
+        PORTBbits.RB5 = 0;
+        TIMER_MSecondDelay(1000);
+    }
 
     // Initializes the File Library
-//    FILES_Init();
+    FILES_Init();
     
     // Opens all 19 audio files from the sd card
-//    for(fileIndex = 0; fileIndex < MAX_NUM_OF_FILES; fileIndex++)
-//    {
-//        if(!FILES_OpenFile(fileNames[fileIndex], files[fileIndex].pointer, &files[fileIndex].rec) &&
-//                (AUDIO_GetHeader() != WAV_SUCCESS))
-//        {
-//            fileIndex--;    // Resets the file index to retry opening the file.
-//        }
-//        else 
-//        {
-//            files[fileIndex].dataSize = AUDIO_GetDataSize();
-//            strncpy(files[fileIndex].fileName, fileNames[fileIndex], sizeof(fileNames[fileIndex]));
-//        }
-//    }
+    for(fileIndex = 0; fileIndex < MAX_NUM_OF_FILES; fileIndex++)
+    {
+        if(!FILES_OpenFile(fileNames[fileIndex], files[fileIndex].pointer, &files[fileIndex].rec) &&
+                (AUDIO_GetHeader() != WAV_SUCCESS))
+        {
+            fileIndex--;    // Resets the file index to retry opening the file.
+        }
+        else 
+        {
+            files[fileIndex].dataSize = AUDIO_GetDataSize();
+            strncpy(files[fileIndex].fileName, fileNames[fileIndex], sizeof(fileNames[fileIndex]));
+        }
+    }
     
     // Initializes the index to the first file.
     fileIndex = 0;
@@ -201,24 +195,13 @@ void AUDIO_Init(void)
     DAC_Init();
 }
 
-BYTE sampleData[40] = {
-    0xf6, 0x3c, 0x74, 0xb5, 0x3a, 0xa1, 0x9a, 0x90, 0xf7, 0xb3, 0x43, 0x1a, 0xf2, 0xb9, 0xa9, 0x0c, 
-    0x26, 0x33, 0x08, 0x08, 0xb9, 0xe9, 0xfe, 0x3f, 0x11, 0x0b, 0x87, 0x80, 0x44, 0x79, 0x91, 0x61, 
-    0xbd, 0x06, 0xfa, 0x07, 0xf9, 0xe8, 0x1c, 0xf1,
-};
-int i = 0;
-
 /**
  * @brief Processes all audio data.
  * @return Void
  */
 void AUDIO_Process(void)
 {
-    DAC_WriteToDAC(WRITE_UPDATE_DAC_A, sampleData[i++]);
-    if(i >= 40)
-    {
-        i = 0;
-    }
+
 }
 
 /**
@@ -283,8 +266,8 @@ UINT32 AUDIO_GetDataSize(void)
 /**
  * @brief Reads the data block of the audio file.
  * @return Returns a boolean indicating if the file was read successfully.
- * @retval TRUE if the file was read successfully
- * @retval FALSE if the file was read unsuccessfully
+ * @retval TRUE if the file was read successfully.
+ * @retval FALSE if the file was read unsuccessfully.
  */
 BOOL AUDIO_GetAudioData(void)
 {

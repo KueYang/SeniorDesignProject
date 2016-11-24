@@ -1,3 +1,10 @@
+/**
+ * @file Audio.h
+ * @author Kue Yang
+ * @date 11/22/2016
+ * @brief Header for the Audio Module. 
+ */
+
 #ifndef AUDIO_H
 #define	AUDIO_H
 
@@ -5,19 +12,16 @@
 extern "C" {
 #endif
 
-/**
- * Defines the PIC that is being programmed.
- */
+/** Defines the PIC that is being programmed. */
 #define PIC1
-    
-/**
- * Defines the max number of audio files to be open.
- */
+/** Defines the max number of audio files to be open. */
 #define MAX_NUM_OF_FILES        19
-    
-/** 
- * WAV File Header Definitions. 
+
+/**  
+ * @defgroup WAV File Header Definitions and Error Codes.
+ * @{
  */
+/** WAV File Header Definitions. */
 #define WAV_HEADER_SIZE         44
 #define WAV_CHUNK_ID            0 
 #define WAV_CHUNK_SIZE          4
@@ -34,9 +38,7 @@ extern "C" {
 #define WAV_CHUNK2_SUB_SIZE     40
 #define WAV_DATA                44
 
-/** 
- * WAV File Error Definitions  
- */
+/** WAV File Error Definitions  */
 #define WAV_SUCCESS                 1
 #define WAV_HEADER_SIZE_ERROR       2
 #define WAV_CHUNK_ID_ERROR          3
@@ -44,6 +46,7 @@ extern "C" {
 #define WAV_SUB_CHUNK1_ID_ERROR     5
 #define WAV_SUB_CHUNK1_SIZE_ERROR   6
 #define WAV_SUB_CHUNK2_ID_ERROR     7
+/** @} */
 
 /**
  * @brief Initializes the Audio module.

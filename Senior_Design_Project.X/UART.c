@@ -1,3 +1,10 @@
+/**
+ * @file UART.c
+ * @author Kue Yang
+ * @date 11/22/2016
+ * @brief The UART module.
+ */
+
 #include <p32xxxx.h>
 #include <plib.h>
 #include "STDDEF.h"
@@ -6,37 +13,63 @@
 #include "FIFO.h"
 #include "UART.h"
 
+/**  
+ * @privatesection
+ * @{
+ */
 #define UART_MODULE_ID          UART1
 #define DESIRED_BAUDRATE        (19200)     //The desired BaudRate
 #define WRITE_BUFFER_SIZE       256
 #define CMD_SIZE                16
 #define DESCRIPTION_SIZE        (WRITE_BUFFER_SIZE-CMD_SIZE)
 
+/* UART Helper Functions. */
+int UART_GetBaudRate(int desireBaud);
+
+/* FIFO helper functions. */
 BOOL UART_isBufferEmpty(FIFO* buffer);
 char UART_getNextChar(FIFO* buffer);
 void UART_putNextChar(FIFO* buffer, char ch);
 
+/* Command Helper Functions. */
 void UART_processCommand(void);
 int MON_parseCommand(COMMANDSTR* cmd, FIFO* buffer);
 COMMANDS MON_getCommand(const char* cmdName);
 void MON_removeWhiteSpace(const char* string);
-BOOL compareStrings(const char* str1, const char* str2);
+BOOL MON_compareStrings(const char* str1, const char* str2);
 
+/* Commands Handlers. */
 void MON_GetHelp(void);
 void MON_GetInputTest(void);
 
-COMMANDSTR cmdStr;
-FIFO rxBuffer, txBuffer;
-UINT16 cmdListSize;
-UINT16 actualBaudRate;
-BOOL cmdReady;
 
+
+/**@var The command string. */
+COMMANDSTR cmdStr;
+/**@var The UART receive buffer. */
+FIFO rxBuffer;
+/**@var The UART transmit buffer. */
+FIFO txBuffer;
+/**@var The command list size. */
+UINT16 cmdListSize;
+/**@var The UART command receive flag. */
+BOOL cmdReady;
+/**@var The UART baud rate. */
+UINT16 actualBaudRate;
+
+/**@var The list of commands. */
 COMMANDS MON_COMMANDS[] = {
     {"HELP", " Display the list of commands avaliable. \n\r", MON_GetHelp},
     {"TEST", " Test getting commands. FORMAT: TEST arg1 arg2. \n\r", MON_GetInputTest},
     {"", "", NULL}
 };
 
+/** @} */
+
+/**
+ * @brief Initialize the UART module.
+ * @return Void
+ */
 void UART_Init(void)
 { 
     cmdListSize = 2;
@@ -63,20 +96,37 @@ void UART_Init(void)
     INTSetVectorPriority(INT_VECTOR_UART(UART_MODULE_ID), INT_PRIORITY_LEVEL_4);
     INTSetVectorSubPriority(INT_VECTOR_UART(UART_MODULE_ID), INT_SUB_PRIORITY_LEVEL_1);
     
-    UART_sendString("\r\n> ");
+    UART_sendString("\r\n> ");  // Sends a prompt.
 }
 
+/**
+ * @brief Initializes all timer modules.
+ * @param desireBaud The desired baud rate.
+ * @return The baud rate for the given peripheral clock.
+ */
 int UART_GetBaudRate(int desireBaud)
 {
     return ((GetPeripheralClock()/desireBaud)/16) - 1;
 }
 
+/**
+ * @brief Processes all UART related tasks.
+ * @return Void.
+ */
 void UART_Process(void)
 {
     UART_processCommand();
 } 
 
-// UART Receive Functions Handlers
+/**
+ * @defgroup Command Helper Functions
+ * @{
+ */
+
+/**
+ * @brief Processes commands received by the UART module.
+ * @return Void.
+ */
 void UART_processCommand(void)
 {
     if(!UART_isBufferEmpty(&rxBuffer) && cmdReady == TRUE)
@@ -104,10 +154,17 @@ void UART_processCommand(void)
         /* Prepares for the next command. */
         UART_sendString("\n\r> ");
         
+        /* Resets the ready flag. */
         cmdReady = FALSE;
     }
 }
 
+/**
+ * @brief Parses the received commands.
+ * @param cmd The command struct used to store the command.
+ * @param buffer The receive buffer.
+ * @return Returns the number of command arguments.
+ */
 int MON_parseCommand(COMMANDSTR* cmd, FIFO* buffer)
 {   
     int i = 0, numOfArgs = 0;
@@ -152,15 +209,20 @@ int MON_parseCommand(COMMANDSTR* cmd, FIFO* buffer)
             strncpy(&cmd->arg2[0], &str[argIndexes[2]], numOfBytes[2]);
             break;
         default:
-            
             break;
     }
     
     return numOfArgs;
 }
-
-BOOL compareStrings(const char* str1, const char* str2)
+/**
+ * @brief Compares two strings.
+ * @return Returns a boolean indicating if the strings matches.
+ * @retval TRUE if both strings matches.
+ * @retval FALSE if the strings does not match.
+ */
+BOOL MON_compareStrings(const char* str1, const char* str2)
 {
+    /* Loops through both strings until reaching a null terminator or if neither strings matches. */
     while (*str1 == *str2) 
     {
         if (*str1 == '\0' || *str2 == '\0')
@@ -178,12 +240,34 @@ BOOL compareStrings(const char* str1, const char* str2)
     return FALSE; 
 }
 
+/**
+ * @brief Removes white spaces from a string.
+ * @param string The string that is being modified.
+ * @return Void.
+ */
+void MON_removeWhiteSpace(const char* string)
+{
+    while(string != "\0")
+    {
+        if(string == " ")
+        {
+            string = string++;
+        }
+        string++;
+    }
+}
+
+/**
+ * @brief Gets the handler for the specified command.
+ * @param cmdName The name of the command.
+ * @return Returns the command handler.
+ */
 COMMANDS MON_getCommand(const char* cmdName)
 {
     int i = 0;
     for(i = 0; i < cmdListSize; i++)
     {
-        if(compareStrings(cmdName, MON_COMMANDS[i].name))
+        if(MON_compareStrings(cmdName, MON_COMMANDS[i].name))
         {
             return MON_COMMANDS[i];
         }
@@ -191,7 +275,11 @@ COMMANDS MON_getCommand(const char* cmdName)
     return MON_COMMANDS[cmdListSize]; // returns an empty null command
 }
 
-// UART Transmission Functions Handlers
+/**
+ * @brief Sends a string.
+ * @param string The string that will be transmitted.
+ * @return Void.
+ */
 void UART_sendString(const char *string)
 {
     while(*string != '\0')
@@ -203,6 +291,11 @@ void UART_sendString(const char *string)
     while(!UARTTransmissionHasCompleted(UART_MODULE_ID));
 }
 
+/**
+ * @brief Sends a character.
+ * @param character The character that will be transmitted.
+ * @return Void.
+ */
 void UART_sendCharacter(const char character)
 {
         while(!UARTTransmitterIsReady(UART_MODULE_ID));
@@ -210,6 +303,10 @@ void UART_sendCharacter(const char character)
         while(!UARTTransmissionHasCompleted(UART_MODULE_ID));
 }
 
+/**
+ * @brief The UART1 Interrupt Service Routine.
+ * @return Void.
+ */
 void __ISR(_UART1_VECTOR, IPL4AUTO) IntUart1Handler(void)
 {
 	if(INTGetFlag(INT_SOURCE_UART_RX(UART_MODULE_ID)))
@@ -239,21 +336,45 @@ void __ISR(_UART1_VECTOR, IPL4AUTO) IntUart1Handler(void)
             }
         }
         
-        // Clear the RX interrupt Flag
+        // Clear the RX interrupt Flag.
 	    INTClearFlag(INT_SOURCE_UART_RX(UART_MODULE_ID));
 	}
 }
+/** @} */
 
+/**
+ * @defgroup FIFO Helper Functions.
+ * @{
+ */
+
+/**
+ * @brief Pushes the specified character into the buffer.
+ * @param buffer The buffer used to store the character.
+ * @param ch The character to push into buffer.
+ * @return Void.
+ */
 void UART_putNextChar(FIFO* buffer, char ch)
 {
     FIFO_Push(buffer, ch);
 }
 
+/**
+ * @brief Pops a character from the buffer.
+ * @param buffer The buffer to pop the character from.
+ * @return Returns the character that is popped off from the buffer.
+ */
 char UART_getNextChar(FIFO* buffer)
 {
     return FIFO_Pop(buffer);
 }
 
+/**
+ * @brief Checks if the specified buffer is empty.
+ * @param buffer The buffer that is being checked.
+ * @return Returns a boolean indicating if the buffer is empty.
+ * @retval TRUE if the buffer is empty.
+ * @retval FALSE if the buffer is not empty.
+ */
 BOOL UART_isBufferEmpty(FIFO* buffer)
 {
     if(buffer->bufferSize > 0)
@@ -262,19 +383,17 @@ BOOL UART_isBufferEmpty(FIFO* buffer)
     }
     return TRUE;
 }
+/** @} */
 
-void MON_removeWhiteSpace(const char* string)
-{
-    while(string != "\0")
-    {
-        if(string == " ")
-        {
-            string = string++;
-        }
-        string++;
-    }
-}
+/**
+ * @defgroup Command Handlers
+ * @{
+ */
 
+/**
+ * @brief Displays the list of available commands.
+ * @return Void.
+ */
 void MON_GetHelp(void)
 {
     int i =0;
@@ -288,6 +407,10 @@ void MON_GetHelp(void)
     }
 }
 
+/**
+ * @brief Command used to test parsing commands. 
+ * @return Void.
+ */
 void MON_GetInputTest(void)
 {
     char buf[128] = "";
@@ -297,3 +420,5 @@ void MON_GetInputTest(void)
     strncat(&buf[sizeof(cmdStr.arg1)], cmdStr.arg2, (128-8-sizeof(cmdStr.arg1)));
     UART_sendString(&buf[0]);
 }
+
+/** @} */

@@ -41,61 +41,25 @@
 #include "FSconfig.h"
 #include "FSDefs.h"
 
-#ifdef __18CXX
-    // Description: This macro is used to initialize a PIC18 SPI module with a 4x prescale divider
-    #define   SYNC_MODE_FAST    0x00
-    // Description: This macro is used to initialize a PIC18 SPI module with a 16x prescale divider
-    #define   SYNC_MODE_MED     0x01
-    // Description: This macro is used to initialize a PIC18 SPI module with a 64x prescale divider
-    #define   SYNC_MODE_SLOW    0x02
-#elif defined __PIC32MX__
-    // Description: This macro is used to initialize a PIC32 SPI module
-    #define   SYNC_MODE_FAST    0x3E
-    // Description: This macro is used to initialize a PIC32 SPI module
-    #define   SYNC_MODE_SLOW    0x3C
-#else
-    // Description: This macro indicates the SPI enable bit for 16-bit PICs
-    #ifndef MASTER_ENABLE_ON
-        #define  MASTER_ENABLE_ON       0x0020
-    #endif
-
-    // Description: This macro is used to initialize a 16-bit PIC SPI module
-    #ifndef SYNC_MODE_FAST
-        #define   SYNC_MODE_FAST    0x3E
-    #endif
-    // Description: This macro is used to initialize a 16-bit PIC SPI module
-    #ifndef SYNC_MODE_SLOW
-        #define   SYNC_MODE_SLOW    0x3C
-    #endif
-
-    // Description: This macro is used to initialize a 16-bit PIC SPI module secondary prescaler
-    #ifndef SEC_PRESCAL_1_1
-        #define  SEC_PRESCAL_1_1        0x001c
-    #endif
-    // Description: This macro is used to initialize a 16-bit PIC SPI module primary prescaler
-    #ifndef PRI_PRESCAL_1_1
-        #define  PRI_PRESCAL_1_1        0x0003
-    #endif
-#endif
-
-
+// Description: This macro is used to initialize a PIC32 SPI module
+#define   SYNC_MODE_FAST    0x3E
+// Description: This macro is used to initialize a PIC32 SPI module
+#define   SYNC_MODE_SLOW    0x3C
 
 /*****************************************************************/
-/*                  Strcutures and defines                       */
+/*                  Structures and defines                       */
 /*****************************************************************/
-
-
 // Description: This macro represents an SD card start single data block token (used for single block writes)
-#define DATA_START_TOKEN            0xFE
+#define DATA_START_TOKEN                0xFE
 
 // Description: This macro represents an SD card start multi-block data token (used for multi-block writes)
 #define DATA_START_MULTI_BLOCK_TOKEN    0xFC
 
 // Description: This macro represents an SD card stop transmission token.  This is used when finishing a multi block write sequence.
-#define DATA_STOP_TRAN_TOKEN        0xFD
+#define DATA_STOP_TRAN_TOKEN            0xFD
 
 // Description: This macro represents an SD card data accepted token
-#define DATA_ACCEPTED               0x05
+#define DATA_ACCEPTED                   0x05
 
 // Description: This macro indicates that the SD card expects to transmit or receive more data
 #define MOREDATA    !0
@@ -183,21 +147,13 @@ typedef union
     // This structure allows array-style access of command bytes
     struct
     {
-        #ifdef __18CXX
-            BYTE field[6];      // BYTE array
-        #else
-            BYTE field[7];
-        #endif
+        BYTE field[7];
     };
     // This structure allows byte-wise access of packet command bytes
     struct
     {
         BYTE crc;               // The CRC byte
-        #if defined __C30__
-            BYTE c30filler;     // Filler space (since bitwise declarations can't cross a WORD boundary)
-        #elif defined __C32__
-            BYTE c32filler[3];  // Filler space (since bitwise declarations can't cross a DWORD boundary)
-        #endif
+        BYTE c32filler[3];  // Filler space (since bitwise declarations can't cross a DWORD boundary)
         
         BYTE addr0;             // Address byte 0
         BYTE addr1;             // Address byte 1
@@ -413,16 +369,8 @@ typedef union
     };
 } CID;
 
-#ifndef FALSE
-    #define FALSE   0
-#endif
-#ifndef TRUE
-    #define TRUE    !FALSE
-#endif
-
 #define INPUT   1
 #define OUTPUT  0
-
 
 // Description: A delay prescaler
 #define DELAY_PRESCALER   (BYTE)      8
@@ -432,7 +380,6 @@ typedef union
 
 // Description: An approximate calculation of how many times to loop to delay 1 ms in the Delayms function
 #define MILLISECDELAY   (WORD)      ((GetInstructionClock()/DELAY_PRESCALER/(WORD)1000) - DELAY_OVERHEAD)
-
 
 // Desription: Media Response Delay Timeouts 
 #define NCR_TIMEOUT     (WORD)20        //Byte times before command response is expected (must be at least 8)
@@ -467,10 +414,8 @@ typedef enum
     SET_WR_BLK_ERASE_COUNT
 }sdmmc_cmd;
 
-
 #define SD_MODE_NORMAL  0
 #define SD_MODE_HC      1
-
 
 //Definition for a structure used when calling either MDD_SDSPI_AsyncReadTasks() 
 //function, or the MDD_SDSPI_AsyncWriteTasks() function.
@@ -482,7 +427,6 @@ typedef struct
     DWORD dwAddress;        //Starting block address to read or to write to on the media.  Should only get initialized, do not modify after that.
     BYTE bStateVariable;    //State machine variable.  Should get initialized to ASYNC_READ_QUEUED or ASYNC_WRITE_QUEUED to start an operation.  After that, do not modify until the read or write is complete.
 }ASYNC_IO;   
-
 
 //Response codes for the MDD_SDSPI_AsyncReadTasks() function.
 #define ASYNC_READ_COMPLETE             0x00
@@ -513,17 +457,13 @@ typedef struct
 #define ASYNC_WRITE_ABORT               0xFE
 #define ASYNC_WRITE_ERROR               0xFF
 
-
 //Constants
 #define MEDIA_BLOCK_SIZE            512u  //Should always be 512 for v1 and v2 devices.
 #define WRITE_RESPONSE_TOKEN_MASK   0x1F  //Bit mask to AND with the write token response byte from the media, to clear the don't care bits.
 
-
-
 /***************************************************************************/
 /*                               Macros                                    */
 /***************************************************************************/
-
 // Description: A macro to send clock cycles to dummy-read the CRC
 #define mReadCRC()              WriteSPIM(0xFF);WriteSPIM(0xFF);
 
@@ -550,11 +490,8 @@ BYTE MDD_SDSPI_AsyncWriteTasks(ASYNC_IO*);
 BYTE MDD_SDSPI_WriteProtectState(void);
 BYTE MDD_SDSPI_ShutdownMedia(void);
 
-
-#if defined __C30__ || defined __C32__
-    extern BYTE ReadByte( BYTE* pBuffer, WORD index );
-    extern WORD ReadWord( BYTE* pBuffer, WORD index );
-    extern DWORD ReadDWord( BYTE* pBuffer, WORD index );
-#endif
+extern BYTE ReadByte( BYTE* pBuffer, WORD index );
+extern WORD ReadWord( BYTE* pBuffer, WORD index );
+extern DWORD ReadDWord( BYTE* pBuffer, WORD index );
 
 #endif

@@ -1,16 +1,37 @@
+/**
+ * @file SPI.c
+ * @author Kue Yang
+ * @date 11/22/2016
+ * @brief The SPI module.
+ */
+
 #include <p32xxxx.h>
 #include <plib.h>
 #include "STDDEF.h"
 #include "TIMER.h"
 #include "SPI.h"
 
-void SPI2_Init(void);
+/**  
+ * @privatesection
+ * @{
+ */
 
+void SPI2_Init(void);
+/** @}*/
+
+/**
+ * @brief Initializes the SPI modules.
+ * @return Void.
+ */
 void SPI_Init(void)
 {
     SPI2_Init();
 }
 
+/**
+ * @brief Initializes the SPI2 module.
+ * @return Void.
+ */
 void SPI2_Init(void)
 {
     // Re-mapped pins RPA4 and RPB8 pins to SDI2 and SDO2
@@ -50,17 +71,26 @@ void SPI2_Init(void)
     
     SPI2CONbits.ON = 1;         // Enable SPI Module
     
-    //Enable SPI1 interrupt.
+    //Enable SPI2 interrupt.
 //    INTEnable(INT_SPI1, INT_ENABLED);
 //    INTSetVectorPriority(INT_SPI_1_VECTOR, INT_PRIORITY_LEVEL_2);
 //    INTSetVectorSubPriority(INT_SPI_1_VECTOR, INT_SUB_PRIORITY_LEVEL_0);
 }
 
-void SPI_Process()
+/**
+ * @brief Runs the SPI related operations.
+ * @return Void.
+ */
+void SPI_Process(void)
 {
     
 }
 
+/**
+ * @brief Reads and write data to SPI buffer.
+ * @param ch The data to be written to SPI buffer.
+ * @return Returns the data from the SPI buffer.
+ */
 BYTE SPI2_ReadWrite(BYTE ch)
 {
     BYTE dummy = 0;
@@ -73,7 +103,10 @@ BYTE SPI2_ReadWrite(BYTE ch)
     return dummy;
 }
 
-/* SPI2 ISR */
+/**
+ * @brief SPI2 Interrupt Service Routine.
+ * @return Void.
+ */
 void __ISR(_SPI_2_VECTOR, IPL4AUTO) IntSpi2Handler(void) 
 {
     INTClearFlag(INT_SPI2TX);

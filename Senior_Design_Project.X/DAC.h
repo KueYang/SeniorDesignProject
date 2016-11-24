@@ -1,3 +1,10 @@
+/**
+ * @file DAC.h
+ * @author Kue Yang
+ * @date 11/22/2016
+ * @brief Header for the DAC Module. 
+ */
+
 #ifndef DAC_H
 #define	DAC_H
 
@@ -5,6 +12,10 @@
 extern "C" {
 #endif
 
+/**  
+ * @defgroup WAV File Header Definitions and Error Codes.
+ * @{
+ */
 /* DAC Pin Outs */
 #define LDAC            PORTAbits.RA3
 #define CLR             PORTBbits.RB4
@@ -31,7 +42,8 @@ extern "C" {
 #define WRITE_INPUT_REG_DAC_A_B         0x07
 #define UPDATE_REG_DAC_A_B              0x0E
 #define WRITE_UPDATE_DAC_A_B            0x17
-    
+/** @} */
+
 void DAC_Init(void);
 BOOL DAC_WriteToDAC(BYTE cmd_addr, WORD data);
 

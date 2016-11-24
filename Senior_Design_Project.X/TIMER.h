@@ -2,7 +2,7 @@
  * @file TIMER.h
  * @author Kue Yang
  * @date 11/22/2016
- * @brief The TIMER module handles timer configurations and delays.
+ * @brief Header for the TIMER module.
  */
 
 #ifndef TIMER_H

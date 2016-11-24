@@ -1,3 +1,10 @@
+/**
+ * @file SD-SPI.c
+ * @author Microchip
+ * @date 11/22/2016
+ * @brief The SD Card SPI module.
+ */
+
 #include <p32xxxx.h>
 #include <plib.h>
 #include "STDDEF.h"
@@ -145,8 +152,6 @@ BYTE MDD_SDSPI_MediaDetect (void)
     return(!SD_CD);
 }//end MediaDetect
 
-
-
 /*********************************************************
   Function:
     WORD MDD_SDSPI_ReadSectorSize (void)
@@ -171,7 +176,6 @@ WORD MDD_SDSPI_ReadSectorSize(void)
 {
     return gMediaSectorSize;
 }
-
 
 /*********************************************************
   Function:
@@ -198,7 +202,6 @@ DWORD MDD_SDSPI_ReadCapacity(void)
     return (MDD_SDSPI_finalLBA);
 }
 
-
 /*********************************************************
   Function:
     WORD MDD_SDSPI_InitIO (void)
@@ -221,17 +224,6 @@ DWORD MDD_SDSPI_ReadCapacity(void)
   *********************************************************/
 void MDD_SDSPI_InitIO (void)
 {
-//    ANSELBbits.ANSB2 = 0;
-//    ANSELBbits.ANSB13 = 0;
-//    ANSELBbits.ANSB14 = 0;
-//    
-//    TRISBbits.TRISB2 = 0;   // SD_CS
-//    TRISBbits.TRISB11 = 1;  // SD_SDI
-//    TRISBbits.TRISB13 = 0;  // SD_SDO
-//    TRISBbits.TRISB14 = 0;  // SD_CLK
-//    
-//    PORTBbits.RB2 = 1;      // Initialize Chip Select line
-    
     // Re-mapped pins RPB11 and RPB13 pins to SDI and SDO
     mSysUnlockOpLock({
         PPSUnLock;
@@ -246,8 +238,6 @@ void MDD_SDSPI_InitIO (void)
     SD_CS_TRIS = OUTPUT;           //Card Select - output
     SD_WE_TRIS = INPUT;            //Write Protect - input
 }
-
-
 
 /*********************************************************
   Function:
@@ -279,7 +269,6 @@ BYTE MDD_SDSPI_ShutdownMedia(void)
 
     return 0;
 }
-
 
 /*****************************************************************************
   Function:

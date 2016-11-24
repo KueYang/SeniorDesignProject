@@ -1,3 +1,10 @@
+/**
+ * @file Audio.h
+ * @author Kue Yang
+ * @date 11/22/2016
+ * @brief Header for the FILES Module. 
+ */
+
 #ifndef FILES_H
 #define	FILES_H
 
@@ -6,9 +13,10 @@ extern "C" {
 #endif
 
 #include "./FIO_Library/FSIO.h"
-    
+
 #define FILENAME_LENGTH     32
     
+/**@typedef FILES structure. */
 typedef struct FILES
 {
     FSFILE* pointer;            // Variable used to point to the current file.

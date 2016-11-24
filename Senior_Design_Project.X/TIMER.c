@@ -11,20 +11,22 @@
 #include "STDDEF.h"
 #include "TIMER.h"
 
+/**  
+ * @privatesection
+ * @{
+ */
 /** 
  * Timer 1 Period, period needed for timer 1 to trigger an interrupt every 1 second.
  * 40 MHz PBCLK / 256 = 156.25 kHz, Timer 1 clock
  */
 #define PERIOD  156 
 
-/**
- * @brief The main timer module process.
- * @return None
- */
 void TIMER1_Init(void);
 
-/** Millisecond counter. */
+/**@var Millisecond counter. */
 UINT32 ms_TICK;
+
+/**@}*/
 
 /**
  * @brief Initializes all timer modules.
@@ -36,7 +38,7 @@ void TIMER_Init(void)
 }
 
 /**
- * @brief The main timer module process.
+ * @brief Runs timer related operations.
  * @return None
  */
 void TIMER_Process(void)
@@ -48,7 +50,7 @@ void TIMER_Process(void)
 }
 
 /**
- * @brief Timer 1 module initialization.
+ * @brief Initializes Timer 1 module.
  * @return Void
  */
 void TIMER1_Init(void)
@@ -63,7 +65,7 @@ void TIMER1_Init(void)
 
 /**
  * @brief Delays the application for a given set time.
- * @param timeDelay The delay in milliseconds
+ * @param timeDelay The delay in milliseconds.
  * @return Void
  */
 void TIMER_MSecondDelay(int timeDelay)
@@ -76,17 +78,18 @@ void TIMER_MSecondDelay(int timeDelay)
  * @brief Returns the millisecond count since the start of the application.
  * @return The millisecond count of the application.
  */
-UINT32 TIMER_GetMSecond()
+UINT32 TIMER_GetMSecond(void)
 {
     return ms_TICK;
 }
 
 /**
- * @brief Interrupt Service Routine used for Timer 1.
+ * @brief Timer 1 Interrupt Service Routine.
  * @return Void.
  */
 void __ISR(_TIMER_1_VECTOR, IPL2AUTO) Timer1Handler(void)
 {
+    // Increments the millisecond timer.
     ms_TICK++;
     
     // Clear the interrupt flag

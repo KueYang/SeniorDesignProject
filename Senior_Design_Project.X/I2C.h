@@ -7,7 +7,6 @@
 extern "C" {
 #endif
 
-
 void I2C_Init(void);
 void I2C_Process(void);
 

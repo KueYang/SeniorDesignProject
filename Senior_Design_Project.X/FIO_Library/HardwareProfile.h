@@ -1,3 +1,10 @@
+/**
+ * @file Audio.h
+ * @author Kue Yang
+ * @date 11/22/2016
+ * @brief Defines System Configurations.
+ */
+
 #ifndef _HARDWAREPROFILE_H_
 #define _HARDWAREPROFILE_H_
 
@@ -15,7 +22,6 @@
 
 /* SD Card definitions: Change these to fit your application when using
    an SD-card-based physical layer                                   */
-
 #ifdef USE_SD_INTERFACE_WITH_SPI
 
 // Registers for the SPI module you want to use

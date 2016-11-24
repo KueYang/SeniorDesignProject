@@ -1,7 +1,19 @@
+/**
+ * @file IO.c
+ * @author Kue Yang
+ * @date 11/22/2016
+ * @brief The IO Module.
+ */
+
 #include <p32xxxx.h>
 #include <plib.h>
 #include "IO.h"
 
+/**
+ * @brief Initializes the IO module.
+ * @details Initializes all pins used for all hardware modules in the application.
+ * @return Void
+ */
 void IO_Init(void)
 {   
     ANSELA = 0; ANSELB = 0;                 // Disable analog inputs
@@ -26,6 +38,10 @@ void IO_Init(void)
     TRISBbits.TRISB15 = 0;  // SD_CLK2
 }
 
+/**
+ * @brief Checks and updates IO used for detecting the fret position.
+ * @return Void
+ */
 void IO_Process(void)
 {
     

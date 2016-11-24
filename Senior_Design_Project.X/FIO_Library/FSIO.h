@@ -1,3 +1,10 @@
+/**
+ * @file Audio.h
+ * @author Kue Yang
+ * @date 11/22/2016
+ * @brief Defines the File System IO Operations.
+ */
+
 #ifndef  FS_DOT_H
 #define  FS_DOT_H
 
@@ -5,7 +12,6 @@
 #include "FSconfig.h"
 #include "FSDefs.h" 
 #include "SD-SPI.h"
-
 
 /*******************************************************************/
 /*                     Strunctures and defines                     */
@@ -41,12 +47,6 @@
 //              current location in the file will be set to the end.  The user will then be able to write to the file.
 #define FS_APPEND   "a"
 
-// Summary: Macro for the FSfopen FS_WRITE mode
-// Description: If this macro is specified as the mode argument in a call of FSfopen, the file being opened will
-//              be created if it doesn't exist.  If it does exist, it will be erased and replaced by an empty file
-//              of the same name.  The user will then be able to write to the file.
-#define FS_WRITE    "w"
-
 // Summary: Macro for the FSfopen FS_READ mode
 // Description: If this macro is specified as the mode argument in a call of FSfopen, the file information for the 
 //              specified file will be loaded.  If the file does not exist, the FSfopen function will fail.  The user 
@@ -59,12 +59,6 @@
 //              current location in the file will be set to the end.  The user will then be able to write to the file
 //              or read from the file.
 #define FS_APPENDPLUS   "a+"
-
-// Summary: Macro for the FSfopen FS_WRITE+ mode
-// Description: If this macro is specified as the mode argument in a call of FSfopen, the file being opened will
-//              be created if it doesn't exist.  If it does exist, it will be erased and replaced by an empty file
-//              of the same name.  The user will then be able to write to the file or read from the file.
-#define FS_WRITEPLUS    "w+"
 
 // Summary: Macro for the FSfopen FS_READ+ mode
 // Description: If this macro is specified as the mode argument in a call of FSfopen, the file information for the 
@@ -84,8 +78,6 @@ typedef struct
     unsigned    FileWriteEOF :1;    // Indicates the current position in a file is at the end of the file
 }FILEFLAGS;
 
-
-
 // Summary: Indicates how to search for file entries in the FILEfind function
 // Description: The values in the SEARCH_TYPE enumeration are used internally by the library to indicate how the FILEfind function
 //              how to perform a search.  The 'LOOK_FOR_EMPTY_ENTRY' value indicates that FILEfind should search for an empty file entry.
@@ -95,8 +87,6 @@ typedef enum{
     LOOK_FOR_EMPTY_ENTRY = 0,
     LOOK_FOR_MATCHING_ENTRY
 } SEARCH_TYPE;
-
-
 
 // Summary: Macro indicating the length of a 8.3 file name
 // Description: The TOTAL_FILE_SIZE_8P3 macro indicates the maximum number of characters in an 8.3 file name.  This value includes
@@ -132,7 +122,6 @@ typedef enum{
 #define FILE_NAME_SIZE_8P3           11
 #define FILE_NAME_SIZE               FILE_NAME_SIZE_8P3
 
-
 // Summary: Contains file information and is used to indicate which file to access.
 // Description: The FSFILE structure is used to hold file information for an open file as it's being modified or accessed.  A pointer to 
 //              an open file's FSFILE structure will be passeed to any library function that will modify that file.
@@ -149,11 +138,6 @@ typedef struct
     WORD            time;           // The file's last update time
     WORD            date;           // The file's last update date
     char            name[FILE_NAME_SIZE_8P3];       // The short name of the file
-	#ifdef SUPPORT_LFN
-    	BOOL			AsciiEncodingType;          // Ascii file name or Non-Ascii file name indicator
-		unsigned short int *utf16LFNptr;	        // Pointer to long file name in UTF16 format
-		unsigned short int utf16LFNlength;          // LFN length in terms of words excluding the NULL word at the last.
-	#endif
     WORD            entry;          // The position of the file's directory entry in it's directory
     WORD            chk;            // File structure checksum
     WORD            attributes;     // The file attributes
@@ -214,11 +198,6 @@ typedef struct
     unsigned char   attributes;                     // The attributes of the file that has been found
     unsigned long   filesize;                       // The size of the file that has been found
     unsigned long   timestamp;                      // The last modified time of the file that has been found (create time for directories)
-	#ifdef SUPPORT_LFN
-		BOOL			AsciiEncodingType;          // Ascii file name or Non-Ascii file name indicator
-		unsigned short int *utf16LFNfound;		    // Pointer to long file name found in UTF16 format
-		unsigned short int utf16LFNfoundLength;     // LFN Found length in terms of words including the NULL word at the last.
-	#endif
     unsigned int    entry;                          // The directory entry of the last file found that matches the specified attributes. (Internal use only)
     char            searchname[FILE_NAME_SIZE_8P3 + 2]; // The 8.3 format name specified when the user began the search. (Internal use only)
     unsigned char   searchattr;                     // The attributes specified when the user began the search. (Internal use only)
@@ -226,11 +205,9 @@ typedef struct
     unsigned char   initialized;                    // Check to determine if the structure was initialized by FindFirst (Internal use only)
 } SearchRec;
 
-
 /***************************************************************************
 * Prototypes                                                               *
 ***************************************************************************/
-
 /*************************************************************************
   Function:
     int FSInit(void)
@@ -256,7 +233,6 @@ typedef struct
     None
   *************************************************************************/
 int FSInit(void);
-
 
 /*********************************************************************
   Function:
@@ -301,52 +277,6 @@ int FSInit(void);
     None.
   *********************************************************************/
 FSFILE * FSfopen(const char * fileName, const char *mode);
-
-#ifdef SUPPORT_LFN
-/*********************************************************************
-  Function:
-    FSFILE * wFSfopen (const unsigned short int * fileName, const char *mode)
-  Summary:
-    Opens a file with UTF16 input 'fileName' on PIC24/PIC32/dsPIC MCU's.
-  Conditions:
-    For read modes, file exists; FSInit performed
-  Input:
-    fileName -  The name of the file to open
-    mode -
-         - FS_WRITE -      Create a new file or replace an existing file
-         - FS_READ -       Read data from an existing file
-         - FS_APPEND -     Append data to an existing file
-         - FS_WRITEPLUS -  Create a new file or replace an existing file (reads also enabled)
-         - FS_READPLUS -   Read data from an existing file (writes also enabled)
-         - FS_APPENDPLUS - Append data to an existing file (reads also enabled)
-  Return Values:
-    FSFILE * - The pointer to the file object
-    NULL -     The file could not be opened
-  Side Effects:
-    The FSerrno variable will be changed.
-  Description:
-    This function opens a file with UTF16 input 'fileName' on PIC24/PIC32/dsPIC MCU's.
-    First, RAM in the dynamic heap or static array will be allocated to a
-    new FSFILE object. Then, the specified file name will be formatted to
-    ensure that it's in 8.3 format or LFN format. Next, the FILEfind function
-    will be used to search for the specified file name. If the name is found,
-    one of three things will happen: if the file was opened in read mode, its
-    file info will be loaded using the FILEopen function; if it was opened in
-    write mode, it will be erased, and a new file will be constructed in
-    its place; if it was opened in append mode, its file info will be
-    loaded with FILEopen and the current location will be moved to the
-    end of the file using the FSfseek function.  If the file was not
-    found by FILEfind, a new file will be created if the mode was specified as
-    a write or append mode.  In these cases, a pointer to the heap or
-    static FSFILE object array will be returned. If the file was not
-    found and the mode was specified as a read mode, the memory
-    allocated to the file will be freed and the NULL pointer value
-    will be returned.
-  Remarks:
-    None.
-  *********************************************************************/
-FSFILE * wFSfopen(const unsigned short int * fileName, const char *mode);
-#endif
 
 /************************************************************
   Function:
@@ -404,7 +334,6 @@ int FSfclose(FSFILE *fo);
   *********************************************************/
 void FSrewind (FSFILE *fo);
 
-
 /**************************************************************************
   Function:
     size_t FSfread(void *ptr, size_t size, size_t n, FSFILE *stream)
@@ -435,7 +364,6 @@ void FSrewind (FSFILE *fo);
     None.
   **************************************************************************/
 UINT32 FSfread(void *ptr, UINT32 size, UINT32 n, FSFILE *stream);
-
 
 /**********************************************************************
   Function:
@@ -470,7 +398,6 @@ UINT32 FSfread(void *ptr, UINT32 size, UINT32 n, FSFILE *stream);
   **********************************************************************/
 int FSfseek(FSFILE *stream, long offset, int whence);
 
-
 /*******************************************************************
   Function:
     long FSftell (FSFILE * fo)
@@ -492,7 +419,6 @@ int FSfseek(FSFILE *stream, long offset, int whence);
     None                                                            
   *******************************************************************/
 long FSftell(FSFILE *fo);
-
 
 /****************************************************
   Function:
@@ -518,481 +444,7 @@ long FSftell(FSFILE *fo);
   ****************************************************/
 int FSfeof( FSFILE * stream );
 
-
-#ifdef ALLOW_FORMATS
-/*******************************************************************
-  Function:
-    int FSformat (char mode, long int serialNumber, char * volumeID)
-  Summary:
-    Formats a device
-  Conditions:
-    The device must possess a valid master boot record.
-  Input:
-    mode -          - 0 - Just erase the FAT and root
-                    - 1 - Create a new boot sector
-    serialNumber -  Serial number to write to the card
-    volumeID -      Name of the card
-  Return Values:
-    0 -    Format was successful
-    EOF -  Format was unsuccessful
-  Side Effects:
-    The FSerrno variable will be changed.
-  Description:
-    The FSformat function can be used to create a new boot sector
-    on a device, based on the information in the master boot record.
-    This function will first initialize the I/O pins and the device,
-    and then attempts to read the master boot record.  If the MBR
-    cannot be loaded successfully, the function will fail.  Next, if
-    the 'mode' argument is specified as '0' the existing boot sector
-    information will be loaded.  If the 'mode' argument is '1' an
-    entirely new boot sector will be constructed using the disk
-    values from the master boot record.  Once the boot sector has
-    been successfully loaded/created, the locations of the FAT and
-    root will be loaded from it, and they will be completely
-    erased.  If the user has specified a volumeID parameter, a 
-    VOLUME attribute entry will be created in the root directory
-    to name the device.
-
-    FAT12, FAT16 and FAT32 formatting are supported.
-
-    Based on the number of sectors, the format function automatically
-    compute the smallest possible value for the cluster size in order to
-    accommodate the physical size of the media. In this case, if a media 
-    with a big capacity is formatted, the format function may take a very
-    long time to write all the FAT tables. 
-
-    Therefore, the FORMAT_SECTORS_PER_CLUSTER macro may be used to 
-    specify the exact cluster size (in multiples of sector size). This 
-    macro can be defined in FSconfig.h
-
-  Remarks:
-    Only devices with a sector size of 512 bytes are supported by the 
-    format function                      
-  *******************************************************************/
-int FSformat (char mode, long int serialNumber, char * volumeID);
-#endif
-
-
-#ifdef ALLOW_WRITES
-/***************************************************************************
-  Function:
-    int FSattrib (FSFILE * file, unsigned char attributes)
-  Summary:
-    Change the attributes of a file
-  Conditions:
-    File opened
-  Input:
-    file -        Pointer to file structure
-    attributes -  The attributes to set for the file
-               -  Attribute -      Value - Indications 
-               -  ATTR_READ_ONLY - 0x01  - The read-only attribute
-               -  ATTR_HIDDEN -    0x02  - The hidden attribute 
-               -  ATTR_SYSTEM -    0x04  - The system attribute 
-               -  ATTR_ARCHIVE -   0x20  - The archive attribute
-  Return Values:
-    0 -  Attribute change was successful 
-    -1 - Attribute change was unsuccessful
-  Side Effects:
-    The FSerrno variable will be changed.
-  Description:
-    The FSattrib funciton will set the attributes of the specified file
-    to the attributes passed in by the user.  This function will load the
-    file entry, replace the attributes with the ones specified, and write
-    the attributes back.  If the specified file is a directory, the
-    directory attribute will be preserved.
-  Remarks:
-    None                                                                
-  ***************************************************************************/
-int FSattrib (FSFILE * file, unsigned char attributes);
-
-
-/***************************************************************
-  Function:
-    int FSrename (const rom char * fileName, FSFILE * fo)
-  Summary:
-    Renames the Ascii name of the file or directory on PIC24/PIC32/dsPIC devices
-  Conditions:
-    File opened.
-  Input:
-    fileName -  The new name of the file
-    fo -        The file to rename
-  Return Values:
-    0 -   File was renamed successfully
-    EOF - File was not renamed
-  Side Effects:
-    The FSerrno variable will be changed.
-  Description:
-    Renames the Ascii name of the file or directory on PIC24/PIC32/dsPIC devices.
-    First, it will search through the current working directory to ensure the
-    specified new filename is not already in use. If it isn't, the new filename
-    will be written to the file entry of the file pointed to by 'fo.'
-  Remarks:
-    None                                                        
-  ***************************************************************/
-int FSrename (const char * fileName, FSFILE * fo);
-
-#ifdef SUPPORT_LFN
-/***************************************************************
-  Function:
-    int wFSrename (const rom unsigned short int * fileName, FSFILE * fo)
-  Summary:
-    Renames the name of the file or directory to the UTF16 input fileName
-    on PIC24/PIC32/dsPIC devices
-  Conditions:
-    File opened.
-  Input:
-    fileName -  The new name of the file
-    fo -        The file to rename
-  Return Values:
-    0 -   File was renamed successfully
-    EOF - File was not renamed
-  Side Effects:
-    The FSerrno variable will be changed.
-  Description:
-    Renames the name of the file or directory to the UTF16 input fileName
-    on PIC24/PIC32/dsPIC devices. First, it will search through the current
-    working directory to ensure the specified new UTF16 filename is not
-    already in use.  If it isn't, the new filename will be written to the
-    file entry of the file pointed to by 'fo.'
-  Remarks:
-    None
-  ***************************************************************/
-int wFSrename (const unsigned short int * fileName, FSFILE * fo);
-#endif
-
-/*********************************************************************
-  Function:
-    int FSremove (const char * fileName)
-  Summary:
-    Deletes the file on PIC24/PIC32/dsPIC device.The 'fileName' is in ascii format.
-  Conditions:
-    File not opened, file exists
-  Input:
-    fileName -  Name of the file to erase
-  Return Values:
-    0 -   File removed 
-    EOF - File was not removed
-  Side Effects:
-    The FSerrno variable will be changed.
-  Description:
-    Deletes the file on PIC24/PIC32/dsPIC device.The 'fileName' is in ascii format.
-    The FSremove function will attempt to find the specified file with the FILEfind
-    function.  If the file is found, it will be erased using the FILEerase function.
-    The user can also provide ascii alias name of the ascii long file name as the
-    input to this function to get it erased from the memory.
-  Remarks:
-    None                                       
-  **********************************************************************/
-int FSremove (const char * fileName);
-
-#ifdef SUPPORT_LFN
-/*********************************************************************
-  Function:
-    int wFSremove (const unsigned short int * fileName)
-  Summary:
-    Deletes the file on PIC24/PIC32/dsPIC device.The 'fileName' is in UTF16 format.
-  Conditions:
-    File not opened, file exists
-  Input:
-    fileName -  Name of the file to erase
-  Return Values:
-    0 -   File removed
-    EOF - File was not removed
-  Side Effects:
-    The FSerrno variable will be changed.
-  Description:
-    Deletes the file on PIC24/PIC32/dsPIC device.The 'fileName' is in UTF16 format.
-    The wFSremove function will attempt to find the specified UTF16 file
-    name with the FILEfind function. If the file is found, it will be erased
-    using the FILEerase function.
-  Remarks:
-    None
-  **********************************************************************/
-int wFSremove (const unsigned short int * fileName);
-#endif
-
-/*********************************************************************************
-  Function:
-    size_t FSfwrite(const void *data_to_write, size_t size, size_t n, FSFILE *stream)
-  Summary:
-    Write data to a file
-  Conditions:
-    File opened in FS_WRITE, FS_APPEND, FS_WRITE+, FS_APPEND+, FS_READ+ mode
-  Input:
-    data_to_write -     Pointer to source buffer
-    size -              Size of units in bytes
-    n -                 Number of units to transfer
-    stream -            Pointer to file structure
-  Return:
-    size_t - number of units written
-  Side Effects:
-    The FSerrno variable will be changed.
-  Description:
-    The FSfwrite function will write data to a file.  First, the sector that
-    corresponds to the current position in the file will be loaded (if it hasn't
-    already been cached in the global data buffer).  Data will then be written to
-    the device from the specified buffer until the specified amount has been written.
-    If the end of a cluster is reached, the next cluster will be loaded, unless
-    the end-of-file flag for the specified file has been set.  If it has, a new
-    cluster will be allocated to the file.  Finally, the new position and filesize
-    will be stored in the FSFILE object.  The parameters 'size' and 'n' indicate how 
-    much data to write.  'Size' refers to the size of one object to write (in bytes), 
-    and 'n' will refer to the number of these objects to write.  The value returned 
-    will be equal  to 'n' unless an error occured.
-  Remarks:
-    None.
-  *********************************************************************************/
-UINT32 FSfwrite(const void *data_to_write, UINT32 size, UINT32 n, FSFILE *stream);
-#endif
-
-#ifdef ALLOW_DIRS
-/**************************************************************************
-  Function:
-    int FSchdir (char * path)
-  Summary:
-    Changes the current working directory to the ascii input path(PIC24/PIC32/dsPIC)
-  Conditions:
-    None
-  Input:
-    path - The path of the directory to change to.
-  Return Values:
-    0 -   The current working directory was changed successfully
-    EOF - The current working directory could not be changed
-  Side Effects:
-    The current working directory may be changed. The FSerrno variable will
-    be changed.
-  Description:
-    Changes the current working directory to the ascii input path(PIC24/PIC32/dsPIC).
-    The FSchdir function passes a RAM pointer to the path to the chdirhelper function.
-  Remarks:
-    None                                            
-  **************************************************************************/
-int FSchdir (char * path);
-
-#ifdef SUPPORT_LFN
-/**************************************************************************
-  Function:
-    int wFSchdir (unsigned short int * path)
-  Summary:
-    Change the current working directory as per the path specified in
-    UTF16 format (PIC24/PIC32/dsPIC)
-  Conditions:
-    None
-  Input:
-    path - The path of the directory to change to.
-  Return Values:
-    0 -   The current working directory was changed successfully
-    EOF - The current working directory could not be changed
-  Side Effects:
-    The current working directory may be changed. The FSerrno variable will
-    be changed.
-  Description:
-    Change the current working directory as per the path specified in
-    UTF16 format (PIC24/PIC32/dsPIC).The FSchdir function passes a RAM
-    pointer to the path to the chdirhelper function.
-  Remarks:
-    None                                            
-  **************************************************************************/
-int wFSchdir (unsigned short int * path);
-#endif
-
-/**************************************************************
-  Function:
-    char * FSgetcwd (char * path, int numchars)
-  Summary:
-    Get the current working directory path in Ascii format
-  Conditions:
-    None
-  Input:
-    path -      Pointer to the array to return the cwd name in
-    numchars -  Number of chars in the path
-  Return Values:
-    char * - The cwd name string pointer (path or defaultArray)
-    NULL -   The current working directory name could not be loaded.
-  Side Effects:
-    The FSerrno variable will be changed
-  Description:
-    Get the current working directory path in Ascii format.
-    The FSgetcwd function will get the name of the current
-    working directory and return it to the user.  The name
-    will be copied into the buffer pointed to by 'path,'
-    starting at the root directory and copying as many chars
-    as possible before the end of the buffer.  The buffer
-    size is indicated by the 'numchars' argument.  The first
-    thing this function will do is load the name of the current
-    working directory, if it isn't already present.  This could
-    occur if the user switched to the dotdot entry of a
-    subdirectory immediately before calling this function.  The
-    function will then copy the current working directory name 
-    into the buffer backwards, and insert a backslash character.  
-    Next, the function will continuously switch to the previous 
-    directories and copy their names backwards into the buffer
-    until it reaches the root.  If the buffer overflows, it
-    will be treated as a circular buffer, and data will be
-    copied over existing characters, starting at the beginning.
-    Once the root directory is reached, the text in the buffer
-    will be swapped, so that the buffer contains as much of the
-    current working directory name as possible, starting at the 
-    root.
-  Remarks:
-    None                                                       
-  **************************************************************/
-char * FSgetcwd (char * path, int numbchars);
-
-#ifdef SUPPORT_LFN
-/**************************************************************
-  Function:
-    char * wFSgetcwd (unsigned short int * path, int numchars)
-  Summary:
-    Get the current working directory path in UTF16 format
-  Conditions:
-    None
-  Input:
-    path -      Pointer to the array to return the cwd name in
-    numchars -  Number of chars in the path
-  Return Values:
-    char * - The cwd name string pointer (path or defaultArray)
-    NULL -   The current working directory name could not be loaded.
-  Side Effects:
-    The FSerrno variable will be changed
-  Description:
-    Get the current working directory path in UTF16 format.
-    The FSgetcwd function will get the name of the current
-    working directory and return it to the user.  The name
-    will be copied into the buffer pointed to by 'path,'
-    starting at the root directory and copying as many chars
-    as possible before the end of the buffer.  The buffer
-    size is indicated by the 'numchars' argument.  The first
-    thing this function will do is load the name of the current
-    working directory, if it isn't already present.  This could
-    occur if the user switched to the dotdot entry of a
-    subdirectory immediately before calling this function.  The
-    function will then copy the current working directory name 
-    into the buffer backwards, and insert a backslash character.  
-    Next, the function will continuously switch to the previous 
-    directories and copy their names backwards into the buffer
-    until it reaches the root.  If the buffer overflows, it
-    will be treated as a circular buffer, and data will be
-    copied over existing characters, starting at the beginning.
-    Once the root directory is reached, the text in the buffer
-    will be swapped, so that the buffer contains as much of the
-    current working directory name as possible, starting at the 
-    root.
-  Remarks:
-    None                                                       
-  **************************************************************/
-char * wFSgetcwd (unsigned short int * path, int numbchars);
-#endif
-
-#ifdef ALLOW_WRITES
-
-/**************************************************************************
-  Function:
-    int FSmkdir (char * path)
-  Summary:
-    Creates a directory as per the ascii input path (PIC24/PIC32/dsPIC)
-  Conditions:
-    None
-  Input:
-    path - The path of directories to create.
-  Return Values:
-    0 -   The specified directory was created successfully
-    EOF - The specified directory could not be created
-  Side Effects:
-    Will create all non-existent directories in the path. The FSerrno 
-    variable will be changed.
-  Description:
-    Creates a directory as per the ascii input path (PIC24/PIC32/dsPIC).
-    This function doesn't move the current working directory setting.
-  Remarks:
-    None                                            
-  **************************************************************************/
-int FSmkdir (char * path);
-
-#ifdef SUPPORT_LFN
-/**************************************************************************
-  Function:
-    int wFSmkdir (unsigned short int * path)
-  Summary:
-    Creates a directory as per the UTF16 input path (PIC24/PIC32/dsPIC)
-  Conditions:
-    None
-  Input:
-    path - The path of directories to create.
-  Return Values:
-    0 -   The specified directory was created successfully
-    EOF - The specified directory could not be created
-  Side Effects:
-    Will create all non-existent directories in the path. The FSerrno 
-    variable will be changed.
-  Description:
-    Creates a directory as per the UTF16 input path (PIC24/PIC32/dsPIC).
-    This function doesn't move the current working directory setting.
-  Remarks:
-    None                                            
-  **************************************************************************/
-int wFSmkdir (unsigned short int * path);
-#endif
-
-/**************************************************************************
-  Function:
-    int FSrmdir (char * path)
-  Summary:
-    Deletes the directory as per the ascii input path (PIC24/PIC32/dsPIC).
-  Conditions:
-    None
-  Input:
-    path -      The path of the directory to remove
-    rmsubdirs - 
-              - TRUE -  All sub-dirs and files in the target dir will be removed
-              - FALSE - FSrmdir will not remove non-empty directories
-  Return Values:
-    0 -   The specified directory was deleted successfully
-    EOF - The specified directory could not be deleted
-  Side Effects:
-    The FSerrno variable will be changed.
-  Description:
-    Deletes the directory as per the ascii input path (PIC24/PIC32/dsPIC).
-    This function wont delete the current working directory.
-  Remarks:
-    None.
-  **************************************************************************/
-int FSrmdir (char * path, unsigned char rmsubdirs);
-
-#ifdef SUPPORT_LFN
-/**************************************************************************
-  Function:
-    int wFSrmdir (unsigned short int * path, unsigned char rmsubdirs)
-  Summary:
-    Deletes the directory as per the UTF16 input path (PIC24/PIC32/dsPIC).
-  Conditions:
-    None
-  Input:
-    path -      The path of the directory to remove
-    rmsubdirs - 
-              - TRUE -  All sub-dirs and files in the target dir will be removed
-              - FALSE - FSrmdir will not remove non-empty directories
-  Return Values:
-    0 -   The specified directory was deleted successfully
-    EOF - The specified directory could not be deleted
-  Side Effects:
-    The FSerrno variable will be changed.
-  Description:
-    Deletes the directory as per the UTF16 input path (PIC24/PIC32/dsPIC).
-    This function wont delete the current working directory.
-  Remarks:
-    None.
-  **************************************************************************/
-int wFSrmdir (unsigned short int * path, unsigned char rmsubdirs);
-#endif
-
-#endif
-
-#endif
-
-
 #ifdef ALLOW_FILESEARCH
-
 /***********************************************************************************
   Function:
     int FindFirst (const char * fileName, unsigned int attr, SearchRec * rec)
@@ -1038,54 +490,6 @@ int wFSrmdir (unsigned short int * path, unsigned char rmsubdirs);
     Call FindFirst or FindFirstpgm before calling FindNext
   ***********************************************************************************/
 int FindFirst (const char * fileName, unsigned int attr, SearchRec * rec);
-
-#ifdef SUPPORT_LFN
-/***********************************************************************************
-  Function:
-    int wFindFirst (const unsigned short int * fileName, unsigned int attr, SearchRec * rec)
-  Summary:
-    Initial search function for the 'fileName' in UTF16 format on PIC24/PIC32/dsPIC devices.
-  Conditions:
-    None
-  Input:
-    fileName - The name to search for
-             - Parital string search characters
-             - * - Indicates the rest of the filename or extension can vary (e.g. FILE.*)
-             - ? - Indicates that one character in a filename can vary (e.g. F?LE.T?T)
-    attr -            The attributes that a found file may have
-         - ATTR_READ_ONLY -  File may be read only
-         - ATTR_HIDDEN -     File may be a hidden file
-         - ATTR_SYSTEM -     File may be a system file
-         - ATTR_VOLUME -     Entry may be a volume label
-         - ATTR_DIRECTORY -  File may be a directory
-         - ATTR_ARCHIVE -    File may have archive attribute
-         - ATTR_MASK -       All attributes
-    rec -             pointer to a structure to put the file information in
-  Return Values:
-    0 -  File was found
-    -1 - No file matching the specified criteria was found
-  Side Effects:
-    Search criteria from previous wFindFirst call on passed SearchRec object
-    will be lost. "utf16LFNfound" is overwritten after subsequent wFindFirst/FindNext
-    operations.It is the responsibility of the application to read the "utf16LFNfound"
-    before it is lost.The FSerrno variable will be changed.
-  Description:
-    Initial search function for the 'fileName' in UTF16 format on PIC24/PIC32/dsPIC devices.
-    The wFindFirst function will search for a file based on parameters passed in
-    by the user.  This function will use the FILEfind function to parse through
-    the current working directory searching for entries that match the specified
-    parameters.  If a file is found, its parameters are copied into the SearchRec
-    structure, as are the initial parameters passed in by the user and the position
-    of the file entry in the current working directory.If the return value of the 
-    function is 0 then "utf16LFNfoundLength" indicates whether the file found was 
-    long file name or short file name(8P3 format). The "utf16LFNfoundLength" is non-zero
-    for long file name and is zero for 8P3 format."utf16LFNfound" points to the
-    address of long file name if found during the operation.
-  Remarks:
-    Call FindFirst or FindFirstpgm before calling FindNext
-  ***********************************************************************************/
-int wFindFirst (const unsigned short int * fileName, unsigned int attr, SearchRec * rec);
-#endif
 
 /**********************************************************************
   Function:
@@ -1307,7 +711,6 @@ int FindNext (SearchRec * rec);
   **************************************************************************/
 int FSerror (void);
 
-
 /*********************************************************************************
   Function:
     int FSCreateMBR (unsigned long firstSector, unsigned long numSectors)
@@ -1342,111 +745,6 @@ int FSerror (void);
     unless the user is sure about the size of the device and the first sector value.
   *********************************************************************************/
 int FSCreateMBR (unsigned long firstSector, unsigned long numSectors);
-
-
-#ifdef ALLOW_GET_DISK_PROPERTIES
-/*********************************************************************************
-  Function:
-    void FSGetDiskProperties(FS_DISK_PROPERTIES* properties)
-  Summary:
-    Allows user to get the disk properties (size of disk, free space, etc)
-  Conditions:
-    1) ALLOW_GET_DISK_PROPERTIES must be defined in FSconfig.h
-    2) a FS_DISK_PROPERTIES object must be created before the function is called
-    3) the new_request member of the FS_DISK_PROPERTIES object must be set before
-        calling the function for the first time.  This will start a new search.
-    4) this function should not be called while there is a file open.  Close all
-        files before calling this function.
-  Input:
-    properties - a pointer to a FS_DISK_PROPERTIES object where the results should
-      be stored.
-  Return Values:
-    This function returns void.  The properties_status of the previous call of 
-      this function is located in the properties.status field.  This field has 
-      the following possible values:
-
-    FS_GET_PROPERTIES_NO_ERRORS - operation completed without error.  Results
-      are in the properties object passed into the function.
-    FS_GET_PROPERTIES_DISK_NOT_MOUNTED - there is no mounted disk.  Results in
-      properties object is not valid
-    FS_GET_PROPERTIES_CLUSTER_FAILURE - there was a failure trying to read a 
-      cluster from the drive.  The results in the properties object is a partial
-      result up until the point of the failure.
-    FS_GET_PROPERTIES_STILL_WORKING - the search for free sectors is still in
-      process.  Continue calling this function with the same properties pointer 
-      until either the function completes or until the partial results meets the
-      application needs.  The properties object contains the partial results of
-      the search and can be used by the application.  
-  Side Effects:
-    Can cause errors if called when files are open.  Close all files before
-    calling this function.
-
-    Calling this function without setting the new_request member on the first
-    call can result in undefined behavior and results.
-
-    Calling this function after a result is returned other than
-    FS_GET_PROPERTIES_STILL_WORKING can result in undefined behavior and results.
-  Description:  
-    This function returns the information about the mounted drive.  The results 
-    member of the properties object passed into the function is populated with 
-    the information about the drive.    
-
-    Before starting a new request, the new_request member of the properties
-    input parameter should be set to TRUE.  This will initiate a new search
-    request.
-
-    This function will return before the search is complete with partial results.
-    All of the results except the free_clusters will be correct after the first
-    call.  The free_clusters will contain the number of free clusters found up
-    until that point, thus the free_clusters result will continue to grow until
-    the entire drive is searched.  If an application only needs to know that a 
-    certain number of bytes is available and doesn't need to know the total free 
-    size, then this function can be called until the required free size is
-    verified.  To continue a search, pass a pointer to the same FS_DISK_PROPERTIES
-    object that was passed in to create the search.
-
-    A new search request sould be made once this function has returned a value 
-    other than FS_GET_PROPERTIES_STILL_WORKING.  Continuing a completed search
-    can result in undefined behavior or results.
-
-    Typical Usage:
-    <code>
-    FS_DISK_PROPERTIES disk_properties;
-
-    disk_properties.new_request = TRUE;
-
-    do
-    {
-        FSGetDiskProperties(&disk_properties);
-    } while (disk_properties.properties_status == FS_GET_PROPERTIES_STILL_WORKING);
-    </code>
-
-    results.disk_format - contains the format of the drive.  Valid results are 
-      FAT12(1), FAT16(2), or FAT32(3).
-
-    results.sector_size - the sector size of the mounted drive.  Valid values are
-      512, 1024, 2048, and 4096.
-
-    results.sectors_per_cluster - the number sectors per cluster.
-
-    results.total_clusters - the number of total clusters on the drive.  This 
-      can be used to calculate the total disk size (total_clusters * 
-      sectors_per_cluster * sector_size = total size of drive in bytes)
-
-    results.free_clusters - the number of free (unallocated) clusters on the drive.
-      This can be used to calculate the total free disk size (free_clusters * 
-      sectors_per_cluster * sector_size = total size of drive in bytes)
-
-  Remarks:
-    PIC24F size estimates:
-      Flash - 400 bytes (-Os setting)
-
-    PIC24F speed estimates:
-      Search takes approximately 7 seconds per Gigabyte of drive space.  Speed
-        will vary based on the number of sectors per cluster and the sector size.
-  *********************************************************************************/
-void FSGetDiskProperties(FS_DISK_PROPERTIES* properties);
-#endif
 
 /*************************************************************************
   Function:

@@ -1,10 +1,11 @@
-#ifndef _FS_DEF_
+/**
+ * @file FSconfig.h
+ * @author Kue Yang
+ * @date 11/22/2016
+ * @brief Defines the File System configuration settings.
+ */
 
-// Summary: A macro indicating whether Long File Name is supported
-// Description: If this macro is disabled then only 8.3 format file name is enabled.
-//              If this macro is enabled then long file names upto 256 characters are
-//              supported.
-#define	SUPPORT_LFN
+#ifndef _FS_DEF_
 
 // Summary: A macro indicating the maximum number of concurrently open files
 // Description: The FS_MAX_FILES_OPEN #define is only applicable when dynamic memory allocation is not used (FS_DYNAMIC_MEM is not defined).
@@ -28,22 +29,6 @@
 // Description: The ALLOW_FILESEARCH definition can be commented out to disable file search functions in the library.  This will
 //              prevent the use of the FindFirst and FindNext functions and reduce code size.
 #define ALLOW_FILESEARCH
-
-// Summary: A macro to enable/disable write functionality
-// Description: The ALLOW_WRITES definition can be commented out to disable all operations that write to the device.  This will
-//              greatly reduce code size.
-//#define ALLOW_WRITES
-
-// Summary: A macro to enable/disable format functionality
-// Description: The ALLOW_FORMATS definition can be commented out to disable formatting functionality.  This will prevent the use of
-//              the FSformat function.  If formats are enabled, write operations must also be enabled by uncommenting ALLOW_WRITES.
-//#define ALLOW_FORMATS
-
-// Summary: A macro to enable/disable directory operations.
-// Description: The ALLOW_DIRS definition can be commented out to disable all directory functionality.  This will reduce code size.
-//              If directories are enabled, write operations must also be enabled by uncommenting ALLOW_WRITES in order to use
-//              the FSmkdir or FSrmdir functions.
-//#define ALLOW_DIRS
 
 // Summary: A macro to enable/disable FAT32 support.
 // Description: The SUPPORT_FAT32 definition can be commented out to disable support for FAT32 functionality.  This will save a small amount
