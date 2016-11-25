@@ -147,7 +147,7 @@ static inline __attribute__((always_inline)) unsigned char SPICalutateBRG(unsign
   Remarks:
     None                                                  
   *********************************************************/
-BYTE MDD_SDSPI_MediaDetect (void)
+BYTE MDD_SDSPI_MediaNotDetect (void)
 {
     return(!SD_CD);
 }//end MediaDetect

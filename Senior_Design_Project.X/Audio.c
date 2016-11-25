@@ -165,32 +165,36 @@ const char* fileNames[MAX_NUM_OF_FILES] = {
 void AUDIO_Init(void)
 {
     // Checks to make sure that the SD card is attached
-    while (!MDD_SDSPI_MediaDetect())
+    while (MDD_SDSPI_MediaNotDetect())
     {
         // Toggles LED until SD card is detected
         PORTBbits.RB5 = 1;
-        TIMER_MSecondDelay(1000);
+        TIMER_MSecondDelay(100);
         PORTBbits.RB5 = 0;
-        TIMER_MSecondDelay(1000);
+        TIMER_MSecondDelay(100);
     }
 
     // Initializes the File Library
     FILES_Init();
     
+    FILES_ListFiles(&files[0].rec);
+    
+    FILES_OpenFile("OST_02.WAV", files[0].pointer, &files[0].rec);
+    
     // Opens all 19 audio files from the sd card
-    for(fileIndex = 0; fileIndex < MAX_NUM_OF_FILES; fileIndex++)
-    {
-        if(!FILES_OpenFile(fileNames[fileIndex], files[fileIndex].pointer, &files[fileIndex].rec) &&
-                (AUDIO_GetHeader() != WAV_SUCCESS))
-        {
-            fileIndex--;    // Resets the file index to retry opening the file.
-        }
-        else 
-        {
-            files[fileIndex].dataSize = AUDIO_GetDataSize();
-            strncpy(files[fileIndex].fileName, fileNames[fileIndex], sizeof(fileNames[fileIndex]));
-        }
-    }
+//    for(fileIndex = 0; fileIndex < MAX_NUM_OF_FILES; fileIndex++)
+//    {
+//        if(!FILES_OpenFile(fileNames[fileIndex], files[fileIndex].pointer, &files[fileIndex].rec) &&
+//                (AUDIO_GetHeader() != WAV_SUCCESS))
+//        {
+//            fileIndex--;    // Resets the file index to retry opening the file.
+//        }
+//        else 
+//        {
+//            files[fileIndex].dataSize = AUDIO_GetDataSize();
+//            strncpy(files[fileIndex].fileName, fileNames[fileIndex], sizeof(fileNames[fileIndex]));
+//        }
+//    }
     
     // Initializes the index to the first file.
     fileIndex = 0;

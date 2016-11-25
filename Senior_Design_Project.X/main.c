@@ -80,7 +80,12 @@
  * @brief The main entry point of the application.
  * @return An integer 0 upon exit success.
  */
-int main(void) {
+int main(void) 
+{    
+    /* Enable multi-vector interrupts */
+    INTConfigureSystem(INT_SYSTEM_CONFIG_MULT_VECTOR);
+    INTEnableInterrupts();
+    
     /* Peripheral Initializations */
     IO_Init();
     TIMER_Init();
@@ -88,15 +93,11 @@ int main(void) {
     SPI_Init();
     UART_Init();
     AUDIO_Init();
-    
-    /* Enable multi-vector interrupts */
-    INTConfigureSystem(INT_SYSTEM_CONFIG_MULT_VECTOR);
-    INTEnableInterrupts();
    
     while(1)
     {
-//        TIMER_Process();
-//        UART_Process();
+        TIMER_Process();
+        UART_Process();
 //        SPI_Process();
         AUDIO_Process();
     }

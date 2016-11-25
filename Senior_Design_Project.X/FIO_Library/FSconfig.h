@@ -37,34 +37,32 @@
 
 // Function definitions
 // Associate the physical layer functions with the correct physical layer
-#ifdef USE_SD_INTERFACE_WITH_SPI       // SD-SPI.c and .h
 
-    // Description: Function pointer to the Media Initialize Physical Layer function
-    #define MDD_MediaInitialize     MDD_SDSPI_MediaInitialize
+// Description: Function pointer to the Media Initialize Physical Layer function
+#define MDD_MediaInitialize     MDD_SDSPI_MediaInitialize
 
-    // Description: Function pointer to the Media Detect Physical Layer function
-    #define MDD_MediaDetect         MDD_SDSPI_MediaDetect
+// Description: Function pointer to the Media Detect Physical Layer function
+#define MDD_MediaNotDetect      MDD_SDSPI_MediaNotDetect
 
-    // Description: Function pointer to the Sector Read Physical Layer function
-    #define MDD_SectorRead          MDD_SDSPI_SectorRead
+// Description: Function pointer to the Sector Read Physical Layer function
+#define MDD_SectorRead          MDD_SDSPI_SectorRead
 
-    // Description: Function pointer to the Sector Write Physical Layer function
-    #define MDD_SectorWrite         MDD_SDSPI_SectorWrite
+// Description: Function pointer to the Sector Write Physical Layer function
+#define MDD_SectorWrite         MDD_SDSPI_SectorWrite
 
-    // Description: Function pointer to the I/O Initialization Physical Layer function
-    #define MDD_InitIO              MDD_SDSPI_InitIO
+// Description: Function pointer to the I/O Initialization Physical Layer function
+#define MDD_InitIO              MDD_SDSPI_InitIO
 
-    // Description: Function pointer to the Media Shutdown Physical Layer function
-    #define MDD_ShutdownMedia       MDD_SDSPI_ShutdownMedia
+// Description: Function pointer to the Media Shutdown Physical Layer function
+#define MDD_ShutdownMedia       MDD_SDSPI_ShutdownMedia
 
-    // Description: Function pointer to the Write Protect Check Physical Layer function
-    #define MDD_WriteProtectState   MDD_SDSPI_WriteProtectState
+// Description: Function pointer to the Write Protect Check Physical Layer function
+#define MDD_WriteProtectState   MDD_SDSPI_WriteProtectState
 
-    // Description: Function pointer to the Read Capacity Physical Layer function
-    #define MDD_ReadCapacity        MDD_SDSPI_ReadCapacity
+// Description: Function pointer to the Read Capacity Physical Layer function
+#define MDD_ReadCapacity        MDD_SDSPI_ReadCapacity
 
-    // Description: Function pointer to the Read Sector Size Physical Layer Function
-    #define MDD_ReadSectorSize      MDD_SDSPI_ReadSectorSize
-#endif
+// Description: Function pointer to the Read Sector Size Physical Layer Function
+#define MDD_ReadSectorSize      MDD_SDSPI_ReadSectorSize
 
 #endif
