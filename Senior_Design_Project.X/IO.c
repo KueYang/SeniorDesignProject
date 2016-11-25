@@ -2,7 +2,10 @@
  * @file IO.c
  * @author Kue Yang
  * @date 11/22/2016
- * @brief The IO Module.
+ * @details The IO module will handle all IO related tasks. The module will be
+ * initialize both the analog and digital IOs for all other modules (e.g. UART). 
+ * The process of checking for finger placement for each frets is handled in 
+ * this module.
  */
 
 #include <p32xxxx.h>

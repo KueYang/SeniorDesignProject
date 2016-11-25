@@ -1,8 +1,7 @@
 /**
- * @file Audio.h
+ * @file FILES.h
  * @author Kue Yang
  * @date 11/22/2016
- * @brief Header for the FILES Module. 
  */
 
 #ifndef FILES_H
@@ -14,15 +13,23 @@ extern "C" {
 
 #include "./FIO_Library/FSIO.h"
 
+/**@def FILENAME_LENGTH 
+ * Defines the max size of a file name. */
 #define FILENAME_LENGTH     32
     
-/**@typedef FILES structure. */
+/**
+ * @brief FILES data structure.
+ * @details Data structure used to store information about a file. 
+ * @remarks Requires Microchip's MDD File System Library.
+ */
 typedef struct FILES
 {
-    FSFILE* pointer;            // Variable used to point to the current file.
-    SearchRec rec;              // Variable used to search for files.
-    UINT32  dataSize;           // Size of the data
-    char*   fileName;           // File name
+    /**@{*/
+    FSFILE* pointer;            /**< Variable used to point to the current file in memory. */
+    SearchRec rec;              /**< Variable used to search for files. */
+    UINT32  dataSize;           /**< Variable used to store the size of the data. */
+    char*   fileName;           /**< Variable used to store the file name. */
+    /**@}*/
 }FILES;
 
 void FILES_Init(void);

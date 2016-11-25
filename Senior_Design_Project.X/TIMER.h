@@ -2,7 +2,6 @@
  * @file TIMER.h
  * @author Kue Yang
  * @date 11/22/2016
- * @brief Header for the TIMER module.
  */
 
 #ifndef TIMER_H
@@ -12,29 +11,10 @@
 extern "C" {
 #endif
 
-/**
- * @brief Initializes all timer modules.
- * @return Void
- */
+
 void TIMER_Init(void);
-
-/**
- * @brief The main timer module process.
- * @return None
- */
 void TIMER_Process(void);
-
-/**
- * @brief Returns the millisecond count since the start of the application.
- * @return The millisecond count of the application.
- */
 UINT32 TIMER_GetMSecond(void);
-
-/**
- * @brief Delays the application for a given set time.
- * @param timeDelay The delay in milliseconds
- * @return Void
- */
 void TIMER_MSecondDelay(int);
 
 #ifdef	__cplusplus

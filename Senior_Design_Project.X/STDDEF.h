@@ -2,7 +2,6 @@
  * @file STDDEF.h
  * @author Kue Yang
  * @date 11/22/2016
- * @brief Defines data types used in the application.
  */
 
 #ifndef STDDEF_H
@@ -12,29 +11,29 @@
 extern "C" {
 #endif
 
-/**@defgroup Standard Data Types 
- * @{
- */
-/** Boolean type definitions */
+/**@def TRUE 
+ * Boolean datatype. */
 #define TRUE    1
+/**@def FALSE 
+ * Boolean datatype. */    
 #define FALSE   0
+/**@def BOOL
+ * Boolean datatype definition. */
 #define BOOL    int
 
-/** @typedef UINT8 datatype. */
+/** @brief Typedef definition for UINT8. */
 typedef unsigned char       UINT8;
-/** @typedef UINT16 datatype. */
+/** @brief Typedef definition for UINT16. */
 typedef unsigned short      UINT16;
-/** @typedef UINT32 datatype. */
+/** @brief Typedef definition for UINT32. */
 typedef unsigned long       UINT32;
 
-/** @typedef BYTE datatype. */
+/** @brief Typedef definition for BYTE datatype. */
 typedef unsigned char       BYTE;   // 8-bits
-/** @typedef WORD datatype. */
+/** @brief Typedef definition for WORD datatype. */
 typedef unsigned short      WORD;   // 16-bits
-/** @typedef DWORD datatype. */
+/** @brief Typedef definition for DWORD datatype. */
 typedef unsigned long       DWORD;  // 32-bits
-
-/** @} */
 
 #ifdef	__cplusplus
 }

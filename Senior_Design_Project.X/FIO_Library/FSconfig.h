@@ -2,7 +2,7 @@
  * @file FSconfig.h
  * @author Kue Yang
  * @date 11/22/2016
- * @brief Defines the File System configuration settings.
+ * @brief Defines the File System configurations. 
  */
 
 #ifndef _FS_DEF_

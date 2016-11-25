@@ -2,7 +2,8 @@
  * @file SPI.c
  * @author Kue Yang
  * @date 11/22/2016
- * @brief The SPI module.
+ * @details The SPI module will handle all SPI related tasks. The SPI module is
+ * used by the DAC module to write to the DAC. 
  */
 
 #include <p32xxxx.h>
@@ -88,8 +89,8 @@ void SPI_Process(void)
 
 /**
  * @brief Reads and write data to SPI buffer.
- * @param ch The data to be written to SPI buffer.
- * @return Returns the data from the SPI buffer.
+ * @arg ch The data to be written to SPI buffer.
+ * @return Returns the data read from the SPI buffer.
  */
 BYTE SPI2_ReadWrite(BYTE ch)
 {

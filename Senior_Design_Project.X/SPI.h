@@ -1,8 +1,7 @@
 /**
  * @file SPI.h
  * @author Kue Yang
- * @date 11/22/2016
- * @brief Header for the SPI Module. 
+ * @date 11/22/2016 
  */
 
 #ifndef SPI_H

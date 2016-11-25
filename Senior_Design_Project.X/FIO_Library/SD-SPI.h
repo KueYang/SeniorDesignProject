@@ -1,39 +1,9 @@
-/******************************************************************************
- *
- *                Microchip Memory Disk Drive File System
- *
- ******************************************************************************
- * FileName:        SD-SPI.h
- * Dependencies:    GenericTypeDefs.h
- *                  FSconfig.h
- *                  FSDefs.h
- * Processor:       PIC18/PIC24/dsPIC30/dsPIC33/PIC32
- * Compiler:        C18/C30/C32
- * Company:         Microchip Technology, Inc.
- * Version:         1.3.0
- *
- * Software License Agreement
- *
- * The software supplied herewith by Microchip Technology Incorporated
- * (the "Company") for its PICmicro® Microcontroller is intended and
- * supplied to you, the Company’s customer, for use solely and
- * exclusively on Microchip PICmicro Microcontroller products. The
- * software is owned by the Company and/or its supplier, and is
- * protected under applicable copyright laws. All rights are reserved.
- * Any use in violation of the foregoing restrictions may subject the
- * user to criminal sanctions under applicable laws, as well as to
- * civil liability for the breach of the terms and conditions of this
- * license.
- *
- * THIS SOFTWARE IS PROVIDED IN AN "AS IS" CONDITION. NO WARRANTIES,
- * WHETHER EXPRESS, IMPLIED OR STATUTORY, INCLUDING, BUT NOT LIMITED
- * TO, IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A
- * PARTICULAR PURPOSE APPLY TO THIS SOFTWARE. THE COMPANY SHALL NOT,
- * IN ANY CIRCUMSTANCES, BE LIABLE FOR SPECIAL, INCIDENTAL OR
- * CONSEQUENTIAL DAMAGES, FOR ANY REASON WHATSOEVER.
- *
-*****************************************************************************/
-
+/**
+ * @file SD-SPI.h
+ * @author Kue Yang
+ * @date 11/22/2016
+ * @brief Defines SPI related operations used in the MDD library.
+ */
 #ifndef SDMMC_H
 #define SDMMC_H
 

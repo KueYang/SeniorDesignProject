@@ -2,12 +2,13 @@
  * @file TIMER.c
  * @author Kue Yang
  * @date 11/22/2016
- * @brief The TIMER module.
+ * @details The TIMER module will handle timers and delays used in the 
+ * application. 
  */
 
 #include <p32xxxx.h>
 #include <plib.h>
-#include "CONFIG.h"
+#include "HardwareProfile.h"
 #include "STDDEF.h"
 #include "TIMER.h"
 
@@ -15,18 +16,17 @@
  * @privatesection
  * @{
  */
-/** 
- * Timer 1 Period, period needed for timer 1 to trigger an interrupt every 1 second.
- * 40 MHz PBCLK / 256 = 156.25 kHz, Timer 1 clock
- */
+
+/** @def PERIOD 
+ * Timer 1 Period for one ms. */
 #define PERIOD  156 
 
 void TIMER1_Init(void);
 
-/**@var Millisecond counter. */
+/**@var ms_TICK 
+ * Millisecond counter. */
 UINT32 ms_TICK;
-
-/**@}*/
+/** @} */
 
 /**
  * @brief Initializes all timer modules.
@@ -39,7 +39,7 @@ void TIMER_Init(void)
 
 /**
  * @brief Runs timer related operations.
- * @return None
+ * @return Void
  */
 void TIMER_Process(void)
 {
@@ -65,7 +65,7 @@ void TIMER1_Init(void)
 
 /**
  * @brief Delays the application for a given set time.
- * @param timeDelay The delay in milliseconds.
+ * @arg timeDelay The delay in milliseconds.
  * @return Void
  */
 void TIMER_MSecondDelay(int timeDelay)
@@ -75,8 +75,8 @@ void TIMER_MSecondDelay(int timeDelay)
 }
 
 /**
- * @brief Returns the millisecond count since the start of the application.
- * @return The millisecond count of the application.
+ * @brief Returns the millisecond count.
+ * @return Returns the millisecond count of the application since startup.
  */
 UINT32 TIMER_GetMSecond(void)
 {
@@ -85,11 +85,13 @@ UINT32 TIMER_GetMSecond(void)
 
 /**
  * @brief Timer 1 Interrupt Service Routine.
+ * @details The interrupt service routine is used to increment the millisecond
+ * counter used for the timer.
  * @return Void.
  */
 void __ISR(_TIMER_1_VECTOR, IPL2AUTO) Timer1Handler(void)
 {
-    // Increments the millisecond timer.
+    // Increments the millisecond counter.
     ms_TICK++;
     
     // Clear the interrupt flag

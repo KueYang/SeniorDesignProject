@@ -2,7 +2,8 @@
  * @file FILES.c
  * @author Kue Yang
  * @date 11/22/2016
- * @brief The FILES module.
+ * @details The FILES module will handle all file related tasks. Tasks includes:
+ * opening and closing files, searching for files and reading files. 
  */
 
 #include <p32xxxx.h>
@@ -15,12 +16,16 @@
  * @privatesection
  * @{
  */
-/** @var Stores the attributes of files to be read. */
+/** @var file_attributes 
+ * Stores the attributes of files to be read. */
 BYTE file_attributes;
 /** @} */
 
 /**
  * @brief Initializes the FILES module.
+ * @details Initializes Microchip MDD File System library. Updates the file attributes
+ * that will be used for file related operations. 
+ * @remark Requires Microchip's MDD File System library.
  * @return Void
  */
 void FILES_Init(void)
@@ -34,12 +39,12 @@ void FILES_Init(void)
 
 /**
  * @brief Opens a given file to be read.
- * @param fileName The name of the file.
- * @param pointer A pointer that will be used to reference the open file.
- * @param rec A pointer that will store information on the opened file.
+ * @arg fileName The name of the file to open.
+ * @arg pointer A pointer that will be used to reference the open file.
+ * @arg rec A pointer that will store information on the opened file.
  * @return Returns a boolean indicating if the file was open successfully.
- * @retval TRUE if the file was open successfully.
- * @retval FALSE if the file was open unsuccessfully.
+ * @retval TRUE If the file was open successfully.
+ * @retval FALSE If the file was open unsuccessfully.
  */
 BOOL FILES_OpenFile(const char* fileName, FSFILE* pointer , SearchRec* rec)
 {
@@ -57,10 +62,10 @@ BOOL FILES_OpenFile(const char* fileName, FSFILE* pointer , SearchRec* rec)
 
 /**
  * @brief Closes an open file.
- * @param pointer The pointer that points to the file.
+ * @arg pointer The pointer that points to the file.
  * @return Returns a boolean indicating if the file was closed successfully.
- * @retval TRUE if the file was closed successfully.
- * @retval FALSE if the file was closed unsuccessfully.
+ * @retval TRUE If the file was closed successfully.
+ * @retval FALSE If the file was closed unsuccessfully.
  */
 BOOL FILES_CloseFile(FSFILE* pointer)
 {
@@ -73,11 +78,11 @@ BOOL FILES_CloseFile(FSFILE* pointer)
 
 /**
  * @brief Displays a list of files.
- * @param rec A pointer that has information on an opened file.
+ * @arg rec A pointer that has information on an opened file.
  * @remarks Requires the UART module to initialized.
  * @return Returns a boolean indicating if there are files to be displayed.
- * @retval TRUE if there are files listed.
- * @retval FALSE if there are no files to be listed.
+ * @retval TRUE If there are files listed.
+ * @retval FALSE If there are no files to be listed.
  */
 BOOL FILES_ListFiles(SearchRec* rec)
 {
@@ -100,8 +105,8 @@ BOOL FILES_ListFiles(SearchRec* rec)
 
 /**
  * @brief Finds a file.
- * @param fileName The name of the file to be searched for.
- * @param rec A pointer that has information on an opened file.
+ * @arg fileName The name of the file to be searched for.
+ * @arg rec A pointer that has information on an opened file.
  * @remarks Requires the UART module to initialized.
  * @return Returns a boolean indicating if the specified file is found.
  * @retval TRUE if there the specified file is found.
@@ -118,10 +123,10 @@ BOOL FILES_FindFile(const char* fileName, SearchRec* rec)
 
 /**
  * @brief Reads from a file.
- * @param buffer The buffer used to store the data read from the specified file.
- * @param bytes The number of bytes to be read from the file.
- * @param blocks The block sizes of the data to be read.
- * @param pointer A pointer to the file being read.
+ * @arg buffer The buffer used to store the data read from the specified file.
+ * @arg bytes The number of bytes to be read from the file.
+ * @arg blocks The block sizes of the data to be read.
+ * @arg pointer A pointer to the file being read.
  * @return Returns a boolean indicating if the specified file is found.
  * @retval TRUE if there the specified file is found.
  * @retval FALSE if there the specified file is not found.

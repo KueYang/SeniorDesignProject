@@ -2,69 +2,79 @@
  * @file UART.c
  * @author Kue Yang
  * @date 11/22/2016
- * @brief The UART module.
+ * @details The UART module will handle serial communication. The module will be
+ * used to receive commands via serial communications and can be use as a 
+ * debugging tool. The serial communication uses the rs232 serial interface. 
  */
 
 #include <p32xxxx.h>
 #include <plib.h>
 #include "STDDEF.h"
-#include "./FIO_Library/HardwareProfile.h"
+#include "HardwareProfile.h"
 #include "Timer.h"
 #include "FIFO.h"
 #include "UART.h"
 
-/**  
- * @privatesection
- * @{
- */
+/** @def UART_MODULE_ID 
+ * The UART module ID. */
 #define UART_MODULE_ID          UART1
+/** @def DESIRED_BAUDRATE 
+ * The desired UART baud rate. */
 #define DESIRED_BAUDRATE        (19200)     //The desired BaudRate
-#define WRITE_BUFFER_SIZE       256
+/** @def WRITE_BUFFER_SIZE 
+ * The buffer size for writing. */
+#define WRITE_BUFFER_SIZE       128
+/** @def CMD_SIZE 
+ * The size of the command name string. */
 #define CMD_SIZE                16
+/** @def DESCRIPTION_SIZE 
+ * The size of command description string. */
 #define DESCRIPTION_SIZE        (WRITE_BUFFER_SIZE-CMD_SIZE)
 
-/* UART Helper Functions. */
+/** UART Helper Functions. */
 int UART_GetBaudRate(int desireBaud);
 
-/* FIFO helper functions. */
+/** FIFO helper functions. */
 BOOL UART_isBufferEmpty(FIFO* buffer);
 char UART_getNextChar(FIFO* buffer);
 void UART_putNextChar(FIFO* buffer, char ch);
 
-/* Command Helper Functions. */
+/** Command Helper Functions. */
 void UART_processCommand(void);
 int MON_parseCommand(COMMANDSTR* cmd, FIFO* buffer);
 COMMANDS MON_getCommand(const char* cmdName);
 void MON_removeWhiteSpace(const char* string);
-BOOL MON_compareStrings(const char* str1, const char* str2);
+BOOL MON_stringsMatch(const char* str1, const char* str2);
 
-/* Commands Handlers. */
+/** Commands Handlers. */
 void MON_GetHelp(void);
 void MON_GetInputTest(void);
 
-
-
-/**@var The command string. */
+/** @var cmdStr 
+ * The command string. */
 COMMANDSTR cmdStr;
-/**@var The UART receive buffer. */
+/** @var rxBuffer 
+ * The UART receive buffer. */
 FIFO rxBuffer;
-/**@var The UART transmit buffer. */
+/** @var txBuffer 
+ * The UART transmit buffer. */
 FIFO txBuffer;
-/**@var The command list size. */
+/** @var cmdListSize 
+ * The command list size. */
 UINT16 cmdListSize;
-/**@var The UART command receive flag. */
+/** @var cmdReady 
+ * The UART command receive flag. */
 BOOL cmdReady;
-/**@var The UART baud rate. */
+/** @var actualBaudRate 
+ * The configured UART baud rate. */
 UINT16 actualBaudRate;
-
-/**@var The list of commands. */
+/** @var MON_COMMANDS 
+ * The list of commands. */
 COMMANDS MON_COMMANDS[] = {
     {"HELP", " Display the list of commands avaliable. \n\r", MON_GetHelp},
     {"TEST", " Test getting commands. FORMAT: TEST arg1 arg2. \n\r", MON_GetInputTest},
     {"", "", NULL}
 };
-
-/** @} */
 
 /**
  * @brief Initialize the UART module.
@@ -100,9 +110,9 @@ void UART_Init(void)
 }
 
 /**
- * @brief Initializes all timer modules.
- * @param desireBaud The desired baud rate.
- * @return The baud rate for the given peripheral clock.
+ * @brief Calculates the baud rate configuration.
+ * @arg desireBaud The desired baud rate.
+ * @return Returns the baud rate for the given peripheral clock.
  */
 int UART_GetBaudRate(int desireBaud)
 {
@@ -117,11 +127,6 @@ void UART_Process(void)
 {
     UART_processCommand();
 } 
-
-/**
- * @defgroup Command Helper Functions
- * @{
- */
 
 /**
  * @brief Processes commands received by the UART module.
@@ -161,8 +166,8 @@ void UART_processCommand(void)
 
 /**
  * @brief Parses the received commands.
- * @param cmd The command struct used to store the command.
- * @param buffer The receive buffer.
+ * @arg cmd The command data structure used to store the command.
+ * @arg buffer The receive buffer.
  * @return Returns the number of command arguments.
  */
 int MON_parseCommand(COMMANDSTR* cmd, FIFO* buffer)
@@ -214,13 +219,16 @@ int MON_parseCommand(COMMANDSTR* cmd, FIFO* buffer)
     
     return numOfArgs;
 }
+
 /**
- * @brief Compares two strings.
+ * @brief Checks if two strings matches.
+ * @arg str1 The first string to compare.
+ * @arg str2 The second string to compare.
  * @return Returns a boolean indicating if the strings matches.
  * @retval TRUE if both strings matches.
  * @retval FALSE if the strings does not match.
  */
-BOOL MON_compareStrings(const char* str1, const char* str2)
+BOOL MON_stringsMatch(const char* str1, const char* str2)
 {
     /* Loops through both strings until reaching a null terminator or if neither strings matches. */
     while (*str1 == *str2) 
@@ -242,7 +250,7 @@ BOOL MON_compareStrings(const char* str1, const char* str2)
 
 /**
  * @brief Removes white spaces from a string.
- * @param string The string that is being modified.
+ * @arg string The string that is being modified.
  * @return Void.
  */
 void MON_removeWhiteSpace(const char* string)
@@ -259,7 +267,7 @@ void MON_removeWhiteSpace(const char* string)
 
 /**
  * @brief Gets the handler for the specified command.
- * @param cmdName The name of the command.
+ * @arg cmdName The name of the command.
  * @return Returns the command handler.
  */
 COMMANDS MON_getCommand(const char* cmdName)
@@ -267,7 +275,7 @@ COMMANDS MON_getCommand(const char* cmdName)
     int i = 0;
     for(i = 0; i < cmdListSize; i++)
     {
-        if(MON_compareStrings(cmdName, MON_COMMANDS[i].name))
+        if(MON_stringsMatch(cmdName, MON_COMMANDS[i].name))
         {
             return MON_COMMANDS[i];
         }
@@ -277,7 +285,7 @@ COMMANDS MON_getCommand(const char* cmdName)
 
 /**
  * @brief Sends a string.
- * @param string The string that will be transmitted.
+ * @arg string The string that will be sent.
  * @return Void.
  */
 void UART_sendString(const char *string)
@@ -293,7 +301,7 @@ void UART_sendString(const char *string)
 
 /**
  * @brief Sends a character.
- * @param character The character that will be transmitted.
+ * @arg character The character that will be sent.
  * @return Void.
  */
 void UART_sendCharacter(const char character)
@@ -305,6 +313,10 @@ void UART_sendCharacter(const char character)
 
 /**
  * @brief The UART1 Interrupt Service Routine.
+ * @details The UART1 interrupt service routine will handle receiving data. If
+ * data is received, the data is pushed into a FIFO queue for later processing. 
+ * If data is received is a return key, the received data has ended and the 
+ * command is ready flag is set. 
  * @return Void.
  */
 void __ISR(_UART1_VECTOR, IPL4AUTO) IntUart1Handler(void)
@@ -340,17 +352,11 @@ void __ISR(_UART1_VECTOR, IPL4AUTO) IntUart1Handler(void)
 	    INTClearFlag(INT_SOURCE_UART_RX(UART_MODULE_ID));
 	}
 }
-/** @} */
-
-/**
- * @defgroup FIFO Helper Functions.
- * @{
- */
 
 /**
  * @brief Pushes the specified character into the buffer.
- * @param buffer The buffer used to store the character.
- * @param ch The character to push into buffer.
+ * @arg buffer The buffer used to store the character.
+ * @arg ch The character to push into buffer.
  * @return Void.
  */
 void UART_putNextChar(FIFO* buffer, char ch)
@@ -360,7 +366,7 @@ void UART_putNextChar(FIFO* buffer, char ch)
 
 /**
  * @brief Pops a character from the buffer.
- * @param buffer The buffer to pop the character from.
+ * @arg buffer The buffer to pop the character from.
  * @return Returns the character that is popped off from the buffer.
  */
 char UART_getNextChar(FIFO* buffer)
@@ -370,7 +376,7 @@ char UART_getNextChar(FIFO* buffer)
 
 /**
  * @brief Checks if the specified buffer is empty.
- * @param buffer The buffer that is being checked.
+ * @arg buffer The buffer that is being checked.
  * @return Returns a boolean indicating if the buffer is empty.
  * @retval TRUE if the buffer is empty.
  * @retval FALSE if the buffer is not empty.
@@ -383,12 +389,6 @@ BOOL UART_isBufferEmpty(FIFO* buffer)
     }
     return TRUE;
 }
-/** @} */
-
-/**
- * @defgroup Command Handlers
- * @{
- */
 
 /**
  * @brief Displays the list of available commands.
@@ -420,5 +420,3 @@ void MON_GetInputTest(void)
     strncat(&buf[sizeof(cmdStr.arg1)], cmdStr.arg2, (128-8-sizeof(cmdStr.arg1)));
     UART_sendString(&buf[0]);
 }
-
-/** @} */

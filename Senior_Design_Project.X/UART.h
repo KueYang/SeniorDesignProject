@@ -2,7 +2,6 @@
  * @file UART.h
  * @author Kue Yang
  * @date 11/22/2016
- * @brief Header for the UART Module. 
  */
 
 #ifndef UART_H
@@ -12,23 +11,35 @@
 extern "C" {
 #endif
 
-/**@defgroup Command Typedef Structures
- * @{
+/**
+ * @brief COMMANDS data structure.
+ * @details The COMMANDS data structure is used to store a command with its 
+ * corresponding command handler. The command handler is used in conjunction 
+ * with the serial communication for processing a command that is received from 
+ * the user.
  */
-/** Command Structure */
-typedef struct COMMANDS{
-    const char* name;
-    const char* description;
-    void (*handler)(void);
+typedef struct COMMANDS
+{
+    /**@{*/
+    const char* name;           /**< Variable used to store the command name */
+    const char* description;    /**< Variable used to store a description of the command. */
+    void (*handler)(void);      /**< Variable used to point to the command handler. */
+    /**@}*/
 }COMMANDS;
 
-/** Command String Structure */
-typedef struct COMMANDSTR{
-    char name[32];
-    char arg1[32];
-    char arg2[32];
+/**
+ * @brief COMMANDSTR data structure.
+ * @details The command string data structure is used to store a command with its 
+ * corresponding arguments. 
+ */
+typedef struct COMMANDSTR
+{
+    /**@{*/
+    char name[32];      /**< Variable used to store the name of the command. */
+    char arg1[32];      /**< Variable used to store the first command argument. */
+    char arg2[32];      /**< Variable used to store the second command argument. */
+    /**@}*/
 }COMMANDSTR;
-/** @} */
 
 void UART_Init(void);
 void UART_Process(void);

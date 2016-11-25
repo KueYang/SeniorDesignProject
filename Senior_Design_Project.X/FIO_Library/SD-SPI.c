@@ -2,13 +2,13 @@
  * @file SD-SPI.c
  * @author Microchip
  * @date 11/22/2016
- * @brief The SD Card SPI module.
  */
 
 #include <p32xxxx.h>
 #include <plib.h>
 #include "STDDEF.h"
-#include "HardwareProfile.h"
+#include "../HardwareProfile.h"
+#include "SPI_Hardware.h"
 #include "FSIO.h"
 #include "FSDefs.h"
 #include "SD-SPI.h"

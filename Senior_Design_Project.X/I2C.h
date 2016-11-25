@@ -1,7 +1,11 @@
+/**
+ * @file I2C.h
+ * @author Kue Yang
+ * @date 11/22/2016
+ */
+
 #ifndef I2C_H
 #define	I2C_H
-
-#include "stddef.h"
 
 #ifdef	__cplusplus
 extern "C" {

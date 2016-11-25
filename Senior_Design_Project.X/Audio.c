@@ -2,7 +2,10 @@
  * @file Audio.c
  * @author Kue Yang
  * @date 11/22/2016
- * @brief The AUDIO modules handles how audio data is process. 
+ * @details The Audio module will handle all audio processing related tasks.
+ * Tasks includes: initializing the DAC and Microchip's MDD File System library, 
+ * reading data from external memory and writing audio data to the DACs.
+ * @remarks The Audio module requires Microchip's MDD File System library.
  */
 
 #include <p32xxxx.h>
@@ -13,22 +16,21 @@
 #include "DAC.h"
 #include "Audio.h"
 
-/**  
- * @privatesection
- * @{
- */
-
 UINT8 AUDIO_GetHeader(void);
 UINT32 AUDIO_GetDataSize(void);
 BOOL AUDIO_GetAudioData(void);
 
-/** @var The list of audio files that are to be used. */
+/** @var files 
+ * The list of audio files that are to be used. */
 FILES files[MAX_NUM_OF_FILES];
-/** @var A buffer used to store data read from the audio file. */
+/** @var receiveBuffer 
+ * A buffer used to store data read from the audio file. */
 BYTE receiveBuffer[256];
-/** @var The index used to specify the audio file that is being read. */
+/** @var fileIndex 
+ * The index used to specify the audio file that is being read. */
 int fileIndex;
-/** @var The file names of audio files for the specified pic. */
+/** @var fileNames 
+ * The file names of audio files for the specified pic. */
 const char* fileNames[MAX_NUM_OF_FILES] = {
 #ifdef PIC1
     "S1_F0.WAV",
@@ -152,10 +154,12 @@ const char* fileNames[MAX_NUM_OF_FILES] = {
 #endif
 };
 
-/** @} */
-
 /**
  * @brief Initializes the Audio module.
+ * @details Initializes the SD card and Microchip MDD File library. After 
+ * initialization, all the audio files that are specific to the PIC are opened.
+ * The DAC is also powered on with only one of its channels on (channel A is on
+ * by default). 
  * @return Void
  */
 void AUDIO_Init(void)
@@ -196,7 +200,12 @@ void AUDIO_Init(void)
 }
 
 /**
- * @brief Processes all audio data.
+ * @brief Process audio data.
+ * @details The audio data will process audio data based on data received from
+ * the IO and ADC modules. The data received by the IO module will correspond to
+ * the fret location. The data received by the ADC module will correspond to the
+ * strumming data.
+ * @remarks Requires the IO and ADC modules to be initialized. 
  * @return Void
  */
 void AUDIO_Process(void)
@@ -205,7 +214,7 @@ void AUDIO_Process(void)
 }
 
 /**
- * @brief Reads the header of the WAV file.
+ * @brief Reads the header of a WAV file.
  * @return A code indicating if reading the file is successful or not.
  * @retval 1, Read the header successfully
  * @retval 2, Header size is invalid

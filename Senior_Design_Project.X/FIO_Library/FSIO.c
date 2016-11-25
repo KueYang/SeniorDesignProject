@@ -2,7 +2,6 @@
  * @file FSIO.c
  * @author Microchip
  * @date 11/22/2016
- * @brief The FSIO module.
  */
 
 #include <plib.h>

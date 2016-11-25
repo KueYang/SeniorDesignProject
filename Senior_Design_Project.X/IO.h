@@ -2,7 +2,6 @@
  * @file IO.h
  * @author Kue Yang
  * @date 11/22/2016
- * @brief Header for the IO Module. 
  */
 
 #ifndef IO_H

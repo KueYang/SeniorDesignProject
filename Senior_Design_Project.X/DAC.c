@@ -2,7 +2,9 @@
  * @file DAC.c
  * @author Kue Yang
  * @date 11/22/2016
- * @brief The DAC module.
+ * @details The DAC module handles all DAC related operations such as 
+ * configuring and writing to the DAC. DAC configurations are defined in the
+ * header file. 
  */
 
 #include <p32xxxx.h>
@@ -13,6 +15,7 @@
 
 /**
  * @brief Initializes the DAC.
+ * @details Powers on the DAC with only one channel open.
  * @remark Requires the SPI module to be initialized.
  * @return Void.
  */
@@ -24,10 +27,14 @@ void DAC_Init(void)
 
 /**
  * @brief Writes data to the DAC.
- * @remark Requires the DAC to be initialized. 
+ * @details The current DAC can only handle 12-bit data. Therefore, the data that
+ * is transmitted are the first 12 MSB.
+ * @arg cmd_addr The command and channel of the DAC.
+ * @arg data The data that will be written to the DAC.
+ * @remark Requires SPI and the DAC to be initialized. 
  * @return Returns a boolean indicating if writing to the DAC is successful.
- * @retval TRUE if the file was read successfully
- * @retval FALSE if the file was read unsuccessfully
+ * @retval TRUE If the file was read successfully
+ * @retval FALSE If the file was read unsuccessfully
  */
 BOOL DAC_WriteToDAC(BYTE cmd_addr, WORD data)
 {

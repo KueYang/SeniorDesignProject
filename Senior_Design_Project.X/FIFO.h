@@ -1,8 +1,7 @@
 /**
- * @file Audio.h
+ * @file FIFO.h
  * @author Kue Yang
  * @date 11/22/2016
- * @brief Header for the FIFO Module. 
  */
 
 #ifndef FIFO_H
@@ -12,14 +11,22 @@
 extern "C" {
 #endif
 
+/**@def BUFFERSIZE 
+ * Defines the buffer size used for the FIFO queue. */
 #define BUFFERSIZE  1024
 
-/** @typedef FIFO structure. */
-typedef struct fifo{
-    char buffer[BUFFERSIZE];
-    int  headPtr;
-    int  tailPtr;
-    int  bufferSize;
+/**
+ * @brief FIFO data structure.
+ * @details The FIFO data structure is used to create and store a FIFO queue.
+ */
+typedef struct FIFO
+{
+    /**@{*/
+    char buffer[BUFFERSIZE];    /**< Variable used to store the FIFO data. */
+    int  headPtr;               /**< Variable used to point to the front of the queue. */
+    int  tailPtr;               /**< Variable used to point to the back of the queue. */
+    int  bufferSize;            /**< Variable used to stores the queue size. */
+    /**@}*/
 }FIFO;
 
 char FIFO_Pop(FIFO* fifo);
