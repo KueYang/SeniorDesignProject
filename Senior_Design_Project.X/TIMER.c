@@ -10,6 +10,7 @@
 #include <plib.h>
 #include "HardwareProfile.h"
 #include "STDDEF.h"
+#include "Audio.h"
 #include "TIMER.h"
 
 /**  

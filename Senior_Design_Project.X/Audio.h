@@ -88,7 +88,10 @@ extern "C" {
 
 void AUDIO_Init(void);
 void AUDIO_Process(void);
+
+void AUDIO_setNewTone(int fret);
 void Audio_WriteDataToDAC(void);
+void Audio_ReadDataFromMemory(void);
 
 #ifdef	__cplusplus
 }

@@ -20,7 +20,7 @@
 #define REC_BUF_SIZE    256
 #define READ_BYTES      16
 
-UINT8 AUDIO_GetHeader(FILES* file);
+UINT8 AUDIO_GetHeader(FILES* file, int index);
 BOOL AUDIO_GetAudioData(FILES* file, int bytes);
 
 /** @var files 
@@ -186,7 +186,7 @@ void AUDIO_Init(void)
     if(files[0].currentPtr != NULL)
     {
         /* Parses the header from the files and stores them. */
-        if(AUDIO_GetHeader(&files[0]) == WAV_SUCCESS)
+        if(AUDIO_GetHeader(&files[0], 0) == WAV_SUCCESS)
         {
             /* Saves a pointer to the beginning of the data section of the file. */
             files[0].startPtr = files[0].currentPtr;
@@ -261,7 +261,7 @@ BOOL AUDIO_isDoneWriting()
  * @retval 6, Chunk ID 1 Data is invalid
  * @retval 7, Chunk ID 2 is invalid
  */
-UINT8 AUDIO_GetHeader(FILES* file)
+UINT8 AUDIO_GetHeader(FILES* file, int index)
 {
     if(FILES_ReadFile(receiveBuffer, 1, WAV_HEADER_SIZE, file->currentPtr))
     {
@@ -293,12 +293,12 @@ UINT8 AUDIO_GetHeader(FILES* file)
             return WAV_SUB_CHUNK2_ID_ERROR;
         }
         
-        file[fileIndex].audioInfo.sampleRate = receiveBuffer[WAV_SAMPLE_RATE+1] << 8 | 
+        file[index].audioInfo.sampleRate = receiveBuffer[WAV_SAMPLE_RATE+1] << 8 | 
                                     receiveBuffer[WAV_SAMPLE_RATE];
-        file[fileIndex].audioInfo.bitsPerSample = receiveBuffer[WAV_BITS_PER_SAMPLE];
-        file[fileIndex].audioInfo.blockAlign = receiveBuffer[WAV_BLOCK_ALIGN];
-        file[fileIndex].audioInfo.numOfChannels = receiveBuffer[WAV_NUM_CHANNELS];
-        file[fileIndex].audioInfo.dataSize = (receiveBuffer[WAV_DATA-1] << 24) | 
+        file[index].audioInfo.bitsPerSample = receiveBuffer[WAV_BITS_PER_SAMPLE];
+        file[index].audioInfo.blockAlign = receiveBuffer[WAV_BLOCK_ALIGN];
+        file[index].audioInfo.numOfChannels = receiveBuffer[WAV_NUM_CHANNELS];
+        file[index].audioInfo.dataSize = (receiveBuffer[WAV_DATA-1] << 24) | 
                                     (receiveBuffer[WAV_DATA-2] << 16) |
                                     (receiveBuffer[WAV_DATA-3] << 8) |
                                     (receiveBuffer[WAV_DATA-4]);
