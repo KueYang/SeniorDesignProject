@@ -16,7 +16,19 @@ extern "C" {
 /**@def FILENAME_LENGTH 
  * Defines the max size of a file name. */
 #define FILENAME_LENGTH     32
-    
+
+typedef struct AUDIOINFO
+{
+    /**@{*/
+    UINT16  bitsPerSample;
+    UINT16  numOfChannels;
+    UINT16  sampleRate;
+    UINT16  blockAlign;
+    UINT32  dataSize;           /**< Variable used to store the size of the data. */
+    char*   fileName;           /**< Variable used to store the file name. */
+    /**@}*/
+}AUDIOINFO;
+
 /**
  * @brief FILES data structure.
  * @details Data structure used to store information about a file. 
@@ -25,15 +37,15 @@ extern "C" {
 typedef struct FILES
 {
     /**@{*/
-    FSFILE* pointer;            /**< Variable used to point to the current file in memory. */
-    SearchRec rec;              /**< Variable used to search for files. */
-    UINT32  dataSize;           /**< Variable used to store the size of the data. */
-    char*   fileName;           /**< Variable used to store the file name. */
+    FSFILE* startPtr;           /**< Variable used to point to the beginning of the file. >*/
+    FSFILE* currentPtr;         /**< Variable used to point to the current location of the open file. >*/
+    SearchRec rec;              /**< Variable used to search for files. >*/
+    AUDIOINFO audioInfo;
     /**@}*/
 }FILES;
 
 void FILES_Init(void);
-BOOL FILES_OpenFile(const char* file, FSFILE* pointer , SearchRec* rec);
+FSFILE* FILES_OpenFile(const char* file, SearchRec* rec);
 BOOL FILES_CloseFile(FSFILE* pointer);
 BOOL FILES_FindFile(const char* file, SearchRec* rec);
 BOOL FILES_ListFiles(SearchRec* rec);

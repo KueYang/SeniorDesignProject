@@ -40,24 +40,19 @@ void FILES_Init(void)
 /**
  * @brief Opens a given file to be read.
  * @arg fileName The name of the file to open.
- * @arg pointer A pointer that will be used to reference the open file.
  * @arg rec A pointer that will store information on the opened file.
  * @return Returns a boolean indicating if the file was open successfully.
  * @retval TRUE If the file was open successfully.
  * @retval FALSE If the file was open unsuccessfully.
  */
-BOOL FILES_OpenFile(const char* fileName, FSFILE* pointer , SearchRec* rec)
+FSFILE* FILES_OpenFile(const char* fileName, SearchRec* rec)
 {
+    // Checks if the specific file is found on the external storage.
     if(FILES_FindFile(fileName, rec))
     {
-        pointer = FSfopen(fileName, "r");
-        if (pointer == NULL)
-        {
-            return FALSE;
-        }
-        return TRUE;
+        return FSfopen(fileName, "r");
     }
-    return FALSE;
+    return NULL;
 }
 
 /**
@@ -134,7 +129,7 @@ BOOL FILES_FindFile(const char* fileName, SearchRec* rec)
 BOOL FILES_ReadFile(BYTE* buffer, UINT8 bytes, UINT32 blocks, FSFILE* pointer)
 {
     /* Reads bytes-Byte blocks from the file and stores it in the receive buffer. */
-    if(FSfread(buffer, bytes, blocks, pointer) != blocks)
+    if(FSfread((void*)buffer, bytes, blocks, pointer) != blocks)
     {
         return FALSE;
     }

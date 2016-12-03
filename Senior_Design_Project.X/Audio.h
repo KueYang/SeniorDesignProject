@@ -88,6 +88,7 @@ extern "C" {
 
 void AUDIO_Init(void);
 void AUDIO_Process(void);
+void Audio_WriteDataToDAC(void);
 
 #ifdef	__cplusplus
 }

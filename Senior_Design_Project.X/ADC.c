@@ -1,6 +1,7 @@
 #include <p32xxxx.h>
 #include <plib.h>
 #include "STDDEF.h"
+#include "IO.h"
 #include "ADC.h"
 
 /**@def NUM_OF_ADCCHANNELS Defines the number of ADC channels used. */

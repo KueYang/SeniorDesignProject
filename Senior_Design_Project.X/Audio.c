@@ -13,22 +13,30 @@
 #include "STDDEF.h"
 #include "TIMER.h"
 #include "FILES.h"
+#include "UART.h"
 #include "DAC.h"
 #include "Audio.h"
 
-UINT8 AUDIO_GetHeader(void);
-UINT32 AUDIO_GetDataSize(void);
-BOOL AUDIO_GetAudioData(void);
+#define REC_BUF_SIZE    256
+#define READ_BYTES      16
+
+UINT8 AUDIO_GetHeader(FILES* file);
+BOOL AUDIO_GetAudioData(FILES* file, int bytes);
 
 /** @var files 
  * The list of audio files that are to be used. */
 FILES files[MAX_NUM_OF_FILES];
 /** @var receiveBuffer 
  * A buffer used to store data read from the audio file. */
-BYTE receiveBuffer[256];
+BYTE receiveBuffer[REC_BUF_SIZE];
+UINT16 audioData[REC_BUF_SIZE];
 /** @var fileIndex 
  * The index used to specify the audio file that is being read. */
 int fileIndex;
+int audioInPtr;
+int audioOutPtr;
+int bytesRead;
+int bytesWritten;
 /** @var fileNames 
  * The file names of audio files for the specified pic. */
 const char* fileNames[MAX_NUM_OF_FILES] = {
@@ -165,36 +173,27 @@ const char* fileNames[MAX_NUM_OF_FILES] = {
 void AUDIO_Init(void)
 {
     // Checks to make sure that the SD card is attached
-    while (MDD_SDSPI_MediaNotDetect())
-    {
-        // Toggles LED until SD card is detected
-        PORTBbits.RB5 = 1;
-        TIMER_MSecondDelay(100);
-        PORTBbits.RB5 = 0;
-        TIMER_MSecondDelay(100);
-    }
+    while(MDD_SDSPI_MediaNotDetect());
 
     // Initializes the File Library
     FILES_Init();
     
+    // Lists the files in memory
     FILES_ListFiles(&files[0].rec);
     
-    FILES_OpenFile("OST_02.WAV", files[0].pointer, &files[0].rec);
-    
-    // Opens all 19 audio files from the sd card
-//    for(fileIndex = 0; fileIndex < MAX_NUM_OF_FILES; fileIndex++)
-//    {
-//        if(!FILES_OpenFile(fileNames[fileIndex], files[fileIndex].pointer, &files[fileIndex].rec) &&
-//                (AUDIO_GetHeader() != WAV_SUCCESS))
-//        {
-//            fileIndex--;    // Resets the file index to retry opening the file.
-//        }
-//        else 
-//        {
-//            files[fileIndex].dataSize = AUDIO_GetDataSize();
-//            strncpy(files[fileIndex].fileName, fileNames[fileIndex], sizeof(fileNames[fileIndex]));
-//        }
-//    }
+    // Opens the given file and set a pointer to the file.
+    files[0].currentPtr = FILES_OpenFile("OST_02.WAV", &files[0].rec);
+    if(files[0].currentPtr != NULL)
+    {
+        /* Parses the header from the files and stores them. */
+        if(AUDIO_GetHeader(&files[0]) == WAV_SUCCESS)
+        {
+            /* Saves a pointer to the beginning of the data section of the file. */
+            files[0].startPtr = files[0].currentPtr;
+            /* Configures the Timer2 period given the sample rate. */
+            TIMER_SetSampleRate(files[0].audioInfo.sampleRate);
+        }
+    }
     
     // Initializes the index to the first file.
     fileIndex = 0;
@@ -214,7 +213,41 @@ void AUDIO_Init(void)
  */
 void AUDIO_Process(void)
 {
+    if(AUDIO_isDoneReading() && AUDIO_isDoneWriting())
+    {
+        AUDIO_setNewTone(0);
+        IO_setCurrentFret(0);
+    }
+}
 
+void AUDIO_setNewTone(int fret)
+{
+    /* Sets the index to point to the file corresponding to the fret. */
+    fileIndex = fret;
+    /* Sets the bytes read to zero. */
+    bytesRead = 0;
+    /* Sets the bytes written to zero. */
+    bytesWritten = 0;
+    /* Sets the current file pointer to the beginning of the data section of the file. */
+    files[fileIndex].currentPtr = files[fileIndex].startPtr;
+}
+
+BOOL AUDIO_isDoneReading()
+{
+    if(bytesRead >= files[fileIndex].audioInfo.dataSize)
+    {
+        return TRUE;
+    }
+    return FALSE;
+}
+
+BOOL AUDIO_isDoneWriting()
+{
+    if(bytesWritten >= files[fileIndex].audioInfo.dataSize)
+    {
+        return TRUE;
+    }
+    return FALSE;
 }
 
 /**
@@ -228,9 +261,9 @@ void AUDIO_Process(void)
  * @retval 6, Chunk ID 1 Data is invalid
  * @retval 7, Chunk ID 2 is invalid
  */
-UINT8 AUDIO_GetHeader(void)
+UINT8 AUDIO_GetHeader(FILES* file)
 {
-    if(FILES_ReadFile(receiveBuffer, 1, WAV_HEADER_SIZE, files[fileIndex].pointer))
+    if(FILES_ReadFile(receiveBuffer, 1, WAV_HEADER_SIZE, file->currentPtr))
     {
         if((receiveBuffer[WAV_CHUNK_ID] != 'R')|
                 (receiveBuffer[WAV_CHUNK_ID+1] != 'I')|
@@ -239,10 +272,10 @@ UINT8 AUDIO_GetHeader(void)
         {
             return WAV_CHUNK_ID_ERROR;
         }
-        else if((receiveBuffer[WAV_FORMAT_ERROR] != 'W')|
-                (receiveBuffer[WAV_FORMAT_ERROR+1] != 'A')|
-                (receiveBuffer[WAV_FORMAT_ERROR+2] != 'V')|
-                (receiveBuffer[WAV_FORMAT_ERROR+3] != 'E'))
+        else if((receiveBuffer[WAV_FORMAT] != 'W')|
+                (receiveBuffer[WAV_FORMAT+1] != 'A')|
+                (receiveBuffer[WAV_FORMAT+2] != 'V')|
+                (receiveBuffer[WAV_FORMAT+3] != 'E'))
         {
             return WAV_FORMAT_ERROR;
         }
@@ -255,25 +288,23 @@ UINT8 AUDIO_GetHeader(void)
         else if((receiveBuffer[WAV_CHUNK2_SUB_ID] != 'd')|
                 (receiveBuffer[WAV_CHUNK2_SUB_ID+1] != 'a')|
                 (receiveBuffer[WAV_CHUNK2_SUB_ID+2] != 't')|
-                (receiveBuffer[WAV_CHUNK2_SUB_ID+2] != 'a'))
+                (receiveBuffer[WAV_CHUNK2_SUB_ID+3] != 'a'))
         {
             return WAV_SUB_CHUNK2_ID_ERROR;
         }
+        
+        file[fileIndex].audioInfo.sampleRate = receiveBuffer[WAV_SAMPLE_RATE+1] << 8 | 
+                                    receiveBuffer[WAV_SAMPLE_RATE];
+        file[fileIndex].audioInfo.bitsPerSample = receiveBuffer[WAV_BITS_PER_SAMPLE];
+        file[fileIndex].audioInfo.blockAlign = receiveBuffer[WAV_BLOCK_ALIGN];
+        file[fileIndex].audioInfo.numOfChannels = receiveBuffer[WAV_NUM_CHANNELS];
+        file[fileIndex].audioInfo.dataSize = (receiveBuffer[WAV_DATA-1] << 24) | 
+                                    (receiveBuffer[WAV_DATA-2] << 16) |
+                                    (receiveBuffer[WAV_DATA-3] << 8) |
+                                    (receiveBuffer[WAV_DATA-4]);
         return WAV_SUCCESS;
     }
     return WAV_HEADER_SIZE_ERROR;
-}
-
-/**
- * @brief Returns the data size of the given audio file.
- * @return The size of the data block of the audio file in BYTES.
- */
-UINT32 AUDIO_GetDataSize(void)
-{
-    return (receiveBuffer[WAV_DATA-1] << 24) | 
-            (receiveBuffer[WAV_DATA-2] << 16) |
-            (receiveBuffer[WAV_DATA-3] << 8) |
-            (receiveBuffer[WAV_DATA-4]);
 }
 
 /**
@@ -282,12 +313,45 @@ UINT32 AUDIO_GetDataSize(void)
  * @retval TRUE if the file was read successfully.
  * @retval FALSE if the file was read unsuccessfully.
  */
-BOOL AUDIO_GetAudioData(void)
+BOOL AUDIO_GetAudioData(FILES* file, int bytes)
 {
-    if(FILES_ReadFile(receiveBuffer, 1, files[fileIndex].dataSize, files[fileIndex].pointer))
+    UINT16 blocks = file->audioInfo.blockAlign*bytes;
+    if(FILES_ReadFile(receiveBuffer, 1, blocks, file->currentPtr))
     {
+        int i = 0;
+        UINT16 audioByte;
+        for(i = 0; i < blocks; i += file->audioInfo.blockAlign)
+        {
+            audioByte = receiveBuffer[i] << 8 | receiveBuffer[i+1];
+            audioData[audioInPtr++] = audioByte;
+            
+            if(audioInPtr >= REC_BUF_SIZE)
+            {
+                audioInPtr = 0;
+            }
+        }
+        bytesRead += blocks;
         return TRUE;
     }
     return FALSE;
 }
+
+void Audio_ReadDataFromMemory(void)
+{
+    /* Reads 16 bytes of data. */
+    AUDIO_GetAudioData(&files[fileIndex], READ_BYTES);
+}
+
+void Audio_WriteDataToDAC(void)
+{
+    /* Writes 1 byte of data to the DAC. */
+    DAC_WriteToDAC(WRITE_UPDATE_DAC_A, audioData[audioOutPtr++]);
+    if(audioOutPtr >= REC_BUF_SIZE)
+    {
+        audioOutPtr = 0;
+    }
+    // Increments the byte written count.
+    bytesWritten++;
+}
+
 
