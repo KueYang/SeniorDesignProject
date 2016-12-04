@@ -11,6 +11,7 @@
 #include <p32xxxx.h>
 #include <plib.h>
 #include "STDDEF.h"
+#include "IO.h"
 #include "TIMER.h"
 #include "FILES.h"
 #include "UART.h"
@@ -217,6 +218,8 @@ void AUDIO_Process(void)
     {
         AUDIO_setNewTone(0);
         IO_setCurrentFret(0);
+        TIMER2_ON(FALSE);
+        TIMER3_ON(FALSE);
     }
 }
 
