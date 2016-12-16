@@ -11,9 +11,10 @@
 #include "STDDEF.h"
 #include "IO.h"
 #include "TIMER.h"
-//#include "ADC.h"
+#include "ADC.h"
 #include "SPI.h"
 #include "UART.h"
+#include "DAC.h"
 #include "Audio.h"
 
 /**
@@ -83,12 +84,13 @@
 int main(void) 
 {    
     /* Peripheral Initializations */
-    IO_Init();
-    TIMER_Init();
-//    ADC_Init();
-    SPI_Init();
-    UART_Init();
-    AUDIO_Init();
+    IO_Init();          // Initializes all analog and digital IO.
+    TIMER_Init();       // Initializes all timer modules.
+    ADC_Init();       // Initializes all ADC modules.
+    SPI_Init();       // Initializes all SPI modules.
+//    UART_Init();      // Initializes all UART modules
+//    AUDIO_Init();     // Initializes the Audio module.
+    DAC_Init();         // Initializes the DACs.
     
     /* Enable multi-vector interrupts */
     INTConfigureSystem(INT_SYSTEM_CONFIG_MULT_VECTOR);
@@ -96,9 +98,9 @@ int main(void)
    
     while(1)
     {
-//        TIMER_Process();
+        TIMER_Process();
 //        UART_Process();
-        AUDIO_Process();
+//        AUDIO_Process();
     }
 
     return (0);

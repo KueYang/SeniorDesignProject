@@ -32,8 +32,6 @@ void IO_Init(void)
     
     // Digital IO
     TRISBbits.TRISB7 = 0;   // Used to test Timer
-    TRISBbits.TRISB5 = 0;   // LED SD Card Indication
-    PORTBbits.RB5 = 0;
     
     // ADC IO
     
@@ -43,8 +41,9 @@ void IO_Init(void)
     
     // SPI IO
     TRISAbits.TRISA3 = 0;   // LDAC
-    TRISBbits.TRISB4 = 0;   // CLR
     TRISAbits.TRISA4 = 0;   // SYNC
+    TRISBbits.TRISB4 = 0;   // CLR
+    TRISBbits.TRISB5 = 0;   // RSTSEL
     TRISBbits.TRISB2 = 1;   // SD_SDI2
     TRISBbits.TRISB1 = 0;   // SD_SDO2
     TRISBbits.TRISB15 = 0;  // SD_CLK2

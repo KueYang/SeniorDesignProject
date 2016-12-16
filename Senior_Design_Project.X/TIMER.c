@@ -20,7 +20,8 @@
 
 /** @def PERIOD 
  * Timer 1 Period for one ms. */
-#define PERIOD  156 
+#define ONE_MS_PERIOD  156 
+#define FIVE_US_PERIOD  200
 
 void TIMER1_Init(void);
 void TIMER2_Init(void);
@@ -62,7 +63,7 @@ void TIMER_Process(void)
  */
 void TIMER1_Init(void)
 {
-    OpenTimer1(T1_ON | T1_SOURCE_INT | T1_PS_1_256, PERIOD);
+    OpenTimer1(T1_ON | T1_SOURCE_INT | T1_PS_1_256, ONE_MS_PERIOD);
     
     // Set up the timer interrupt with a priority of 2
     INTEnable(INT_T1, INT_ENABLED);
@@ -74,6 +75,8 @@ void TIMER_SetSampleRate(UINT16 sampleRate)
 {
     PR2 = (GetPeripheralClock()/sampleRate) - 1;
     TMR2 = 0;
+    PR3 = (GetPeripheralClock()/sampleRate) - 1;
+    TMR3 = 0;
 }
 
 /**
@@ -82,14 +85,14 @@ void TIMER_SetSampleRate(UINT16 sampleRate)
  */
 void TIMER2_Init(void)
 {
-    OpenTimer2(T2_OFF | T2_SOURCE_INT | T2_PS_1_256, PERIOD);
+    OpenTimer2(T2_OFF | T2_SOURCE_INT | T2_PS_1_256, ONE_MS_PERIOD);
     
     Timer2_ON = FALSE;
     
     // Set up the timer interrupt with a priority of 2
     INTEnable(INT_T2, INT_ENABLED);
     INTSetVectorPriority(INT_TIMER_2_VECTOR, INT_PRIORITY_LEVEL_1);
-    INTSetVectorSubPriority(INT_TIMER_2_VECTOR, INT_SUB_PRIORITY_LEVEL_1);
+    INTSetVectorSubPriority(INT_TIMER_2_VECTOR, INT_SUB_PRIORITY_LEVEL_3);
 }
 
 /**
@@ -98,7 +101,7 @@ void TIMER2_Init(void)
  */
 void TIMER3_Init(void)
 {
-    OpenTimer3(T3_OFF | T3_SOURCE_INT | T3_PS_1_256, PERIOD);
+    OpenTimer3(T3_OFF | T3_SOURCE_INT | T3_PS_1_2, FIVE_US_PERIOD);
     
     Timer3_ON = FALSE;
     

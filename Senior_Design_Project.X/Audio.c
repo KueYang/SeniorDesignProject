@@ -199,8 +199,7 @@ void AUDIO_Init(void)
     // Initializes the index to the first file.
     fileIndex = 0;
     
-   // Initializes the DAC
-    DAC_Init();
+    TIMER3_ON(TRUE);
 }
 
 /**
@@ -339,17 +338,21 @@ BOOL AUDIO_GetAudioData(FILES* file, int bytes)
     return FALSE;
 }
 
+int i = 0;
 void Audio_ReadDataFromMemory(void)
 {
+    UART_sendString("Reading Data \n\r");
     /* Reads 16 bytes of data. */
     AUDIO_GetAudioData(&files[fileIndex], READ_BYTES);
+    UART_sendCharacter(receiveBuffer[0]);
+    UART_sendString("\n\r");
 }
 
 void Audio_WriteDataToDAC(void)
 {
     /* Writes 1 byte of data to the DAC. */
-    DAC_WriteToDAC(WRITE_UPDATE_DAC_A, audioData[audioOutPtr++]);
-    if(audioOutPtr >= REC_BUF_SIZE)
+    DAC_WriteToDAC(WRITE_UPDATE_CHN_A, audioData[audioOutPtr++]);
+    if(audioOutPtr >= 255)
     {
         audioOutPtr = 0;
     }
