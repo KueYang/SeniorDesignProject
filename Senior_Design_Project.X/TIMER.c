@@ -73,8 +73,8 @@ void TIMER1_Init(void)
 
 void TIMER_SetSampleRate(UINT16 sampleRate)
 {
-    PR2 = (GetPeripheralClock()/sampleRate) - 1;
-    TMR2 = 0;
+//    PR2 = (GetPeripheralClock()/sampleRate) - 1;
+//    TMR2 = 0;
     PR3 = (GetPeripheralClock()/sampleRate) - 1;
     TMR3 = 0;
 }
@@ -186,7 +186,13 @@ void __ISR(_TIMER_1_VECTOR, IPL2AUTO) Timer1Handler(void)
 
 void __ISR(_TIMER_2_VECTOR, IPL2AUTO) Timer2Handler(void)
 {
-    Audio_WriteDataToDAC();
+    AUDIO_WriteDataToDAC();
+    
+    if(AUDIO_getBytesWritten()%REC_BUF_SIZE == 0)
+    {
+        TIMER3_ON(TRUE);    // Turns on reading data interrupt.
+        TIMER2_ON(FALSE);   // Disables the writing data interrupt.
+    }
     
     // Clear the interrupt flag
     INTClearFlag(INT_T2);
@@ -194,12 +200,23 @@ void __ISR(_TIMER_2_VECTOR, IPL2AUTO) Timer2Handler(void)
 
 void __ISR(_TIMER_3_VECTOR, IPL2AUTO) Timer3Handler(void)
 {
-    Audio_ReadDataFromMemory();
-    
-    // Enables the timer 2 module if it isn't already on.
-    if(!Timer2_ON)
+    /* 
+     * Checks if the bytes written is greater than the buffer size. If so, 
+     * starts reading from memory again to fill in the buffer. Otherwise, write
+     * data to the DAC.
+     */ 
+    if(AUDIO_getBytesWritten()%REC_BUF_SIZE == 0)
     {
-        TIMER2_ON(TRUE);
+        AUDIO_ReadDataFromMemory();
+    }
+    else
+    {
+        AUDIO_WriteDataToDAC();
+    }
+    
+    if(AUDIO_isDoneWriting())
+    {
+        TIMER3_ON(FALSE);
     }
     
     // Clear the interrupt flag

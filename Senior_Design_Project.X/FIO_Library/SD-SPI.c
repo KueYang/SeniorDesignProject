@@ -1344,8 +1344,8 @@ void OpenSPIM( unsigned int sync_mode)
 	SPICON1bits.CKE = 0;
 
     SPICLOCK = 0;
-    SPIOUT = 0;                  // define SDO1 as output (master or slave)
-    SPIIN = 1;                  // define SDI1 as input (master or slave)
+    SPIOUT = 0;                // define SDO1 as output (master or slave)
+    SPIIN = 1;                 // define SDI1 as input (master or slave)
     SPIENABLE = 1;             // enable synchronous serial port
 }
 
@@ -1373,7 +1373,7 @@ void OpenSPIM( unsigned int sync_mode)
     None.
   ***************************************************************************************/
 void InitSPISlowMode(void)
-{   
+{
 	OpenSPI(SPI_START_CFG_1, SPI_START_CFG_2);
 	SPIBRG = SPICalutateBRG(GetPeripheralClock(), 400000);
 }    
@@ -1452,13 +1452,13 @@ If v2.0+ device:
 ********************************************************************************/
 MEDIA_INFORMATION *  MDD_SDSPI_MediaInitialize(void)
 {
-    WORD timeout;
-    MMC_RESPONSE response;
-	BYTE CSDResponse[20];
-	BYTE count, index;
-	DWORD c_size;
-	BYTE c_size_mult;
-	BYTE block_len;
+    WORD            timeout;
+    MMC_RESPONSE    response;
+	BYTE            CSDResponse[20];
+	BYTE            count, index;
+	DWORD           c_size;
+	BYTE            c_size_mult;
+	BYTE            block_len;
  
     //Initialize global variables.  Will get updated later with valid data once
     //the data is known.
@@ -1482,12 +1482,13 @@ MEDIA_INFORMATION *  MDD_SDSPI_MediaInitialize(void)
     //accessing the media). 
     Delayms(30);
     SD_CS = 1;
+    
     //Generate 80 clock pulses.
     for(timeout=0; timeout<10u; timeout++)
         WriteSPISlow(0xFF);
 
     // Send CMD0 (with CS = 0) to reset the media and put SD cards into SPI mode.
-    timeout = 10;
+    timeout = 100;
     do
     {
         //Toggle chip select, to make media abandon whatever it may have been doing
@@ -1569,13 +1570,12 @@ MEDIA_INFORMATION *  MDD_SDSPI_MediaInitialize(void)
         //If we get to here, the device supported the CMD8 command and didn't complain about our host
         //voltage range.
         //Most likely this means it is either a v2.0 spec standard or high capacity SD card (SDHC)
-        UART_sendString("Media successfully processed CMD8.\r\n");
+        UART_sendString("Media successfully processed CMD8.\r\nSending CMD58.\r\n");
 
-		//Send CMD58 (Read OCR [operating conditions register]).  Reponse type is R3, which has 5 bytes.
+		//Send CMD58 (Read OCR [operating conditions register]).  Response type is R3, which has 5 bytes.
 		//Byte 4 = normal R1 response byte, Bytes 3-0 are = OCR register value.
-        UART_sendString("Sending CMD58.\r\n");
-		
         response = SendMediaSlowCmd(READ_OCR, 0x0);
+        
         //Now that we have the OCR register value in the reponse packet, we could parse
         //the register contents and learn what voltage the SD card wants to run at.
         //If our host circuitry has variable power supply capability, it could 
@@ -1609,7 +1609,6 @@ MEDIA_INFORMATION *  MDD_SDSPI_MediaInitialize(void)
     		mediaInformation.errorCode = MEDIA_CANNOT_INITIALIZE;
         }				
 		
-		
         //Now send CMD58 (Read OCR register).  The OCR register contains important
         //info we will want to know about the card (ex: standard capacity vs. SDHC).
         response = SendMediaSlowCmd(READ_OCR, 0x0); 
@@ -1628,14 +1627,12 @@ MEDIA_INFORMATION *  MDD_SDSPI_MediaInitialize(void)
         } 
         //SD Card should now be finished with initialization sequence.  Device should be ready
         //for read/write commands.
-
 	}//if(((response.r7.bytewise._returnVal & 0xFFF) == 0x1AA) && (!response.r7.bitwise.bits.ILLEGAL_CMD))
     else
 	{
         //The CMD8 wasn't supported.  This means the card is not a v2.0 card.
         //Presumably the card is v1.x device, standard capacity (not SDHC).
         UART_sendString("CMD8 Unsupported: Media is most likely MMC or SD 1.x device.\r\n");
-
 
         SD_CS = 1;                              // deselect the devices
         Delayms(1);
@@ -1669,10 +1666,8 @@ MEDIA_INFORMATION *  MDD_SDSPI_MediaInitialize(void)
             //the default size selected on cards that support other sizes as well.
             //response = SendMediaSlowCmd(SET_BLOCKLEN, 0x00000200);    //Set read/write block length to 512 bytes
         }
-       
 	}
-
-
+    
     //Temporarily deselect device
     SD_CS = 1;
     
@@ -1705,7 +1700,7 @@ MEDIA_INFORMATION *  MDD_SDSPI_MediaInitialize(void)
         mediaInformation.errorCode = MEDIA_CANNOT_INITIALIZE;
         SD_CS = 1;
         return &mediaInformation;
-    }    
+    }
 
 	/* According to the simplified spec, section 7.2.6, the card will respond
 	with a standard response token, followed by a data block of 16 bytes

@@ -5,8 +5,9 @@
  */
 
 #include <plib.h>
-#include "FSIO.h"
 #include "STDDEF.h"
+#include "../UART.h"
+#include "FSIO.h"
 #include "FSDefs.h"
 
 /*****************************************************************************/
@@ -600,7 +601,7 @@ BYTE FILEget_next_cluster(FSFILE *fo, DWORD n)
 BYTE DISKmount( DISK *dsk)
 {
     BYTE                error = CE_GOOD;
-    MEDIA_INFORMATION *mediaInformation;
+    MEDIA_INFORMATION   *mediaInformation;
 
     dsk->mount = FALSE; // default invalid
     dsk->buffer = gDataBuffer;    // assign buffer

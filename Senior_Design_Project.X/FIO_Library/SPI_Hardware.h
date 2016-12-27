@@ -25,7 +25,7 @@ extern "C" {
 #define SPI_START_CFG_2     (SPI_ENABLE)
 
 /**@def SPI_FREQUENCY Defines the SPI Clock Speed. */
-#define SPI_FREQUENCY			(20000000)
+#define SPI_FREQUENCY		(20000000)
 
 /**@def SD_CS SD Chip Select Output bit. */
 #define SD_CS               LATBbits.LATB10
