@@ -21,7 +21,9 @@
  */
 void DAC_Init(void)
 {
+#ifndef DAC12B
     RSTSEL = 0; // Sets the DAC to zero scale on power up.
+#endif
     SYNC = 1;   // Sets the latch high.
 #ifdef DAC12B
     DAC_WriteToDAC(POWER_ON_OFF_CHN_A_B , 0x000F & DAC_B_A);
