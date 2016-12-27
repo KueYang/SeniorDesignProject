@@ -27,20 +27,15 @@ int currentFret;
  */
 void IO_Init(void)
 {   
-    ANSELA = 0; ANSELB = 0;                 // Disable analog inputs
-    CM1CON = 0; CM2CON = 0; CM3CON = 0;     // Disable analog comparators
-    
     // Digital IO
     TRISBbits.TRISB7 = 0;   // Used to test Timer
-    
-    // ADC IO
     
     // UART IO
     TRISAbits.TRISA2 = 1;   // U1RX
     TRISBbits.TRISB3 = 0;   // U1TX
     
     // SPI IO
-    TRISAbits.TRISA3 = 0;   // LDAC
+//    TRISAbits.TRISA3 = 0;   // LDAC
     TRISAbits.TRISA4 = 0;   // SYNC
     TRISBbits.TRISB4 = 0;   // CLR
     TRISBbits.TRISB5 = 0;   // RSTSEL
