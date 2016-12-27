@@ -86,12 +86,14 @@ extern "C" {
  * Defines the error code for invalid chunk2 ID. */
 #define WAV_SUB_CHUNK2_ID_ERROR     7
 
+#define REC_BUF_SIZE    256
+    
 void AUDIO_Init(void);
 void AUDIO_Process(void);
 
 void AUDIO_setNewTone(int fret);
-void Audio_WriteDataToDAC(void);
-void Audio_ReadDataFromMemory(void);
+void AUDIO_WriteDataToDAC(void);
+void AUDIO_ReadDataFromMemory(void);
 
 #ifdef	__cplusplus
 }

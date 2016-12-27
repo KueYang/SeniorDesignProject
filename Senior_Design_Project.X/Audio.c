@@ -18,8 +18,7 @@
 #include "DAC.h"
 #include "Audio.h"
 
-#define REC_BUF_SIZE    256
-#define READ_BYTES      16
+#define READ_BYTES      REC_BUF_SIZE
 
 UINT8 AUDIO_GetHeader(FILES* file, int index);
 BOOL AUDIO_GetAudioData(FILES* file, int bytes);
@@ -198,8 +197,6 @@ void AUDIO_Init(void)
     
     // Initializes the index to the first file.
     fileIndex = 0;
-    
-    TIMER3_ON(TRUE);
 }
 
 /**
@@ -230,6 +227,10 @@ void AUDIO_setNewTone(int fret)
     bytesRead = 0;
     /* Sets the bytes written to zero. */
     bytesWritten = 0;
+    /* Sets the audio in pointer to zero. */
+    audioInPtr = 0;
+    /* Sets the audio out pointer to zero. */
+    audioOutPtr = 0;
     /* Sets the current file pointer to the beginning of the data section of the file. */
     files[fileIndex].currentPtr = files[fileIndex].startPtr;
 }
@@ -241,6 +242,11 @@ BOOL AUDIO_isDoneReading()
         return TRUE;
     }
     return FALSE;
+}
+
+int AUDIO_getBytesWritten(void)
+{
+    return bytesWritten;
 }
 
 BOOL AUDIO_isDoneWriting()
@@ -338,21 +344,17 @@ BOOL AUDIO_GetAudioData(FILES* file, int bytes)
     return FALSE;
 }
 
-int i = 0;
-void Audio_ReadDataFromMemory(void)
+void AUDIO_ReadDataFromMemory(void)
 {
-    UART_sendString("Reading Data \n\r");
     /* Reads 16 bytes of data. */
     AUDIO_GetAudioData(&files[fileIndex], READ_BYTES);
-    UART_sendCharacter(receiveBuffer[0]);
-    UART_sendString("\n\r");
 }
 
-void Audio_WriteDataToDAC(void)
+void AUDIO_WriteDataToDAC(void)
 {
-    /* Writes 1 byte of data to the DAC. */
+    /* Writes 1 WORD of data to the DAC. */
     DAC_WriteToDAC(WRITE_UPDATE_CHN_A, audioData[audioOutPtr++]);
-    if(audioOutPtr >= 255)
+    if(audioOutPtr >= REC_BUF_SIZE)
     {
         audioOutPtr = 0;
     }
