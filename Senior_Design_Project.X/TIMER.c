@@ -51,9 +51,9 @@ void TIMER_Init(void)
  */
 void TIMER_Process(void)
 {
-    PORTBbits.RB7 = 1;
+    PORTBbits.RB5 = 1;
     TIMER_MSecondDelay(3000);
-    PORTBbits.RB7 = 0;
+    PORTBbits.RB5 = 0;
     TIMER_MSecondDelay(3000);
 }
 

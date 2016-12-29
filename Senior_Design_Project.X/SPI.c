@@ -8,6 +8,7 @@
 
 #include <p32xxxx.h>
 #include <plib.h>
+#include "HardwareProfile.h"
 #include "STDDEF.h"
 #include "TIMER.h"
 #include "SPI.h"
@@ -16,7 +17,7 @@
  * @privatesection
  * @{
  */
-
+UINT16 SPI_GetBaudRate(int clk);
 void SPI2_Init(void);
 /** @}*/
 
@@ -71,20 +72,6 @@ void SPI2_Init(void)
     SPI2STATbits.SPIROV = 0;    // Clears Receive overflow flag
     
     SPI2CONbits.ON = 1;         // Enable SPI Module
-    
-    //Enable SPI2 interrupt.
-//    INTEnable(INT_SPI1, INT_ENABLED);
-//    INTSetVectorPriority(INT_SPI_1_VECTOR, INT_PRIORITY_LEVEL_2);
-//    INTSetVectorSubPriority(INT_SPI_1_VECTOR, INT_SUB_PRIORITY_LEVEL_0);
-}
-
-/**
- * @brief Runs the SPI related operations.
- * @return Void.
- */
-void SPI_Process(void)
-{
-    
 }
 
 /**
@@ -104,13 +91,49 @@ BYTE SPI2_ReadWrite(BYTE ch)
     return dummy;
 }
 
-/**
- * @brief SPI2 Interrupt Service Routine.
- * @return Void.
- */
-void __ISR(_SPI_2_VECTOR, IPL4AUTO) IntSpi2Handler(void) 
+void SPI1_Init(int clk)
 {
-    INTClearFlag(INT_SPI2TX);
+    // Re-mapped pins RPB11 and RPB13 pins to SDI1 and SDO1
+    mSysUnlockOpLock({
+        PPSUnLock;
+        PPSInput(2,SDI1,RPB11);     // Assign RPB11 as input pin for SDI
+        PPSOutput(3,RPB13,SDO1);    // Set RPB13 pin as output for SDO
+        PPSLock;
+    });
+    
+    SPI1CONbits.ON = 0;         // Disable SPI Module
+    SPI1CONbits.MSSEN = 0;      // Slave select SPI support disabled
+    SPI1CONbits.MCLKSEL = 0;    // PBCLK is used by baud rate generator
+    SPI1CONbits.ENHBUF = 0;     // Enhanced Buffer mode disabled
+    SPI1CONbits.SIDL = 0;       // Continue module in idle mode
+    SPI1CONbits.DISSDO = 0;     // SDO1 controlled by module
+    SPI1CONbits.MODE16 = 0b00;  // 8-bit communication
+    SPI1CONbits.SMP = 1;        // Input data sampled at end of data output
+    SPI1CONbits.CKE = 1;        // Serial output data changes from active to idle clk
+    SPI1CONbits.SSEN = 0;       // Slave select disable
+    SPI1CONbits.CKP = 0;        // Clk is idle low, active high
+    SPI1CONbits.MSTEN = 1;      // Master mode enabled
+    SPI1CONbits.DISSDI = 0;     // SDI1 controlled by module
+    
+    SPI1BRG = SPI_GetBaudRate(clk); // SPI clock config
+    SPI1STATbits.SPIROV = 0;        // Clears Receive overflow flag
+    
+    SPI1CONbits.ON = 1;             // Enable SPI Module
 }
 
+BYTE SPI1_ReadWrite(BYTE ch)
+{
+    BYTE dummy = 0;
 
+    dummy = SPI1BUF;                //Clears flag to read/write to buffer
+    SPI1BUF = ch;                   //Write BYTE to the buffer
+    while (!SPI1STATbits.SPIRBF);   //Waits for transfer to be completed
+    dummy = SPI1BUF;                //Read a dummy byte from buffer
+
+    return dummy;
+}
+
+UINT16 SPI_GetBaudRate(int clk)
+{
+    return GetPeripheralClock()/(2*clk) - 1;
+}

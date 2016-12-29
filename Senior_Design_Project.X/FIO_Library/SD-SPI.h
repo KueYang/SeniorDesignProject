@@ -7,7 +7,7 @@
 #ifndef SDMMC_H
 #define SDMMC_H
 
-#include "GenericTypeDefs.h"
+#include "../SPI.h"
 #include "FSconfig.h"
 #include "FSDefs.h"
 
@@ -435,13 +435,13 @@ typedef struct
 /*                               Macros                                    */
 /***************************************************************************/
 // Description: A macro to send clock cycles to dummy-read the CRC
-#define mReadCRC()              WriteSPIM(0xFF);WriteSPIM(0xFF);
+#define mReadCRC()              SPI1_ReadWrite(0xFF);SPI1_ReadWrite(0xFF);
 
 // Description: A macro to send clock cycles to dummy-write the CRC
-#define mSendCRC()              WriteSPIM(0xFF);WriteSPIM(0xFF);
+#define mSendCRC()              SPI1_ReadWrite(0xFF);SPI1_ReadWrite(0xFF);
 
 // Description: A macro to send 8 clock cycles for SD timing requirements
-#define mSend8ClkCycles()       WriteSPIM(0xFF);
+#define mSend8ClkCycles()       SPI1_ReadWrite(0xFF);
 
 /*****************************************************************************/
 /*                                 Public Prototypes                         */

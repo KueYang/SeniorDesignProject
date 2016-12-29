@@ -83,6 +83,10 @@
  */
 int main(void) 
 {    
+    /* Enable multi-vector interrupts */
+    INTConfigureSystem(INT_SYSTEM_CONFIG_MULT_VECTOR);
+    INTEnableInterrupts();
+    
     /* Peripheral Initializations */
     IO_Init();          // Initializes all digital IO.
     TIMER_Init();       // Initializes all timer modules.
@@ -91,17 +95,13 @@ int main(void)
     UART_Init();        // Initializes all UART modules
     AUDIO_Init();       // Initializes the Audio module.
     DAC_Init();         // Initializes the DACs.
-    
-    /* Enable multi-vector interrupts */
-    INTConfigureSystem(INT_SYSTEM_CONFIG_MULT_VECTOR);
-    INTEnableInterrupts();
    
     while(1)
     {
         WDTCONSET = 0x01;   // Clears the watchdog timer flag.
         TIMER_Process();
-//        UART_Process();
-//        AUDIO_Process();
+        UART_Process();
+        AUDIO_Process();
     }
 
     return (0);

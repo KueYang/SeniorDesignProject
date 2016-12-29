@@ -173,7 +173,7 @@ const char* fileNames[MAX_NUM_OF_FILES] = {
 void AUDIO_Init(void)
 {
     // Checks to make sure that the SD card is attached
-    while(MDD_SDSPI_MediaNotDetect());
+    while(MDD_SDSPI_MediaDetect());
 
     // Initializes the File Library
     FILES_Init();
@@ -361,5 +361,3 @@ void AUDIO_WriteDataToDAC(void)
     // Increments the byte written count.
     bytesWritten++;
 }
-
-

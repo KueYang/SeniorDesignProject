@@ -10,6 +10,7 @@
 
 #include <p32xxxx.h>
 #include <plib.h>
+#include "HardwareProfile.h"
 #include "IO.h"
 
 #define FRET_GROUP_COUNT    4
@@ -34,7 +35,7 @@ void IO_Init(void)
     TRISAbits.TRISA2 = 1;   // U1RX
     TRISBbits.TRISB3 = 0;   // U1TX
     
-    // SPI IO
+    // SPI IO, DAC
 //    TRISAbits.TRISA3 = 0;   // LDAC
     TRISAbits.TRISA4 = 0;   // SYNC
     TRISBbits.TRISB4 = 0;   // CLR
@@ -42,6 +43,13 @@ void IO_Init(void)
     TRISBbits.TRISB2 = 1;   // SD_SDI2
     TRISBbits.TRISB1 = 0;   // SD_SDO2
     TRISBbits.TRISB15 = 0;  // SD_CLK2
+    
+    // SPI IO, SD Card
+    TRISBbits.TRISB7 = 0;   // CS
+    TRISBbits.TRISB8 = 1;   // CD
+    TRISBbits.TRISB11 = 1;  // SD_SDI1
+    TRISBbits.TRISB13 = 0;  // SD_SDO1
+    TRISBbits.TRISB14 = 0;  // SD_CLK1
     
     currentFret = 0;    // Sets the current fret to 0, indicating that the string is "opened."
 }

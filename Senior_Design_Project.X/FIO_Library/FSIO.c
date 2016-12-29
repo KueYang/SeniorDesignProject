@@ -163,20 +163,18 @@ DWORD GetFullClusterNumber(DIRENTRY entry);
   *************************************************************************/
 int FSInit(void)
 {
-    int fIndex;
-
     gBufferZeroed = FALSE;
     gNeedFATWrite = FALSE;             
     gLastFATSectorRead = 0xFFFFFFFF;       
     gLastDataSectorRead = 0xFFFFFFFF;  
 
-    MDD_SDSPI_InitIO();
+//    MDD_SDSPI_InitIO();
 
     if(DISKmount(&gDiskData) == CE_GOOD)
     {
         /* Clears slots for opening files. */
         int i;
-        for(i = 0; i <FS_MAX_FILES_OPEN; i++)
+        for(i = 0; i < FS_MAX_FILES_OPEN; i++)
         {
             gFileSlotOpen[i] = TRUE;
         }
@@ -600,14 +598,15 @@ BYTE FILEget_next_cluster(FSFILE *fo, DWORD n)
   **************************************************************************/
 BYTE DISKmount( DISK *dsk)
 {
-    BYTE                error = CE_GOOD;
     MEDIA_INFORMATION   *mediaInformation;
+    BYTE error = CE_GOOD;
 
     dsk->mount = FALSE; // default invalid
     dsk->buffer = gDataBuffer;    // assign buffer
 
     // Initialize the device
     mediaInformation = (MEDIA_INFORMATION *)MDD_SDSPI_MediaInitialize();
+    
     if (mediaInformation->errorCode != MEDIA_NO_ERROR)
     {
         error = CE_INIT_ERROR;
@@ -1487,12 +1486,6 @@ FSFILE * FSfopen( const char * fileName, const char *mode )
     //Read the mode character
     ModeC = mode[0];
 
-    if(MDD_SDSPI_WriteProtectState() && (ModeC != 'r') && (ModeC != 'R')) 
-    { 
-        FSerrno = CE_WRITE_PROTECTED; 
-        return NULL; 
-    } 
-
     filePtr = NULL;
 
     //Pick available file structure
@@ -1557,11 +1550,6 @@ FSFILE * FSfopen( const char * fileName, const char *mode )
     {
         final = CE_FILE_NOT_FOUND;
         FSerrno = CE_FILE_NOT_FOUND;
-    }
-
-    if (MDD_SDSPI_WriteProtectState())
-    {
-        filePtr->flags.write = 0;;
     }
 
     if( final != CE_GOOD )
