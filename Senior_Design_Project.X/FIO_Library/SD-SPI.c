@@ -748,7 +748,7 @@ MEDIA_INFORMATION *  MDD_SDSPI_MediaInitialize(void)
     SPI1_Init(400000);   
     
 #ifdef DEBUG
-    UART_sendString("\r\n\r\nInitializing Media\r\n");
+    MON_SendString("\r\n\r\nInitializing Media\r\n");
 #endif
     //Media wants the longer of: Vdd ramp time, 1 ms fixed delay, or 74+ clock pulses.
     //According to spec, CS should be high during the 74+ clock pulses.
@@ -792,9 +792,9 @@ MEDIA_INFORMATION *  MDD_SDSPI_MediaInitialize(void)
     if(timeout == 0)
     {    
         #ifdef DEBUG
-        UART_sendString("Reset Failed... \r\n");
-        UART_sendString("Media failed CMD0 too many times. \n\r ");
-        UART_sendString("Trying CMD12 to recover. \r\n");
+        MON_SendString("Reset Failed... \r\n");
+        MON_SendString("Media failed CMD0 too many times. \n\r ");
+        MON_SendString("Trying CMD12 to recover. \r\n");
         #endif
 
         PORTBbits.RB7 = 1;
@@ -819,7 +819,7 @@ MEDIA_INFORMATION *  MDD_SDSPI_MediaInitialize(void)
             //Therefore, we just give up now.  The user needs to physically 
             //power cycle the media and/or the whole board.
             #ifdef DEBUG
-            UART_sendString("Media still failed CMD0. Cannot initialize card, returning.\r\n");
+            MON_SendString("Media still failed CMD0. Cannot initialize card, returning.\r\n");
             #endif
             mediaInformation.errorCode = MEDIA_CANNOT_INITIALIZE;
             return &mediaInformation;
@@ -828,14 +828,14 @@ MEDIA_INFORMATION *  MDD_SDSPI_MediaInitialize(void)
         {
             #ifdef DEBUG
             //Card successfully processed CMD0 and is now in the idle state.     
-            UART_sendString("Media successfully processed CMD0 after CMD12.\r\n");
+            MON_SendString("Media successfully processed CMD0 after CMD12.\r\n");
             #endif
         }    
     }//if(timeout == 0) [for the CMD0 transmit loop]
     else
     {     
         #ifdef DEBUG
-        UART_sendString("Media successfully processed CMD0.\r\n");
+        MON_SendString("Media successfully processed CMD0.\r\n");
         #endif
     }       
     
@@ -855,7 +855,7 @@ MEDIA_INFORMATION *  MDD_SDSPI_MediaInitialize(void)
         //voltage range.
         //Most likely this means it is either a v2.0 spec standard or high capacity SD card (SDHC)
         #ifdef DEBUG
-        UART_sendString("Media successfully processed CMD8.\r\nSending CMD58.\r\n");
+        MON_SendString("Media successfully processed CMD8.\r\nSending CMD58.\r\n");
         #endif
 
 		//Send CMD58 (Read OCR [operating conditions register]).  Response type is R3, which has 5 bytes.
@@ -886,7 +886,7 @@ MEDIA_INFORMATION *  MDD_SDSPI_MediaInitialize(void)
 			if(response.r1._byte == 0)
 			{
                 #ifdef DEBUG
-                UART_sendString("Media successfully processed CMD55/ACMD41 and is no longer busy.\r\n");
+                MON_SendString("Media successfully processed CMD55/ACMD41 and is no longer busy.\r\n");
                 #endif
 				break;  //Break out of for() loop.  Card is finished initializing.
             }				
@@ -894,7 +894,7 @@ MEDIA_INFORMATION *  MDD_SDSPI_MediaInitialize(void)
 		if(timeout >= 0xFFFF)
 		{
             #ifdef DEBUG
-            UART_sendString("Media Timeout on CMD55/ACMD41.\r\n");
+            MON_SendString("Media Timeout on CMD55/ACMD41.\r\n");
             #endif
     		mediaInformation.errorCode = MEDIA_CANNOT_INITIALIZE;
         }				
@@ -909,14 +909,14 @@ MEDIA_INFORMATION *  MDD_SDSPI_MediaInitialize(void)
 		{
 			gSDMode = SD_MODE_HC;
             #ifdef DEBUG
-            UART_sendString("Media successfully processed CMD58: SD card is SDHC v2.0 (or later) physical spec type.\r\n");
+            MON_SendString("Media successfully processed CMD58: SD card is SDHC v2.0 (or later) physical spec type.\r\n");
             #endif
         }				
         else
         {
             gSDMode = SD_MODE_NORMAL;
             #ifdef DEBUG
-            UART_sendString("Media successfully processed CMD58: SD card is standard capacity v2.0 (or later) spec.\r\n");
+            MON_SendString("Media successfully processed CMD58: SD card is standard capacity v2.0 (or later) spec.\r\n");
             #endif
         } 
         //SD Card should now be finished with initialization sequence.  Device should be ready
@@ -927,7 +927,7 @@ MEDIA_INFORMATION *  MDD_SDSPI_MediaInitialize(void)
         //The CMD8 wasn't supported.  This means the card is not a v2.0 card.
         //Presumably the card is v1.x device, standard capacity (not SDHC).
         #ifdef DEBUG
-        UART_sendString("CMD8 Unsupported: Media is most likely MMC or SD 1.x device.\r\n");
+        MON_SendString("CMD8 Unsupported: Media is most likely MMC or SD 1.x device.\r\n");
         #endif
 
         PORTBbits.RB7 = 1;                              // deselect the devices
@@ -948,7 +948,7 @@ MEDIA_INFORMATION *  MDD_SDSPI_MediaInitialize(void)
         if(timeout == 0)
         {
             #ifdef DEBUG
-            UART_sendString("CMD1 failed.\r\n");
+            MON_SendString("CMD1 failed.\r\n");
             #endif
 
             mediaInformation.errorCode = MEDIA_CANNOT_INITIALIZE;
@@ -957,7 +957,7 @@ MEDIA_INFORMATION *  MDD_SDSPI_MediaInitialize(void)
         else
         {
             #ifdef DEBUG
-            UART_sendString("CMD1 Successfully processed, media is no longer busy.\r\n");
+            MON_SendString("CMD1 Successfully processed, media is no longer busy.\r\n");
             #endif
             
             //Set read/write block length to 512 bytes.  Note: commented out since
@@ -991,14 +991,14 @@ MEDIA_INFORMATION *  MDD_SDSPI_MediaInitialize(void)
     if(timeout != 0x00)
     {
     #ifdef DEBUG
-        UART_sendString("CMD9 Successfully processed: Read CSD register.\r\n");
+        MON_SendString("CMD9 Successfully processed: Read CSD register.\r\n");
     #endif
     }    
     else
     {
         #ifdef DEBUG
         //Media failed to respond to the read CSD register operation.
-        UART_sendString("Timeout occurred while processing CMD9 to read CSD register.\r\n");
+        MON_SendString("Timeout occurred while processing CMD9 to read CSD register.\r\n");
         #endif
         
         mediaInformation.errorCode = MEDIA_CANNOT_INITIALIZE;
@@ -1098,7 +1098,7 @@ MEDIA_INFORMATION *  MDD_SDSPI_MediaInitialize(void)
     PORTBbits.RB7 = 1;
 
     #ifdef DEBUG
-    UART_sendString("Returning from MediaInitialize() function.\r\n");
+    MON_SendString("Returning from MediaInitialize() function.\r\n");
     #endif
     return &mediaInformation;
 }//end MediaInitialize

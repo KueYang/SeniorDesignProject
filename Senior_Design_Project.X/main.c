@@ -90,12 +90,12 @@ int main(void)
     /* Peripheral Initializations */
     IO_Init();          // Initializes all digital IO.
     TIMER_Init();       // Initializes all timer modules.
-    ADC_Init();         // Initializes all ADC modules.
+//    ADC_Init();         // Initializes all ADC modules.
     SPI_Init();         // Initializes all SPI modules.
     UART_Init();        // Initializes all UART modules
     AUDIO_Init();       // Initializes the Audio module.
-    DAC_Init();         // Initializes the DACs.
-   
+//    DAC_Init();         // Initializes the DACs.
+    
     while(1)
     {
         WDTCONSET = 0x01;   // Clears the watchdog timer flag.

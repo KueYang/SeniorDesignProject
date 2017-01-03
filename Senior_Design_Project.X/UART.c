@@ -30,6 +30,9 @@
 /** @def DESCRIPTION_SIZE 
  * The size of command description string. */
 #define DESCRIPTION_SIZE        (WRITE_BUFFER_SIZE-CMD_SIZE)
+/** @def CMD_SIZE 
+ * The size of the command name string. */
+#define NUM_OF_CMD              3
 
 /** UART Helper Functions. */
 int UART_GetBaudRate(int desireBaud);
@@ -43,12 +46,14 @@ void UART_putNextChar(FIFO* buffer, char ch);
 void UART_processCommand(void);
 int MON_parseCommand(COMMANDSTR* cmd, FIFO* buffer);
 COMMANDS MON_getCommand(const char* cmdName);
+BOOL MON_SendString(const char* str);
 void MON_removeWhiteSpace(const char* string);
 BOOL MON_stringsMatch(const char* str1, const char* str2);
 
 /** Commands Handlers. */
 void MON_GetHelp(void);
 void MON_GetInputTest(void);
+void MON_GetFileList(void);
 
 /** @var cmdStr 
  * The command string. */
@@ -59,9 +64,6 @@ FIFO rxBuffer;
 /** @var txBuffer 
  * The UART transmit buffer. */
 FIFO txBuffer;
-/** @var cmdListSize 
- * The command list size. */
-UINT16 cmdListSize;
 /** @var cmdReady 
  * The UART command receive flag. */
 BOOL cmdReady;
@@ -73,6 +75,7 @@ UINT16 actualBaudRate;
 COMMANDS MON_COMMANDS[] = {
     {"HELP", " Display the list of commands avaliable. \n\r", MON_GetHelp},
     {"TEST", " Test getting commands. FORMAT: TEST arg1 arg2. \n\r", MON_GetInputTest},
+    {"FILES", " Lists all WAV files. \n\r", MON_GetFileList},
     {"", "", NULL}
 };
 
@@ -82,7 +85,6 @@ COMMANDS MON_COMMANDS[] = {
  */
 void UART_Init(void)
 { 
-    cmdListSize = 2;
     cmdReady = FALSE;
     
     // Re-mapped pins RB14 and RB15 pins to U1RX and U1TX
@@ -95,7 +97,7 @@ void UART_Init(void)
     
     // Configure UART1 module
     UARTConfigure(UART_MODULE_ID, UART_ENABLE_PINS_TX_RX_ONLY | UART_INVERT_RECEIVE_POLARITY | UART_INVERT_TRANSMIT_POLARITY);
-    UARTSetFifoMode(UART_MODULE_ID, UART_INTERRUPT_ON_TX_NOT_FULL | UART_INTERRUPT_ON_RX_NOT_EMPTY);
+    UARTSetFifoMode(UART_MODULE_ID, UART_INTERRUPT_ON_TX_BUFFER_EMPTY | UART_INTERRUPT_ON_RX_NOT_EMPTY);
     UARTSetLineControl(UART_MODULE_ID, UART_DATA_SIZE_8_BITS | UART_PARITY_NONE | UART_STOP_BITS_1);
     actualBaudRate = UARTSetDataRate(UART_MODULE_ID, GetPeripheralClock(), DESIRED_BAUDRATE);
     UARTEnable(UART_MODULE_ID, UART_ENABLE_FLAGS(UART_PERIPHERAL | UART_RX | UART_TX));
@@ -106,7 +108,7 @@ void UART_Init(void)
     INTSetVectorPriority(INT_VECTOR_UART(UART_MODULE_ID), INT_PRIORITY_LEVEL_4);
     INTSetVectorSubPriority(INT_VECTOR_UART(UART_MODULE_ID), INT_SUB_PRIORITY_LEVEL_1);
     
-    UART_sendString("\r\n> ");  // Sends a prompt.
+    MON_SendString("\r\n> ");  // Sends a prompt.
 }
 
 /**
@@ -149,6 +151,12 @@ void UART_processCommand(void)
             {
                 command.handler();
             }
+            else
+            {
+                MON_SendString("\tCommand doesn't exist. \n\r> ");
+//                UART_sendString("\tCommand doesn't exist. \n\r> ");
+                
+            }
 
             /* Clears command variable. */
             memset(&cmdStr.name[0], 0, sizeof(cmdStr.name));
@@ -157,7 +165,8 @@ void UART_processCommand(void)
         }
         
         /* Prepares for the next command. */
-        UART_sendString("\n\r> ");
+//        UART_sendString("\n\r> ");
+        MON_SendString("\n\r> ");
         
         /* Resets the ready flag. */
         cmdReady = FALSE;
@@ -220,6 +229,16 @@ int MON_parseCommand(COMMANDSTR* cmd, FIFO* buffer)
     return numOfArgs;
 }
 
+BOOL MON_SendString(const char* str)
+{
+    while(*str != '\0')
+    {
+        FIFO_Push(&txBuffer, *str);
+        str++;
+    }
+    INTEnable(INT_SOURCE_UART_TX(UART_MODULE_ID), INT_ENABLED);
+}
+
 /**
  * @brief Checks if two strings matches.
  * @arg str1 The first string to compare.
@@ -273,14 +292,14 @@ void MON_removeWhiteSpace(const char* string)
 COMMANDS MON_getCommand(const char* cmdName)
 {
     int i = 0;
-    for(i = 0; i < cmdListSize; i++)
+    for(i = 0; i < NUM_OF_CMD; i++)
     {
         if(MON_stringsMatch(cmdName, MON_COMMANDS[i].name))
         {
             return MON_COMMANDS[i];
         }
     }
-    return MON_COMMANDS[cmdListSize]; // returns an empty null command
+    return MON_COMMANDS[NUM_OF_CMD]; // returns an empty null command
 }
 
 /**
@@ -351,6 +370,31 @@ void __ISR(_UART1_VECTOR, IPL4AUTO) IntUart1Handler(void)
         // Clear the RX interrupt Flag.
 	    INTClearFlag(INT_SOURCE_UART_RX(UART_MODULE_ID));
 	}
+    
+    if(INTGetFlag(INT_SOURCE_UART_TX(UART_MODULE_ID)))
+	{   
+        /* Checks if bus collision has occurred and clears collision flag.*/
+        if(IFS1bits.U1EIF)
+        {
+           U1STAbits.OERR = 0;
+           IFS1bits.U1EIF=0;
+        }
+        else if(IFS1bits.U1TXIF)
+        {
+            /* Checks if there is data ready to read from the receive buffer. */
+            if(UART_TRANSMITTER_NOT_FULL && !UART_isBufferEmpty(&txBuffer))
+            {
+                U1TXREG = UART_getNextChar(&txBuffer);    
+            }
+            else
+            {
+                INTEnable(INT_SOURCE_UART_TX(UART_MODULE_ID), INT_DISABLED);
+            }
+        }
+        
+        // Clear the RX interrupt Flag.
+	    INTClearFlag(INT_SOURCE_UART_TX(UART_MODULE_ID));
+	}
 }
 
 /**
@@ -398,12 +442,12 @@ void MON_GetHelp(void)
 {
     int i =0;
     char buf[128] = "";
-    for(i = 0; i < cmdListSize; i++)
+    for(i = 0; i < NUM_OF_CMD; i++)
     {
         memset(&buf[0], 0, sizeof(buf)); // Clears the buffer for each command.
         strncpy(&buf[0], MON_COMMANDS[i].name, sizeof(MON_COMMANDS[i].name));
         strncat(&buf[sizeof(MON_COMMANDS[i].name)], MON_COMMANDS[i].description, (128-sizeof(MON_COMMANDS[i].name)));
-        UART_sendString(&buf[0]);
+        MON_SendString(&buf[0]);
     }
 }
 
@@ -418,5 +462,10 @@ void MON_GetInputTest(void)
     strncpy(&buf[0], "TESTING ", 8);
     strncat(&buf[8], cmdStr.arg1, sizeof(cmdStr.arg1));
     strncat(&buf[sizeof(cmdStr.arg1)], cmdStr.arg2, (128-8-sizeof(cmdStr.arg1)));
-    UART_sendString(&buf[0]);
+    MON_SendString(&buf[0]);
+}
+
+void MON_GetFileList(void)
+{
+    FILES_ListFiles();
 }
