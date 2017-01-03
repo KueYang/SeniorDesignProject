@@ -9,7 +9,6 @@
         <itemPath>FIO_Library/FSIO.h</itemPath>
         <itemPath>FIO_Library/FSDefs.h</itemPath>
         <itemPath>FIO_Library/FSconfig.h</itemPath>
-        <itemPath>FIO_Library/SPI_Hardware.h</itemPath>
       </logicalFolder>
       <itemPath>STDDEF.h</itemPath>
       <itemPath>ADC.h</itemPath>
@@ -198,7 +197,7 @@
       <C32Global>
         <property key="common-include-directories" value=""/>
         <property key="gp-relative-option" value=""/>
-        <property key="legacy-libc" value="false"/>
+        <property key="legacy-libc" value="true"/>
         <property key="relaxed-math" value="false"/>
         <property key="save-temps" value="false"/>
         <property key="wpo-lto" value="false"/>
@@ -240,7 +239,6 @@
         <property key="UART1" value="true"/>
         <property key="UART2" value="true"/>
         <property key="USB" value="true"/>
-        <property key="firmware.download.all" value="false"/>
         <property key="hwtoolclock.frcindebug" value="false"/>
         <property key="memories.aux" value="false"/>
         <property key="memories.bootflash" value="true"/>
