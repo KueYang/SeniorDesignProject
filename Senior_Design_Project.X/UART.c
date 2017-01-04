@@ -48,6 +48,7 @@ int MON_parseCommand(COMMANDSTR* cmd, FIFO* buffer);
 COMMANDS MON_getCommand(const char* cmdName);
 BOOL MON_SendString(const char* str);
 void MON_removeWhiteSpace(const char* string);
+UINT16 MON_getStringLength(const char* string);
 BOOL MON_stringsMatch(const char* str1, const char* str2);
 
 /** Commands Handlers. */
@@ -147,15 +148,13 @@ void UART_processCommand(void)
         {
             /* Calls the command handler if the returned command isn't empty. */
             COMMANDS command = MON_getCommand(cmdStr.name);
-            if(command.name != NULL)
+            if(command.handler != NULL)
             {
                 command.handler();
             }
             else
             {
-                MON_SendString("\tCommand doesn't exist. \n\r> ");
-//                UART_sendString("\tCommand doesn't exist. \n\r> ");
-                
+                MON_SendString("Command doesn't exist.");
             }
 
             /* Clears command variable. */
@@ -165,7 +164,6 @@ void UART_processCommand(void)
         }
         
         /* Prepares for the next command. */
-//        UART_sendString("\n\r> ");
         MON_SendString("\n\r> ");
         
         /* Resets the ready flag. */
@@ -183,20 +181,21 @@ int MON_parseCommand(COMMANDSTR* cmd, FIFO* buffer)
 {   
     int i = 0, numOfArgs = 0;
     int argIndexes[3] = {0,0,0};
-    char str[32] = "";
+    char str[64] = "";
     
     /* Pops off the first character in the receive buffer. */
     char ch = UART_getNextChar(buffer);
+    
     /* Checks for a return character and empty space. */
     if(ch == '\r' || ch == ' ')
     {
         return -1;
-    
     }
     int count = 0;
     int numOfBytes[3] = {0,0,0};
+    
     /* Grabs the first command from the fifo buffer. */
-    while(ch != '\r' && i < 32)
+    while(ch != '\r' && i < 64)
     {
         str[i++] = ch;
         ch = UART_getNextChar(buffer);
@@ -274,14 +273,25 @@ BOOL MON_stringsMatch(const char* str1, const char* str2)
  */
 void MON_removeWhiteSpace(const char* string)
 {
-    while(string != "\0")
+    while(*string != '\0')
     {
-        if(string == " ")
+        if(*string == ' ')
         {
             string = string++;
         }
         string++;
     }
+}
+
+UINT16 MON_getStringLength(const char* string)
+{
+    UINT16 length = 0;
+    while(*string != '\0')
+    {
+        string++;
+        length++;
+    }
+    return length;
 }
 
 /**
@@ -325,9 +335,9 @@ void UART_sendString(const char *string)
  */
 void UART_sendCharacter(const char character)
 {
-        while(!UARTTransmitterIsReady(UART_MODULE_ID));
-        UARTSendDataByte(UART_MODULE_ID, character);
-        while(!UARTTransmissionHasCompleted(UART_MODULE_ID));
+    while(!UARTTransmitterIsReady(UART_MODULE_ID));
+    UARTSendDataByte(UART_MODULE_ID, character);
+    while(!UARTTransmissionHasCompleted(UART_MODULE_ID));
 }
 
 /**
@@ -386,7 +396,8 @@ void __ISR(_UART1_VECTOR, IPL4AUTO) IntUart1Handler(void)
             {
                 U1TXREG = UART_getNextChar(&txBuffer);    
             }
-            else
+            /* Checks if the transmit buffer is empty. If so, disable the TX interrupt. */
+            if(UART_isBufferEmpty(&txBuffer))
             {
                 INTEnable(INT_SOURCE_UART_TX(UART_MODULE_ID), INT_DISABLED);
             }
@@ -440,13 +451,15 @@ BOOL UART_isBufferEmpty(FIFO* buffer)
  */
 void MON_GetHelp(void)
 {
-    int i =0;
+    int i = 0;
+    UINT16 strLength = 0;
     char buf[128] = "";
     for(i = 0; i < NUM_OF_CMD; i++)
     {
         memset(&buf[0], 0, sizeof(buf)); // Clears the buffer for each command.
-        strncpy(&buf[0], MON_COMMANDS[i].name, sizeof(MON_COMMANDS[i].name));
-        strncat(&buf[sizeof(MON_COMMANDS[i].name)], MON_COMMANDS[i].description, (128-sizeof(MON_COMMANDS[i].name)));
+        strLength = MON_getStringLength(MON_COMMANDS[i].name);
+        strncpy(&buf[0], MON_COMMANDS[i].name, strLength);
+        strncat(&buf[sizeof(MON_COMMANDS[i].name)], MON_COMMANDS[i].description, (128-strLength));
         MON_SendString(&buf[0]);
     }
 }
@@ -467,5 +480,5 @@ void MON_GetInputTest(void)
 
 void MON_GetFileList(void)
 {
-    FILES_ListFiles();
+    AUDIO_getFileList();
 }

@@ -179,7 +179,7 @@ void AUDIO_Init(void)
     FILES_Init();
     
     // Lists the files in memory
-    FILES_ListFiles(&files[0].rec);
+    AUDIO_getFileList();
     
     // Opens the given file and set a pointer to the file.
     files[0].currentPtr = FILES_OpenFile("OST_02.WAV", &files[0].rec);
@@ -233,6 +233,11 @@ void AUDIO_setNewTone(int fret)
     audioOutPtr = 0;
     /* Sets the current file pointer to the beginning of the data section of the file. */
     files[fileIndex].currentPtr = files[fileIndex].startPtr;
+}
+
+FILES* AUDIO_getFilePtr(void)
+{
+    return &files[0];
 }
 
 BOOL AUDIO_isDoneReading()
@@ -360,4 +365,10 @@ void AUDIO_WriteDataToDAC(void)
     }
     // Increments the byte written count.
     bytesWritten++;
+}
+
+
+void AUDIO_getFileList(void)
+{
+    FILES_ListFiles(&files[0].rec);
 }

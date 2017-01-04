@@ -10,7 +10,7 @@
 #ifdef	__cplusplus
 extern "C" {
 #endif
-
+    
 /** @def PIC1 
  * Defines the PIC that is being programmed. */
 #define PIC1
@@ -86,11 +86,14 @@ extern "C" {
  * Defines the error code for invalid chunk2 ID. */
 #define WAV_SUB_CHUNK2_ID_ERROR     7
 
+/** @def REC_BUF_SIZE 
+ * Defines the audio buffer size. */
 #define REC_BUF_SIZE    256
     
 void AUDIO_Init(void);
 void AUDIO_Process(void);
 
+void AUDIO_getFileList(void);
 void AUDIO_setNewTone(int fret);
 void AUDIO_WriteDataToDAC(void);
 void AUDIO_ReadDataFromMemory(void);
