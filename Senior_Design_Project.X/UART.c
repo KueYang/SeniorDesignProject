@@ -13,6 +13,8 @@
 #include "HardwareProfile.h"
 #include "Timer.h"
 #include "FIFO.h"
+#include "FILES.h"
+#include "DAC.h"
 #include "UART.h"
 
 /** @def UART_MODULE_ID 
@@ -32,7 +34,7 @@
 #define DESCRIPTION_SIZE        (WRITE_BUFFER_SIZE-CMD_SIZE)
 /** @def CMD_SIZE 
  * The size of the command name string. */
-#define NUM_OF_CMD              3
+#define NUM_OF_CMD              7
 
 /** UART Helper Functions. */
 int UART_GetBaudRate(int desireBaud);
@@ -46,7 +48,6 @@ void UART_putNextChar(FIFO* buffer, char ch);
 void UART_processCommand(void);
 int MON_parseCommand(COMMANDSTR* cmd, FIFO* buffer);
 COMMANDS MON_getCommand(const char* cmdName);
-BOOL MON_SendString(const char* str);
 void MON_removeWhiteSpace(const char* string);
 UINT16 MON_getStringLength(const char* string);
 BOOL MON_stringsMatch(const char* str1, const char* str2);
@@ -55,6 +56,10 @@ BOOL MON_stringsMatch(const char* str1, const char* str2);
 void MON_GetHelp(void);
 void MON_GetInputTest(void);
 void MON_GetFileList(void);
+void MON_TestDAC(void);
+void MON_Timer_ON_OFF(void);
+void MON_Timer_Set_PS(void);
+void MON_Read_FILE(void);
 
 /** @var cmdStr 
  * The command string. */
@@ -74,9 +79,13 @@ UINT16 actualBaudRate;
 /** @var MON_COMMANDS 
  * The list of commands. */
 COMMANDS MON_COMMANDS[] = {
-    {"HELP", " Display the list of commands avaliable. \n\r", MON_GetHelp},
-    {"TEST", " Test getting commands. FORMAT: TEST arg1 arg2. \n\r", MON_GetInputTest},
-    {"FILES", " Lists all WAV files. \n\r", MON_GetFileList},
+    {"HELP", " Display the list of commands avaliable. ", MON_GetHelp},
+    {"TEST", " Test getting commands. FORMAT: TEST arg1 arg2. ", MON_GetInputTest},
+    {"FILES", " Lists all WAV files. ", MON_GetFileList},
+    {"DAC", " Tests to see if the DAC is functioning. ", MON_TestDAC},
+    {"TON", " Toggles on/off the Audio Timer. ", MON_Timer_ON_OFF},
+    {"PRD", " Configures the timer prescalar. FORMAT: PRD prescalar .", MON_Timer_Set_PS},
+    {"READ", " Reads the bytes from a file.", MON_Read_FILE},
     {"", "", NULL}
 };
 
@@ -109,7 +118,7 @@ void UART_Init(void)
     INTSetVectorPriority(INT_VECTOR_UART(UART_MODULE_ID), INT_PRIORITY_LEVEL_4);
     INTSetVectorSubPriority(INT_VECTOR_UART(UART_MODULE_ID), INT_SUB_PRIORITY_LEVEL_1);
     
-    MON_SendString("\r\n> ");  // Sends a prompt.
+    MON_SendString(">");  // Sends a prompt.
 }
 
 /**
@@ -164,7 +173,7 @@ void UART_processCommand(void)
         }
         
         /* Prepares for the next command. */
-        MON_SendString("\n\r> ");
+        MON_SendString(">");
         
         /* Resets the ready flag. */
         cmdReady = FALSE;
@@ -185,12 +194,12 @@ int MON_parseCommand(COMMANDSTR* cmd, FIFO* buffer)
     
     /* Pops off the first character in the receive buffer. */
     char ch = UART_getNextChar(buffer);
-    
     /* Checks for a return character and empty space. */
     if(ch == '\r' || ch == ' ')
     {
         return -1;
     }
+    
     int count = 0;
     int numOfBytes[3] = {0,0,0};
     
@@ -198,13 +207,14 @@ int MON_parseCommand(COMMANDSTR* cmd, FIFO* buffer)
     while(ch != '\r' && i < 64)
     {
         str[i++] = ch;
-        ch = UART_getNextChar(buffer);
         count++;
+        ch = UART_getNextChar(buffer);
         
         if(ch == ' ' || ch == '\r')
         {
             numOfBytes[numOfArgs] = count;
-            argIndexes[numOfArgs++] = i-1;
+            argIndexes[numOfArgs++] = i-count+1;
+            count = 0;
         }
     }
     
@@ -230,11 +240,22 @@ int MON_parseCommand(COMMANDSTR* cmd, FIFO* buffer)
 
 BOOL MON_SendString(const char* str)
 {
-    while(*str != '\0')
+    if(*str == '>')
     {
         FIFO_Push(&txBuffer, *str);
-        str++;
     }
+    else
+    {
+        while(*str != '\0')
+        {
+            FIFO_Push(&txBuffer, *str);
+            str++;
+        }
+
+        FIFO_Push(&txBuffer, '\n');
+        FIFO_Push(&txBuffer, '\r');
+    }
+    
     INTEnable(INT_SOURCE_UART_TX(UART_MODULE_ID), INT_ENABLED);
 }
 
@@ -481,4 +502,49 @@ void MON_GetInputTest(void)
 void MON_GetFileList(void)
 {
     AUDIO_getFileList();
+}
+
+BYTE testBytes[40] = {0xe0, 0x26, 0x2a, 0x4d, 0x63, 0x09, 0xba, 0x36, 0xd0, 
+0xd7, 0xb5, 0x55, 0x94, 0xa2, 0x55, 0x81, 0xf0, 0xa5, 0xfb, 0xfb, 0x59, 0x79, 
+0x5a, 0x8c, 0x22, 0x3f, 0xbc, 0x89, 0x8b, 0xb0, 0x62, 0x70, 0x0e, 0x6c, 0xe7, 
+0x0b, 0xcf, 0xe4, 0x0c, 0x28};
+void MON_TestDAC(void)
+{
+    int i = 0;
+    for(i = 0; i < 40; i++)
+    {
+        DAC_WriteToDAC(WRITE_UPDATE_CHN_A, testBytes[i]);
+    }
+}
+
+void MON_Timer_ON_OFF(void)
+{
+    if(!TIMER3_IsON())
+    {
+        TIMER3_ON(TRUE);
+    }
+    else
+    {
+        TIMER3_ON(FALSE);
+    }
+}
+
+void MON_Timer_Set_PS(void)
+{   
+    UINT16 prd = atoi(cmdStr.arg1);
+    T3CONbits.ON = 0;
+    PR3 = prd;
+}
+
+void MON_Read_FILE(void)
+{   
+    char buf[1024] = "";
+    BYTE* bufPtr;
+    
+    while(!AUDIO_isDoneReading())
+    {
+        bufPtr = AUDIO_ReadData();
+        strncat(&buf[0], bufPtr, 1024);
+        MON_SendString(&buf[0]);
+    }
 }
