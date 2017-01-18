@@ -20,17 +20,15 @@
 
 /** @def PERIOD 
  * Timer 1 Period for one ms. */
-#define ONE_MS_PERIOD  156 
-#define FIVE_US_PERIOD  200
+#define ONE_MS_PERIOD           156
+#define TWENTY_US_PERIOD        12
 
 void TIMER1_Init(void);
-void TIMER2_Init(void);
 void TIMER3_Init(void);
 
 /**@var ms_TICK 
  * Millisecond counter. */
 UINT32 ms_TICK;
-BOOL Timer2_ON;
 BOOL Timer3_ON;
 /** @} */
 
@@ -41,7 +39,6 @@ BOOL Timer3_ON;
 void TIMER_Init(void)
 {
     TIMER1_Init();
-    TIMER2_Init();
     TIMER3_Init();
 }
 
@@ -73,26 +70,9 @@ void TIMER1_Init(void)
 
 void TIMER_SetSampleRate(UINT16 sampleRate)
 {
-//    PR2 = (GetPeripheralClock()/sampleRate) - 1;
-//    TMR2 = 0;
-    PR3 = (GetPeripheralClock()/sampleRate) - 1;
+    UINT16 period = ((GetPeripheralClock()/sampleRate)-1);
+    PR3 = period;
     TMR3 = 0;
-}
-
-/**
- * @brief Initializes Timer 2 module.
- * @return Void
- */
-void TIMER2_Init(void)
-{
-    OpenTimer2(T2_OFF | T2_SOURCE_INT | T2_PS_1_256, ONE_MS_PERIOD);
-    
-    Timer2_ON = FALSE;
-    
-    // Set up the timer interrupt with a priority of 2
-    INTEnable(INT_T2, INT_ENABLED);
-    INTSetVectorPriority(INT_TIMER_2_VECTOR, INT_PRIORITY_LEVEL_1);
-    INTSetVectorSubPriority(INT_TIMER_2_VECTOR, INT_SUB_PRIORITY_LEVEL_3);
 }
 
 /**
@@ -101,7 +81,15 @@ void TIMER2_Init(void)
  */
 void TIMER3_Init(void)
 {
-    OpenTimer3(T3_OFF | T3_SOURCE_INT | T3_PS_1_2, FIVE_US_PERIOD);
+//    OpenTimer3(T3_OFF | T3_SOURCE_INT | T3_PS_1_8, SIX_US_PERIOD);
+    T3CONbits.ON = 0;
+    T3CONbits.SIDL = 0;
+    T3CONbits.TGATE = 0;
+    T3CONbits.TCKPS = 0b000;    //PS = 1
+    T3CONbits.TCS = 0;
+    
+    PR3 = TWENTY_US_PERIOD;
+    TMR3 = 0;
     
     Timer3_ON = FALSE;
     
@@ -109,25 +97,6 @@ void TIMER3_Init(void)
     INTEnable(INT_T3, INT_ENABLED);
     INTSetVectorPriority(INT_TIMER_3_VECTOR, INT_PRIORITY_LEVEL_1);
     INTSetVectorSubPriority(INT_TIMER_3_VECTOR, INT_SUB_PRIORITY_LEVEL_2);
-}
-
-BOOL TIMER2_IsON(void)
-{
-    return Timer2_ON;
-}
-
-void TIMER2_ON(BOOL ON)
-{
-    if(ON == TRUE)
-    {
-        T2CONbits.ON = 1;
-        Timer2_ON = TRUE;
-    }
-    else
-    {
-        T2CONbits.ON = 0;
-        Timer2_ON = FALSE;
-    }
 }
 
 BOOL TIMER3_IsON(void)
@@ -184,19 +153,6 @@ void __ISR(_TIMER_1_VECTOR, IPL2AUTO) Timer1Handler(void)
     INTClearFlag(INT_T1);
 }
 
-void __ISR(_TIMER_2_VECTOR, IPL2AUTO) Timer2Handler(void)
-{
-    AUDIO_WriteDataToDAC();
-    
-    if(AUDIO_getBytesWritten()%REC_BUF_SIZE == 0)
-    {
-        TIMER3_ON(TRUE);    // Turns on reading data interrupt.
-        TIMER2_ON(FALSE);   // Disables the writing data interrupt.
-    }
-    
-    // Clear the interrupt flag
-    INTClearFlag(INT_T2);
-}
 
 void __ISR(_TIMER_3_VECTOR, IPL2AUTO) Timer3Handler(void)
 {
@@ -204,19 +160,25 @@ void __ISR(_TIMER_3_VECTOR, IPL2AUTO) Timer3Handler(void)
      * Checks if the bytes written is greater than the buffer size. If so, 
      * starts reading from memory again to fill in the buffer. Otherwise, write
      * data to the DAC.
-     */ 
-    if(AUDIO_getBytesWritten()%REC_BUF_SIZE == 0)
+     */
+    int bytesWritten = AUDIO_getBytesWritten();
+    int bytesRead = AUDIO_getBytesRead();
+    
+    if((bytesRead == bytesWritten) && (!AUDIO_isDoneReading()))
     {
         AUDIO_ReadDataFromMemory();
     }
     else
     {
-        AUDIO_WriteDataToDAC();
-    }
-    
-    if(AUDIO_isDoneWriting())
-    {
-        TIMER3_ON(FALSE);
+        if(AUDIO_isDoneWriting())
+        {
+            AUDIO_setNewTone(0);        // Resets the note to the open string note
+            TIMER3_ON(FALSE);
+        }
+        else
+        {
+            AUDIO_WriteDataToDAC();
+        }
     }
     
     // Clear the interrupt flag

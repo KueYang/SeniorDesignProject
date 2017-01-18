@@ -45,6 +45,7 @@ void UART_Init(void);
 void UART_Process(void);
 
 BOOL MON_SendString(const char* str);
+BOOL MON_SendChar(const char* character);
 
 #ifdef	__cplusplus
 }

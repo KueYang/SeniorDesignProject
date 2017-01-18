@@ -29,6 +29,15 @@ typedef struct AUDIOINFO
     /**@}*/
 }AUDIOINFO;
 
+typedef struct FILEPOS
+{
+    DWORD   cluster;        // The first cluster of the file
+    DWORD   ccls;           // The current cluster of the file
+    WORD    sec;            // The current sector in the current cluster of the file
+    WORD    pos;            // The position in the current sector
+    DWORD   seek;           // The position in the current sector
+}FILEPOS;
+
 /**
  * @brief FILES data structure.
  * @details Data structure used to store information about a file. 
@@ -37,7 +46,7 @@ typedef struct AUDIOINFO
 typedef struct FILES
 {
     /**@{*/
-    FSFILE* startPtr;           /**< Variable used to point to the beginning of the file. >*/
+    FILEPOS posInfo;            /**< Variable used to point to the beginning of the file. >*/
     FSFILE* currentPtr;         /**< Variable used to point to the current location of the open file. >*/
     SearchRec rec;              /**< Variable used to search for files. >*/
     AUDIOINFO audioInfo;

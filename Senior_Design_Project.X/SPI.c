@@ -36,11 +36,11 @@ void SPI_Init(void)
  */
 void SPI2_Init(void)
 {
-    // Re-mapped pins RPA4 and RPB8 pins to SDI2 and SDO2
+    // Re-mapped pins RPB2 and RPB1 pins to SDI2 and SDO2
     mSysUnlockOpLock({
         PPSUnLock;
-        PPSInput(3,SDI2,RPB2);     // Assign RPA4 as input pin for SDI
-        PPSOutput(2,RPB1,SDO2);    // Set RPB8 pin as output for SDO
+        PPSInput(3,SDI2,RPB2);     // Assign RPB2 as input pin for SDI
+        PPSOutput(2,RPB1,SDO2);    // Set RPB1 pin as output for SDO
         PPSLock;
     });
     

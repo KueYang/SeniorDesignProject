@@ -26,7 +26,7 @@ void DAC_Init(void)
 #endif
     SYNC = 1;   // Sets the latch high.
 #ifdef DAC12B
-    DAC_WriteToDAC(POWER_ON_OFF_CHN_A_B , 0x000F & DAC_B_A);
+    DAC_WriteToDAC(POWER_ON_OFF_CHN_A , 0x000F & DAC_A);
 #else    
     DAC_WriteToDAC(POWER_ON_OFF_CHN_A_B , 0x3B);
 #endif
@@ -45,12 +45,14 @@ void DAC_Init(void)
  */
 BOOL DAC_WriteToDAC(BYTE cmd_addr, WORD data)
 {
-   SYNC = 0;    // Shifts the latch low to initiate write
+    SYNC = 0;    // Shifts the latch low to initiate write
    
-   SPI2_ReadWrite(cmd_addr);
+    SPI2_ReadWrite(cmd_addr);
 #ifdef DAC12B
-   SPI2_ReadWrite(data && 0xFF0);       // Sends the first 8 bits
-   SPI2_ReadWrite(data && 0x00F);       // Sends the last 4 bits
+    BYTE LSBytes = (data & 0x00F0);
+    BYTE MSBytes = (data & 0xFF00)>>8;
+    SPI2_ReadWrite(MSBytes);         // Sends the first 2 MBS
+    SPI2_ReadWrite(LSBytes);         // Sends the last MBS
 #else
    SPI2_ReadWrite(data && 0xFF00);      // Sends the first 8 bits
    SPI2_ReadWrite(data && 0x00FF);      // Sends the last 8 bits

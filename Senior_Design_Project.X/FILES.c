@@ -83,14 +83,14 @@ BOOL FILES_ListFiles(SearchRec* rec)
 {
     char buf[FILENAME_LENGTH];
     
-    MON_SendString("\n\rShowing all WAV files in root directory:\n\r");
+    MON_SendString("Showing all WAV files in root directory:");
     if (FindFirst("*.WAV", file_attributes, rec) == 0) 
     {
-        snprintf(buf, FILENAME_LENGTH, "%s\t%u KB \n\r", rec->filename, rec->filesize/1000);
+        snprintf(buf, FILENAME_LENGTH, "%s\t%u KB", rec->filename, rec->filesize/1000);
         MON_SendString(&buf[0]);
         while (FindNext(rec) == 0) 
         {
-            snprintf(buf, FILENAME_LENGTH, "%s\t%u KB \n\r", rec->filename, rec->filesize/1000);
+            snprintf(buf, FILENAME_LENGTH, "%s\t%u KB", rec->filename, rec->filesize/1000);
             MON_SendString(&buf[0]);
         }
         return TRUE;

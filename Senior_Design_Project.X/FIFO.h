@@ -13,7 +13,7 @@ extern "C" {
 
 /**@def BUFFERSIZE 
  * Defines the buffer size used for the FIFO queue. */
-#define BUFFERSIZE  1024
+#define BUFFERSIZE  2048
 
 /**
  * @brief FIFO data structure.

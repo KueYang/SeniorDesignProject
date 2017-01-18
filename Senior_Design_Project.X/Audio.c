@@ -28,15 +28,15 @@ BOOL AUDIO_GetAudioData(FILES* file, int bytes);
 FILES files[MAX_NUM_OF_FILES];
 /** @var receiveBuffer 
  * A buffer used to store data read from the audio file. */
-BYTE receiveBuffer[REC_BUF_SIZE];
-UINT16 audioData[REC_BUF_SIZE];
+BYTE receiveBuffer[2*REC_BUF_SIZE];
+UINT16 audioData[2*REC_BUF_SIZE];
 /** @var fileIndex 
  * The index used to specify the audio file that is being read. */
-int fileIndex;
-int audioInPtr;
-int audioOutPtr;
-int bytesRead;
-int bytesWritten;
+UINT16 fileIndex;
+UINT16 audioInPtr;
+UINT16 audioOutPtr;
+UINT32 bytesRead;
+UINT32 bytesWritten;
 /** @var fileNames 
  * The file names of audio files for the specified pic. */
 const char* fileNames[MAX_NUM_OF_FILES] = {
@@ -170,6 +170,8 @@ const char* fileNames[MAX_NUM_OF_FILES] = {
  * by default). 
  * @return Void
  */
+SearchRec rec;
+
 void AUDIO_Init(void)
 {
     // Checks to make sure that the SD card is attached
@@ -182,14 +184,18 @@ void AUDIO_Init(void)
     AUDIO_getFileList();
     
     // Opens the given file and set a pointer to the file.
-    files[0].currentPtr = FILES_OpenFile("OST_02.WAV", &files[0].rec);
+    files[0].currentPtr = FILES_OpenFile("S6_EHIGH.WAV", &rec);
     if(files[0].currentPtr != NULL)
     {
         /* Parses the header from the files and stores them. */
         if(AUDIO_GetHeader(&files[0], 0) == WAV_SUCCESS)
         {
             /* Saves a pointer to the beginning of the data section of the file. */
-            files[0].startPtr = files[0].currentPtr;
+            files[0].posInfo.cluster = files[0].currentPtr->cluster;
+            files[0].posInfo.ccls = files[0].currentPtr->ccls;
+            files[0].posInfo.sec = files[0].currentPtr->sec;
+            files[0].posInfo.seek = files[0].currentPtr->seek;
+            
             /* Configures the Timer2 period given the sample rate. */
             TIMER_SetSampleRate(files[0].audioInfo.sampleRate);
         }
@@ -210,19 +216,19 @@ void AUDIO_Init(void)
  */
 void AUDIO_Process(void)
 {
-    if(AUDIO_isDoneReading() && AUDIO_isDoneWriting())
-    {
-        AUDIO_setNewTone(0);
-        IO_setCurrentFret(0);
-        TIMER2_ON(FALSE);
-        TIMER3_ON(FALSE);
-    }
+//    if(AUDIO_isDoneReading() && AUDIO_isDoneWriting())
+//    {
+//        AUDIO_setNewTone(0);
+//        IO_setCurrentFret(0);
+//        TIMER2_ON(FALSE);
+//        TIMER3_ON(FALSE);
+//    }
 }
 
 void AUDIO_setNewTone(int fret)
 {
     /* Sets the index to point to the file corresponding to the fret. */
-    fileIndex = fret;
+//    fileIndex = fret;
     /* Sets the bytes read to zero. */
     bytesRead = 0;
     /* Sets the bytes written to zero. */
@@ -232,12 +238,22 @@ void AUDIO_setNewTone(int fret)
     /* Sets the audio out pointer to zero. */
     audioOutPtr = 0;
     /* Sets the current file pointer to the beginning of the data section of the file. */
-    files[fileIndex].currentPtr = files[fileIndex].startPtr;
+    files[0].currentPtr->cluster = files[0].posInfo.cluster;
+    files[0].currentPtr->ccls = files[0].posInfo.ccls;
+    files[0].currentPtr->sec = files[0].posInfo.sec;
+    files[0].currentPtr->seek = files[0].posInfo.seek;
+    
+    MON_SendString("Setting new a tone.");
 }
 
 FILES* AUDIO_getFilePtr(void)
 {
     return &files[0];
+}
+
+int AUDIO_getBytesRead(void)
+{
+    return bytesRead;
 }
 
 BOOL AUDIO_isDoneReading()
@@ -326,19 +342,53 @@ UINT8 AUDIO_GetHeader(FILES* file, int index)
  * @retval TRUE if the file was read successfully.
  * @retval FALSE if the file was read unsuccessfully.
  */
+
+#define AC_ZERO         2048    // since Dac resolution is 12-bits
+volatile UINT16 LSTACK[READ_BYTES];
+volatile UINT16 RSTACK[READ_BYTES];
+
 BOOL AUDIO_GetAudioData(FILES* file, int bytes)
 {
-    UINT16 blocks = file->audioInfo.blockAlign*bytes;
+    UINT16 blockAlign = file->audioInfo.blockAlign;
+    UINT16 blocks = blockAlign*bytes;
+    UINT32 bytesLeft = (file->audioInfo.dataSize - bytesRead);
+    
+    if(blocks >= bytesLeft)
+    {
+        blocks = bytesLeft;
+    }
+    
     if(FILES_ReadFile(receiveBuffer, 1, blocks, file->currentPtr))
     {
         int i = 0;
         UINT16 audioByte;
-        for(i = 0; i < blocks; i += file->audioInfo.blockAlign)
+        UINT16 unsign_audio;
+        for(i = 0; i < blocks; i+=blockAlign)
         {
-            audioByte = receiveBuffer[i] << 8 | receiveBuffer[i+1];
-            audioData[audioInPtr++] = audioByte;
+            audioByte = ((receiveBuffer[i+1] << 4) | (receiveBuffer[i] >> 4));
+            if (audioByte & 0x0800) {
+                unsign_audio = ~(audioByte - 1);
+                audioByte = AC_ZERO - unsign_audio;
+            }
+            else {
+                audioByte = AC_ZERO + audioByte;
+            }
+            LSTACK[audioInPtr] = 0x3000 | audioByte;
             
-            if(audioInPtr >= REC_BUF_SIZE)
+            if(file->audioInfo.numOfChannels == 2)
+            {
+                audioByte = ((receiveBuffer[i+3] << 4) | (receiveBuffer[i+2] >> 4));
+                if (audioByte & 0x0800) {
+                    unsign_audio = ~(audioByte - 1);
+                    audioByte = AC_ZERO - unsign_audio;
+                }
+                else {
+                    audioByte = AC_ZERO + audioByte;
+                }             
+            }
+            RSTACK[audioInPtr++] = 0xB000 | audioByte;
+            
+            if(audioInPtr >= READ_BYTES)
             {
                 audioInPtr = 0;
             }
@@ -358,17 +408,18 @@ void AUDIO_ReadDataFromMemory(void)
 void AUDIO_WriteDataToDAC(void)
 {
     /* Writes 1 WORD of data to the DAC. */
-    DAC_WriteToDAC(WRITE_UPDATE_CHN_A, audioData[audioOutPtr++]);
-    if(audioOutPtr >= REC_BUF_SIZE)
+    DAC_WriteToDAC(WRITE_UPDATE_CHN_A, LSTACK[audioOutPtr]);
+    DAC_WriteToDAC(WRITE_UPDATE_CHN_A, RSTACK[audioOutPtr++]);
+    
+    if(audioOutPtr >= READ_BYTES)
     {
         audioOutPtr = 0;
     }
     // Increments the byte written count.
-    bytesWritten++;
+    bytesWritten+=4;
 }
-
 
 void AUDIO_getFileList(void)
 {
-    FILES_ListFiles(&files[0].rec);
+    FILES_ListFiles(&rec);
 }
