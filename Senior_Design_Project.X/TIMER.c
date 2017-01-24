@@ -20,7 +20,8 @@
 
 /** @def PERIOD 
  * Timer 1 Period for one ms. */
-#define ONE_MS_PERIOD           156
+#define TEN_US_PERIOD           400
+#define ONE_MS_PERIOD           40000
 #define TWENTY_US_PERIOD        12
 
 void TIMER1_Init(void);
@@ -28,7 +29,9 @@ void TIMER3_Init(void);
 
 /**@var ms_TICK 
  * Millisecond counter. */
+UINT32 us_TICK;
 UINT32 ms_TICK;
+BOOL Timer1_ON;
 BOOL Timer3_ON;
 /** @} */
 
@@ -38,6 +41,9 @@ BOOL Timer3_ON;
  */
 void TIMER_Init(void)
 {
+    us_TICK = 0;
+    ms_TICK = 0;
+    
     TIMER1_Init();
     TIMER3_Init();
 }
@@ -60,12 +66,33 @@ void TIMER_Process(void)
  */
 void TIMER1_Init(void)
 {
-    OpenTimer1(T1_ON | T1_SOURCE_INT | T1_PS_1_256, ONE_MS_PERIOD);
+    OpenTimer1(T1_ON | T1_SOURCE_INT | T1_PS_1_1, TEN_US_PERIOD);
     
     // Set up the timer interrupt with a priority of 2
     INTEnable(INT_T1, INT_ENABLED);
-    INTSetVectorPriority(INT_TIMER_1_VECTOR, INT_PRIORITY_LEVEL_1);
+    INTSetVectorPriority(INT_TIMER_1_VECTOR, INT_PRIORITY_LEVEL_2);
     INTSetVectorSubPriority(INT_TIMER_1_VECTOR, INT_SUB_PRIORITY_LEVEL_0);
+}
+
+BOOL TIMER1_IsON(void)
+{
+    return Timer1_ON;
+}
+
+void TIMER1_ON(BOOL ON)
+{
+    if(ON == TRUE)
+    {
+        T1CONbits.ON = 1;
+        Timer1_ON = TRUE;
+        INTClearFlag(INT_T1);
+    }
+    else
+    {
+        T1CONbits.ON = 0;
+        Timer1_ON = FALSE;
+        INTClearFlag(INT_T1);
+    }
 }
 
 void TIMER_SetSampleRate(UINT16 sampleRate)
@@ -95,7 +122,7 @@ void TIMER3_Init(void)
     
     // Set up the timer interrupt with a priority of 2
     INTEnable(INT_T3, INT_ENABLED);
-    INTSetVectorPriority(INT_TIMER_3_VECTOR, INT_PRIORITY_LEVEL_1);
+    INTSetVectorPriority(INT_TIMER_3_VECTOR, INT_PRIORITY_LEVEL_2);
     INTSetVectorSubPriority(INT_TIMER_3_VECTOR, INT_SUB_PRIORITY_LEVEL_2);
 }
 
@@ -110,11 +137,13 @@ void TIMER3_ON(BOOL ON)
     {
         T3CONbits.ON = 1;
         Timer3_ON = TRUE;
+        INTClearFlag(INT_T3);
     }
     else
     {
         T3CONbits.ON = 0;
         Timer3_ON = FALSE;
+        INTClearFlag(INT_T3);
     }
 }
 
@@ -138,6 +167,12 @@ UINT32 TIMER_GetMSecond(void)
     return ms_TICK;
 }
 
+UINT32 TIMER_GetUSecond(void)
+{
+    return us_TICK;
+}
+
+
 /**
  * @brief Timer 1 Interrupt Service Routine.
  * @details The interrupt service routine is used to increment the millisecond
@@ -147,7 +182,12 @@ UINT32 TIMER_GetMSecond(void)
 void __ISR(_TIMER_1_VECTOR, IPL2AUTO) Timer1Handler(void)
 {
     // Increments the millisecond counter.
-    ms_TICK++;
+    us_TICK+=10;
+    
+    if(us_TICK%1000 == 0)
+    {
+        ms_TICK++;
+    }
     
     // Clear the interrupt flag
     INTClearFlag(INT_T1);
@@ -166,7 +206,12 @@ void __ISR(_TIMER_3_VECTOR, IPL2AUTO) Timer3Handler(void)
     
     if((bytesRead == bytesWritten) && (!AUDIO_isDoneReading()))
     {
+        UINT32 startTime = TIMER_GetUSecond();
         AUDIO_ReadDataFromMemory();
+        UINT32 endTime = TIMER_GetUSecond();
+        
+        UINT32 timeToRead = endTime - startTime;
+        int x = 0;
     }
     else
     {

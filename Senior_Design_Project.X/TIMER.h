@@ -13,9 +13,12 @@ extern "C" {
 
 void TIMER_Init(void);
 void TIMER_Process(void);
+UINT32 TIMER_GetUSecond(void);
 UINT32 TIMER_GetMSecond(void);
 void TIMER_MSecondDelay(int);
 
+BOOL TIMER1_IsON(void);
+void TIMER1_ON(BOOL ON);
 BOOL TIMER3_IsON(void);
 void TIMER3_ON(BOOL ON);
 void TIMER_SetSampleRate(UINT16 sampleRate);
