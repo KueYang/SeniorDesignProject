@@ -15,6 +15,8 @@ extern "C" {
  * Selects the DAC to be used. Defaults to the AD5689R */
 #define DAC12B
 
+#define AC_ZERO                         2048
+    
 /** @def LDAC 
  * Defines the IO port used for updating the DAC. */
 #define LDAC                            PORTAbits.RA3
@@ -74,6 +76,7 @@ extern "C" {
 /** @def WRITE_UPDATE_CHN_A_B 
  * Defines the command to write and update both channel A and channel B. */
 #define WRITE_UPDATE_CHN_A_B            0x17
+    
 #else
 /** @def RSTSEL 
  * Defines the IO port used for power-on reset. */
@@ -134,6 +137,8 @@ extern "C" {
 #endif
     
 void DAC_Init(void);
+void DAC_Zero(void);
+void DAC_ZeroOutput(void);
 BOOL DAC_WriteToDAC(BYTE cmd_addr, WORD data);
 
 #ifdef	__cplusplus

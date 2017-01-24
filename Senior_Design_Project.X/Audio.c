@@ -18,7 +18,9 @@
 #include "DAC.h"
 #include "Audio.h"
 
-#define READ_BYTES      REC_BUF_SIZE
+/** @def REC_BUF_SIZE 
+ * Defines the audio buffer size. */
+#define REC_BUF_SIZE    256
 
 UINT8 AUDIO_GetHeader(FILES* file, int index);
 BOOL AUDIO_GetAudioData(FILES* file, int bytes);
@@ -28,10 +30,11 @@ BOOL AUDIO_GetAudioData(FILES* file, int bytes);
 FILES files[MAX_NUM_OF_FILES];
 /** @var receiveBuffer 
  * A buffer used to store data read from the audio file. */
-BYTE receiveBuffer[2*REC_BUF_SIZE];
-UINT16 audioData[2*REC_BUF_SIZE];
+BYTE receiveBuffer[REC_BUF_SIZE];
+UINT16 audioData[REC_BUF_SIZE*4];
 /** @var fileIndex 
  * The index used to specify the audio file that is being read. */
+SearchRec rec;
 UINT16 fileIndex;
 UINT16 audioInPtr;
 UINT16 audioOutPtr;
@@ -170,8 +173,6 @@ const char* fileNames[MAX_NUM_OF_FILES] = {
  * by default). 
  * @return Void
  */
-SearchRec rec;
-
 void AUDIO_Init(void)
 {
     // Checks to make sure that the SD card is attached
@@ -184,7 +185,7 @@ void AUDIO_Init(void)
     AUDIO_getFileList();
     
     // Opens the given file and set a pointer to the file.
-    files[0].currentPtr = FILES_OpenFile("S6_EHIGH.WAV", &rec);
+    files[0].currentPtr = FILES_OpenFile("OST_02.WAV", &rec);
     if(files[0].currentPtr != NULL)
     {
         /* Parses the header from the files and stores them. */
@@ -216,13 +217,7 @@ void AUDIO_Init(void)
  */
 void AUDIO_Process(void)
 {
-//    if(AUDIO_isDoneReading() && AUDIO_isDoneWriting())
-//    {
-//        AUDIO_setNewTone(0);
-//        IO_setCurrentFret(0);
-//        TIMER2_ON(FALSE);
-//        TIMER3_ON(FALSE);
-//    }
+    
 }
 
 void AUDIO_setNewTone(int fret)
@@ -342,10 +337,8 @@ UINT8 AUDIO_GetHeader(FILES* file, int index)
  * @retval TRUE if the file was read successfully.
  * @retval FALSE if the file was read unsuccessfully.
  */
-
-#define AC_ZERO         2048    // since Dac resolution is 12-bits
-volatile UINT16 LSTACK[READ_BYTES];
-volatile UINT16 RSTACK[READ_BYTES];
+volatile UINT16 LSTACK[REC_BUF_SIZE];
+volatile UINT16 RSTACK[REC_BUF_SIZE];
 
 BOOL AUDIO_GetAudioData(FILES* file, int bytes)
 {
@@ -357,7 +350,7 @@ BOOL AUDIO_GetAudioData(FILES* file, int bytes)
     {
         blocks = bytesLeft;
     }
-    
+
     if(FILES_ReadFile(receiveBuffer, 1, blocks, file->currentPtr))
     {
         int i = 0;
@@ -365,20 +358,20 @@ BOOL AUDIO_GetAudioData(FILES* file, int bytes)
         UINT16 unsign_audio;
         for(i = 0; i < blocks; i+=blockAlign)
         {
-            audioByte = ((receiveBuffer[i+1] << 4) | (receiveBuffer[i] >> 4));
-            if (audioByte & 0x0800) {
+            audioByte = ((receiveBuffer[i+1] << 8) | (receiveBuffer[i]));
+            if (audioByte & 0x8000) {
                 unsign_audio = ~(audioByte - 1);
                 audioByte = AC_ZERO - unsign_audio;
             }
             else {
                 audioByte = AC_ZERO + audioByte;
             }
-            LSTACK[audioInPtr] = 0x3000 | audioByte;
+            LSTACK[audioInPtr] = audioByte;
             
             if(file->audioInfo.numOfChannels == 2)
             {
-                audioByte = ((receiveBuffer[i+3] << 4) | (receiveBuffer[i+2] >> 4));
-                if (audioByte & 0x0800) {
+                audioByte = ((receiveBuffer[i+3] << 8) | (receiveBuffer[i+2]));
+                if (audioByte & 0x8000) {
                     unsign_audio = ~(audioByte - 1);
                     audioByte = AC_ZERO - unsign_audio;
                 }
@@ -386,12 +379,14 @@ BOOL AUDIO_GetAudioData(FILES* file, int bytes)
                     audioByte = AC_ZERO + audioByte;
                 }             
             }
-            RSTACK[audioInPtr++] = 0xB000 | audioByte;
+            RSTACK[audioInPtr++] = audioByte;
             
-            if(audioInPtr >= READ_BYTES)
+            if(audioInPtr >= REC_BUF_SIZE)
             {
                 audioInPtr = 0;
             }
+            
+            while (audioInPtr == (audioOutPtr-2));
         }
         bytesRead += blocks;
         return TRUE;
@@ -399,10 +394,10 @@ BOOL AUDIO_GetAudioData(FILES* file, int bytes)
     return FALSE;
 }
 
-void AUDIO_ReadDataFromMemory(void)
+BOOL AUDIO_ReadDataFromMemory(void)
 {
     /* Reads 16 bytes of data. */
-    AUDIO_GetAudioData(&files[fileIndex], READ_BYTES);
+    return AUDIO_GetAudioData(&files[fileIndex], REC_BUF_SIZE);
 }
 
 void AUDIO_WriteDataToDAC(void)
@@ -411,7 +406,7 @@ void AUDIO_WriteDataToDAC(void)
     DAC_WriteToDAC(WRITE_UPDATE_CHN_A, LSTACK[audioOutPtr]);
     DAC_WriteToDAC(WRITE_UPDATE_CHN_A, RSTACK[audioOutPtr++]);
     
-    if(audioOutPtr >= READ_BYTES)
+    if(audioOutPtr >= REC_BUF_SIZE)
     {
         audioOutPtr = 0;
     }

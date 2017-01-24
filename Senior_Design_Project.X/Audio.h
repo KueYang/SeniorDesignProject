@@ -85,10 +85,6 @@ extern "C" {
 /** @def WAV_SUB_CHUNK2_ID_ERROR 
  * Defines the error code for invalid chunk2 ID. */
 #define WAV_SUB_CHUNK2_ID_ERROR     7
-
-/** @def REC_BUF_SIZE 
- * Defines the audio buffer size. */
-#define REC_BUF_SIZE    128
     
 void AUDIO_Init(void);
 void AUDIO_Process(void);
@@ -96,7 +92,7 @@ void AUDIO_Process(void);
 void AUDIO_getFileList(void);
 void AUDIO_setNewTone(int fret);
 void AUDIO_WriteDataToDAC(void);
-void AUDIO_ReadDataFromMemory(void);
+BOOL AUDIO_ReadDataFromMemory(void);
 int AUDIO_getBytesRead(void);
 int AUDIO_getBytesWritten(void);
 

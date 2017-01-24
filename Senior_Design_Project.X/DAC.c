@@ -30,6 +30,8 @@ void DAC_Init(void)
 #else    
     DAC_WriteToDAC(POWER_ON_OFF_CHN_A_B , 0x3B);
 #endif
+    
+    DAC_Zero();
 }
 
 /**
@@ -61,5 +63,13 @@ BOOL DAC_WriteToDAC(BYTE cmd_addr, WORD data)
    SYNC = 1;    // Shifts the latch high to end write
 }
 
+void DAC_Zero(void)
+{
+    DAC_WriteToDAC(WRITE_UPDATE_CHN_A, AC_ZERO);
+}
 
-
+void DAC_ZeroOutput(void)
+{
+    CLR = 0;
+    CLR = 1;
+}
