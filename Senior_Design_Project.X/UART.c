@@ -51,12 +51,14 @@ COMMANDS MON_getCommand(const char* cmdName);
 void MON_removeWhiteSpace(const char* string);
 UINT16 MON_getStringLength(const char* string);
 BOOL MON_stringsMatch(const char* str1, const char* str2);
+char MON_lowerToUpper(const char* ch);
 
 /** Commands Handlers. */
 void MON_GetHelp(void);
 void MON_GetInputTest(void);
 void MON_GetFileList(void);
 void MON_TestDAC(void);
+void MON_ZeroDAC(void);
 void MON_SinDAC(void);
 void MON_Timer_ON_OFF(void);
 void MON_Timer_Set_PS(void);
@@ -83,7 +85,8 @@ COMMANDS MON_COMMANDS[] = {
     {"HELP", " Display the list of commands avaliable. ", MON_GetHelp},
     {"TEST", " Test getting commands. FORMAT: TEST arg1 arg2. ", MON_GetInputTest},
     {"FILES", " Lists all WAV files. ", MON_GetFileList},
-    {"DAC", " Tests to see if the DAC is functioning. ", MON_TestDAC},
+    {"DAC", " Tests the DAC by sending a value. FORMAT: DAC value. ", MON_TestDAC},
+    {"DACZ", " Sets all DAC outputs to zero. ", MON_ZeroDAC},
     {"SIN", " Tests the DAC using a sin wave. ", MON_SinDAC},
     {"TON", " Toggles on/off the Audio Timer. ", MON_Timer_ON_OFF},
     {"PRD", " Configures the timer prescalar. FORMAT: PRD prescalar .", MON_Timer_Set_PS},
@@ -116,7 +119,7 @@ void UART_Init(void)
     // Configure UART RX1 and TX1 Interrupt
     INTEnable(INT_SOURCE_UART_RX(UART_MODULE_ID), INT_ENABLED);
     INTEnable(INT_SOURCE_UART_TX(UART_MODULE_ID), INT_DISABLED);
-    INTSetVectorPriority(INT_VECTOR_UART(UART_MODULE_ID), INT_PRIORITY_LEVEL_4);
+    INTSetVectorPriority(INT_VECTOR_UART(UART_MODULE_ID), INT_PRIORITY_LEVEL_1);
     INTSetVectorSubPriority(INT_VECTOR_UART(UART_MODULE_ID), INT_SUB_PRIORITY_LEVEL_1);
     
     MON_SendString(">");  // Sends a prompt.
@@ -207,7 +210,7 @@ int MON_parseCommand(COMMANDSTR* cmd, FIFO* buffer)
     /* Grabs the first command from the fifo buffer. */
     while(ch != '\r' && i < 64)
     {
-        str[i++] = ch;
+        str[i++] = (char)MON_lowerToUpper(&ch);
         count++;
         ch = UART_getNextChar(buffer);
         
@@ -264,6 +267,16 @@ BOOL MON_SendString(const char* str)
     }
     
     INTEnable(INT_SOURCE_UART_TX(UART_MODULE_ID), INT_ENABLED);
+}
+
+char MON_lowerToUpper(const char* ch)
+{
+    char uChar = (*ch);
+    if (uChar >= 'a' && uChar <= 'z') 
+    {
+         uChar = uChar - 32;
+    }
+    return uChar;
 }
 
 /**
@@ -373,6 +386,7 @@ void __ISR(_UART1_VECTOR, IPL4AUTO) IntUart1Handler(void)
                 if(data == '\r')
                 {
                     cmdReady = TRUE;
+                    UART_processCommand();
                 }
             }
         }
@@ -485,8 +499,16 @@ void MON_GetFileList(void)
 
 void MON_TestDAC(void)
 {
-    
+    UINT16 value = atoi(cmdStr.arg1);
+    DAC_WriteToDAC(WRITE_UPDATE_CHN_A, value);
 }
+
+
+void MON_ZeroDAC(void)
+{
+    DAC_ZeroOutput();
+}
+
 void MON_SinDAC(void)
 {
     WORD testBytes[1024] = {0x400,0x406,0x40d,0x413,0x419,0x41f,0x426,0x42c,
