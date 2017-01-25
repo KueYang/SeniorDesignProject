@@ -197,8 +197,8 @@ void AUDIO_Init(void)
             files[0].posInfo.sec = files[0].currentPtr->sec;
             files[0].posInfo.seek = files[0].currentPtr->seek;
             
-            /* Configures the Timer2 period given the sample rate. */
-            TIMER_SetSampleRate(files[0].audioInfo.sampleRate);
+            /* Configures the Timer3 period given the sample rate. */
+            TIMER3_SetSampleRate(files[0].audioInfo.sampleRate);
         }
     }
     
@@ -385,8 +385,6 @@ BOOL AUDIO_GetAudioData(FILES* file, int bytes)
             {
                 audioInPtr = 0;
             }
-            
-            while (audioInPtr == (audioOutPtr-2));
         }
         bytesRead += blocks;
         return TRUE;

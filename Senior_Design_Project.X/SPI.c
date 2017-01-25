@@ -58,7 +58,7 @@ void SPI2_Init(void)
     SPI2CONbits.ENHBUF = 0;     // Enhanced Buffer mode disabled
     SPI2CONbits.SIDL = 0;       // Continue module in idle mode
     SPI2CONbits.DISSDO = 0;     // SDO2 controlled by module
-    SPI2CONbits.MODE16 = 0b00;  // 8-bit communication
+    SPI2CONbits.MODE16 = 0b00;  // 16-bit communication
     SPI2CONbits.SMP = 1;        // Input data sampled at end of data output
     SPI2CONbits.CKE = 0;        // Serial output data changes from idle to active clk
     SPI2CONbits.SSEN = 0;       // Slave select disable
@@ -68,10 +68,20 @@ void SPI2_Init(void)
     SPI2CONbits.STXISEL = 0b00; // Transmit interrupts on last transfer
     SPI2CONbits.SRXISEL = 0b00; // Receive interrupts on last received
     
-    SPI2BRG = 2;                // SPI clock speed at PBCLK/8
-    SPI2STATbits.SPIROV = 0;    // Clears Receive overflow flag
+    SPI2CON2bits.AUDEN = 0;                 // Audio CODEC support disabled
+    SPI2CON2bits.AUDMOD = 0b00;             // I2S mode
+    SPI2CON2bits.AUDMONO = 0;               // Audio Data is stereo
+    SPI2CON2bits.FRMERREN = 0;              // Interrupt Events via FRMERR disabled
+    SPI2CON2bits.IGNROV = 0;                // Receive overflow is critical, stops SPI
+    SPI2CON2bits.IGNTUR = 0;                // Transmit underrun is critical, stops SPI
+    SPI2CON2bits.SPIROVEN = 0;              // Receive overflow doesn't trigger error event.
+    SPI2CON2bits.SPITUREN = 0;              // Transmit underrun doesn't trigger error event.
+    SPI2CON2bits.SPISGNEXT = 0;             // RX Data is not signed-extended
     
-    SPI2CONbits.ON = 1;         // Enable SPI Module
+    SPI2BRG = SPI_GetBaudRate(20000000);    // SPI clock speed at PBCLK/8
+    SPI2STATbits.SPIROV = 0;                // Clears Receive overflow flag
+    
+    SPI2CONbits.ON = 1;                     // Enable SPI Module
 }
 
 /**

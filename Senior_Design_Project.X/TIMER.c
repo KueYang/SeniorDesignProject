@@ -25,6 +25,7 @@
 #define TWENTY_US_PERIOD        12
 
 void TIMER1_Init(void);
+void TIMER2_Init(void);
 void TIMER3_Init(void);
 
 /**@var ms_TICK 
@@ -32,6 +33,7 @@ void TIMER3_Init(void);
 UINT32 us_TICK;
 UINT32 ms_TICK;
 BOOL Timer1_ON;
+BOOL Timer2_ON;
 BOOL Timer3_ON;
 /** @} */
 
@@ -45,6 +47,7 @@ void TIMER_Init(void)
     ms_TICK = 0;
     
     TIMER1_Init();
+    TIMER2_Init();
     TIMER3_Init();
 }
 
@@ -66,7 +69,7 @@ void TIMER_Process(void)
  */
 void TIMER1_Init(void)
 {
-    OpenTimer1(T1_ON | T1_SOURCE_INT | T1_PS_1_1, TEN_US_PERIOD);
+    OpenTimer1(T1_ON | T1_SOURCE_INT | T1_PS_1_1, ONE_MS_PERIOD);
     
     // Set up the timer interrupt with a priority of 2
     INTEnable(INT_T1, INT_ENABLED);
@@ -95,11 +98,51 @@ void TIMER1_ON(BOOL ON)
     }
 }
 
-void TIMER_SetSampleRate(UINT16 sampleRate)
+void TIMER2_Init(void)
 {
-    UINT16 period = ((GetPeripheralClock()/sampleRate)-1);
-    PR3 = period;
-    TMR3 = 0;
+    T2CONbits.ON = 0;
+    T2CONbits.SIDL = 0;
+    T2CONbits.TGATE = 0;
+    T2CONbits.TCKPS = 0b000;    //PS = 1
+    T2CONbits.TCS = 0;
+    
+    PR2 = TWENTY_US_PERIOD;
+    TMR2 = 0;
+    
+    Timer2_ON = FALSE;
+    
+    // Set up the timer interrupt with a priority of 2
+    INTEnable(INT_T2, INT_ENABLED);
+    INTSetVectorPriority(INT_TIMER_2_VECTOR, INT_PRIORITY_LEVEL_2);
+    INTSetVectorSubPriority(INT_TIMER_2_VECTOR, INT_SUB_PRIORITY_LEVEL_3);
+}
+
+void TIMER2_SetSampleRate(UINT16 sampleRate)
+{
+    UINT16 period = ((GetPeripheralClock()/sampleRate)-1)/2;
+    PR2 = period;
+    TMR2 = 0;
+}
+
+BOOL TIMER2_IsON(void)
+{
+    return Timer2_ON;
+}
+
+void TIMER2_ON(BOOL ON)
+{
+    if(ON == TRUE)
+    {
+        T2CONbits.ON = 1;
+        Timer2_ON = TRUE;
+        INTClearFlag(INT_T2);
+    }
+    else
+    {
+        T2CONbits.ON = 0;
+        Timer2_ON = FALSE;
+        INTClearFlag(INT_T2);
+    }
 }
 
 /**
@@ -124,6 +167,13 @@ void TIMER3_Init(void)
     INTEnable(INT_T3, INT_ENABLED);
     INTSetVectorPriority(INT_TIMER_3_VECTOR, INT_PRIORITY_LEVEL_2);
     INTSetVectorSubPriority(INT_TIMER_3_VECTOR, INT_SUB_PRIORITY_LEVEL_2);
+}
+
+void TIMER3_SetSampleRate(UINT16 sampleRate)
+{
+    UINT16 period = ((GetPeripheralClock()/sampleRate)-1);
+    PR3 = 440;
+    TMR3 = 0;
 }
 
 BOOL TIMER3_IsON(void)
@@ -172,7 +222,6 @@ UINT32 TIMER_GetUSecond(void)
     return us_TICK;
 }
 
-
 /**
  * @brief Timer 1 Interrupt Service Routine.
  * @details The interrupt service routine is used to increment the millisecond
@@ -182,17 +231,28 @@ UINT32 TIMER_GetUSecond(void)
 void __ISR(_TIMER_1_VECTOR, IPL2AUTO) Timer1Handler(void)
 {
     // Increments the millisecond counter.
-    us_TICK+=10;
-    
-    if(us_TICK%1000 == 0)
-    {
-        ms_TICK++;
-    }
+    ms_TICK++;
     
     // Clear the interrupt flag
     INTClearFlag(INT_T1);
 }
 
+void __ISR(_TIMER_2_VECTOR, IPL2AUTO) Timer2Handler(void)
+{
+    int bytesWritten = AUDIO_getBytesWritten();
+    int bytesRead = AUDIO_getBytesRead();
+    
+    if((bytesRead == bytesWritten) && (!AUDIO_isDoneReading()))
+    {
+        AUDIO_ReadDataFromMemory();
+    }
+    
+    if(AUDIO_isDoneReading()){
+        TIMER2_ON(FALSE);
+    }
+    
+    INTClearFlag(INT_T2);
+}
 
 void __ISR(_TIMER_3_VECTOR, IPL2AUTO) Timer3Handler(void)
 {
@@ -206,19 +266,14 @@ void __ISR(_TIMER_3_VECTOR, IPL2AUTO) Timer3Handler(void)
     
     if((bytesRead == bytesWritten) && (!AUDIO_isDoneReading()))
     {
-        UINT32 startTime = TIMER_GetUSecond();
         AUDIO_ReadDataFromMemory();
-        UINT32 endTime = TIMER_GetUSecond();
-        
-        UINT32 timeToRead = endTime - startTime;
-        int x = 0;
     }
     else
     {
         if(AUDIO_isDoneWriting())
         {
-            AUDIO_setNewTone(0);        // Resets the note to the open string note
             TIMER3_ON(FALSE);
+            AUDIO_setNewTone(0);        // Resets the note to the open string note
         }
         else
         {
@@ -229,5 +284,3 @@ void __ISR(_TIMER_3_VECTOR, IPL2AUTO) Timer3Handler(void)
     // Clear the interrupt flag
     INTClearFlag(INT_T3);
 }
-
-

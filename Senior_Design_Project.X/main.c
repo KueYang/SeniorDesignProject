@@ -9,6 +9,7 @@
 #include <plib.h>
 #include "HardwareProfile.h"
 #include "STDDEF.h"
+#include "FILES.h"
 #include "IO.h"
 #include "TIMER.h"
 #include "ADC.h"
@@ -77,6 +78,8 @@
 #pragma config WDTPS = PS512         // Watchdog Timer Post-scaler, 32 ms timeout
 /**@}*/
 
+void TestFunction(void);
+
 /**
  * @brief The main entry point of the application.
  * @return An integer 0 upon exit success.
@@ -98,12 +101,8 @@ int main(void)
     
     while(1)
     {
-        WDTCONSET = 0x01;   // Clears the watchdog timer flag.
+//        WDTCONSET = 0x01;   // Clears the watchdog timer flag.
 //        TIMER_Process();
-//        UART_Process();
-//        AUDIO_Process();
-        
-        
     }
 
     return (0);
