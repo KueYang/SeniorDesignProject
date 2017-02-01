@@ -51,7 +51,7 @@ FRESULT FILESNEW_CloseFile(FIL* file)
    return f_close(file);
 }
 
-BOOL FILESNEW_ListFiles(void)
+BOOL FILESNEW_ListFiles(const char* selectedName)
 {
     char buf[128];
     FRESULT res;        /* Stores the results of the operation. */
@@ -66,7 +66,14 @@ BOOL FILESNEW_ListFiles(void)
     {
         while (res == FR_OK && Finfo.fname[0]) {
             // Prints out the file name and file size.
-            snprintf(&buf[0], 128, "%s\t%u KB", Finfo.fname, Finfo.fsize/1000);
+            if(MON_stringsMatch(selectedName, &Finfo.fname[0]))
+            {
+                snprintf(&buf[0], 128, "%s\t%u KB ***", Finfo.fname, Finfo.fsize/1000);
+            }
+            else
+            {
+                snprintf(&buf[0], 128, "%s\t%u KB", Finfo.fname, Finfo.fsize/1000);
+            }
             MON_SendString(&buf[0]);
             
             // Searches for the next file in the directory.

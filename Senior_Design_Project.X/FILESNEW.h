@@ -22,14 +22,13 @@ typedef struct AUDIOINFONEW
     UINT16  sampleRate;
     UINT16  blockAlign;
     UINT32  dataSize;           /**< Variable used to store the size of the data. */
-    char*   fileName;           /**< Variable used to store the file name. */
+    char fileName[16];
     /**@}*/
 }AUDIOINFONEW;
     
 typedef struct FILESNEW
 {
     /**@{*/
-    FILINFO Finfo;
     FIL File;			/* File objects */
     FSIZE_t startPtr;
     AUDIOINFONEW audioInfo;
@@ -38,7 +37,7 @@ typedef struct FILESNEW
 
 FRESULT FILESNEW_ReadFile(FIL* file, BYTE* buffer, UINT16 bytes, UINT16* ptr);
 FRESULT FILESNEW_FindFile(DIR* dir, FILINFO* fileInfo, const char* fileName);
-BOOL FILESNEW_ListFiles(void);
+BOOL FILESNEW_ListFiles(const char* selectedName);
 FRESULT FILESNEW_CloseFile(FIL* file);
 FRESULT FILESNEW_OpenFile(FIL* file, const char* fileName, int mode);
 

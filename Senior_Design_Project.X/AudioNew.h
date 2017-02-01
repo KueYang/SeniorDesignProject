@@ -17,7 +17,7 @@ extern "C" {
 
 /** @def MAX_NUM_OF_FILES 
  * Defines the max number of audio files to be open. */
-#define MAX_NUM_OF_FILES        1
+#define MAX_NUM_OF_FILES        10
     
 /** @def REC_BUF_SIZE 
  * Defines the audio buffer size. */
@@ -27,7 +27,7 @@ extern "C" {
 void AUDIONEW_Init(void);
 void AUDIONEW_Process(void);
 
-void AUDIONEW_getFileList(void);
+void AUDIONEW_ListFiles(void);
 void AUDIONEW_setNewTone(int fret);
 BOOL AUDIONEW_setNewFile(const char* fileName);
 void AUDIONEW_resetFilePtr(void);

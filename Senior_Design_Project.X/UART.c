@@ -13,7 +13,7 @@
 #include "HardwareProfile.h"
 #include "Timer.h"
 #include "FIFO.h"
-#include "FILESNEW.h"
+#include "AudioNew.h"
 #include "DAC.h"
 #include "UART.h"
 
@@ -519,7 +519,7 @@ void MON_GetInputTest(void)
 
 void MON_GetFileList(void)
 {
-    FILESNEW_ListFiles();
+    AUDIONEW_ListFiles();
 }
 
 void MON_Set_File(void)

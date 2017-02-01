@@ -29,7 +29,6 @@ FILESNEW files[MAX_NUM_OF_FILES];
 BYTE receiveBuffer[REC_BUF_SIZE];
 UINT16 LSTACK[STACK_BUF_SIZE];
 UINT16 RSTACK[STACK_BUF_SIZE];
-//UINT16 audioData[REC_BUF_SIZE];
 /** @var fileIndex 
  * The index used to specify the audio file that is being read. */
 UINT16 fileIndex;
@@ -37,6 +36,19 @@ UINT16 audioInPtr;
 UINT16 audioOutPtr;
 UINT32 bytesRead;
 UINT32 bytesWritten;
+
+const char* fileNames[MAX_NUM_OF_FILES] = {
+    "OST_02.WAV",
+    "S1ELOW.WAV",
+    "S2_A.WAV",
+    "S3_D.WAV",
+    "S4_G.WAV",
+    "S5_B.WAV",
+    "S6_EHIGH.WAV",
+    "BOST_02.WAV",
+    "ETUDES~1.WAV",
+    "DK64JJ.WAV"
+};
 
 /**
  * @brief Initializes the Audio module.
@@ -51,11 +63,14 @@ void AUDIONEW_Init(void)
     // Checks to make sure that the SD card is attached
     FILESNEW_Init();
     
-    // Lists the files in memory
-    FILESNEW_ListFiles();
-    
-    // Opens the given file and set a pointer to the file.
-    FILESNEW_OpenFile(&files[0].File,"OST_02.WAV", FA_READ);
+    // Opens all related audio files.
+    int i = 0;
+    for(i = 0; i < MAX_NUM_OF_FILES; i++)
+    {
+        // Opens the given file and set a pointer to the file.
+        FILESNEW_OpenFile(&files[i].File, fileNames[i],FA_READ);
+        strncpy(&files[i].audioInfo.fileName[0], fileNames[i], sizeof(files[i].audioInfo.fileName));
+    }
 
     UINT16 readPtr = 0;
     AUDIONEW_GetHeader(0, WAV_HEADER_SIZE, &readPtr);
@@ -66,6 +81,9 @@ void AUDIONEW_Init(void)
     // Initializes the index to the first file.
     fileIndex = 0;
     AUDIONEW_setNewTone(0);
+    
+    // Lists the files in memory
+    FILESNEW_ListFiles(&files[fileIndex].audioInfo.fileName[0]);
 }
 
 /**
@@ -82,6 +100,12 @@ void AUDIONEW_Process(void)
     
 }
 
+
+void AUDIONEW_ListFiles(void)
+{
+    FILESNEW_ListFiles(&files[fileIndex].audioInfo.fileName[0]);
+}
+
 BOOL AUDIONEW_setNewFile(const char* fileName)
 {
     int i = 0;
@@ -89,7 +113,7 @@ BOOL AUDIONEW_setNewFile(const char* fileName)
     // Searches the list of files for the specified file.
     for(i = 0; i < MAX_NUM_OF_FILES; i++)
     {
-        if(MON_stringsMatch(&files[i].Finfo.fname[0], fileName))
+        if(MON_stringsMatch(&files[i].audioInfo.fileName[0], fileName))
         {
             AUDIONEW_setNewTone(i);
             return TRUE;
