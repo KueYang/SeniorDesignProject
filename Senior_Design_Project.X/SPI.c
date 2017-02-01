@@ -78,7 +78,7 @@ void SPI2_Init(void)
     SPI2CON2bits.SPITUREN = 0;              // Transmit underrun doesn't trigger error event.
     SPI2CON2bits.SPISGNEXT = 0;             // RX Data is not signed-extended
     
-    SPI2BRG = SPI_GetBaudRate(20000000);    // SPI clock speed at PBCLK/8
+    SPI2BRG = SPI_GetBaudRate(8000000);    // SPI clock speed at 20 MHz
     SPI2STATbits.SPIROV = 0;                // Clears Receive overflow flag
     
     SPI2CONbits.ON = 1;                     // Enable SPI Module
@@ -131,6 +131,11 @@ void SPI1_Init(int clk)
     SPI1CONbits.ON = 1;             // Enable SPI Module
 }
 
+UINT16 SPI_GetBaudRate(int clk)
+{
+    return GetPeripheralClock()/(2*clk) - 1;
+}
+
 BYTE SPI1_ReadWrite(BYTE ch)
 {
     BYTE dummy = 0;
@@ -143,7 +148,24 @@ BYTE SPI1_ReadWrite(BYTE ch)
     return dummy;
 }
 
-UINT16 SPI_GetBaudRate(int clk)
+
+//buff - data to be sent
+// cnt - Number of bytes to send
+void SPI1_MultiWrite (const BYTE* buff,	UINT16 cnt )
 {
-    return GetPeripheralClock()/(2*clk) - 1;
+	do {
+		SPI1BUF = *buff++; while(!SPI1STATbits.SPIRBF) ; SPI1BUF; 
+		SPI1BUF = *buff++; while(!SPI1STATbits.SPIRBF) ; SPI1BUF; 
+	} while (cnt -= 2);
 }
+
+// buff - Buffer to store received data
+// cnt - Number of bytes to receive s
+void SPI1_MultiRead ( BYTE* buff, UINT16 cnt)
+{
+	do {
+		SPI1BUF = 0xFF; while(!SPI1STATbits.SPIRBF) ; *buff++ = SPI1BUF; 
+		SPI1BUF = 0xFF; while(!SPI1STATbits.SPIRBF) ; *buff++ = SPI1BUF; 
+	} while (cnt -= 2);
+}
+
