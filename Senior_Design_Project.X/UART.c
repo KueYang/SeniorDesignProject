@@ -13,7 +13,7 @@
 #include "HardwareProfile.h"
 #include "Timer.h"
 #include "FIFO.h"
-#include "FILES.h"
+#include "FILESNEW.h"
 #include "DAC.h"
 #include "UART.h"
 
@@ -32,9 +32,6 @@
 /** @def DESCRIPTION_SIZE 
  * The size of command description string. */
 #define DESCRIPTION_SIZE        (WRITE_BUFFER_SIZE-CMD_SIZE)
-/** @def CMD_SIZE 
- * The size of the command name string. */
-#define NUM_OF_CMD              7
 
 /** UART Helper Functions. */
 int UART_GetBaudRate(int desireBaud);
@@ -48,21 +45,26 @@ void UART_putNextChar(FIFO* buffer, char ch);
 void UART_processCommand(void);
 int MON_parseCommand(COMMANDSTR* cmd, FIFO* buffer);
 COMMANDS MON_getCommand(const char* cmdName);
-void MON_removeWhiteSpace(const char* string);
-UINT16 MON_getStringLength(const char* string);
-BOOL MON_stringsMatch(const char* str1, const char* str2);
-char MON_lowerToUpper(const char* ch);
 
 /** Commands Handlers. */
 void MON_GetHelp(void);
 void MON_GetInputTest(void);
+
+/* File related commands*/
 void MON_GetFileList(void);
+void MON_Get_File(void);
+void MON_Set_File(void);
+void MON_Read_File(void);
+
+/* DAC related commands. */
 void MON_TestDAC(void);
 void MON_ZeroDAC(void);
 void MON_SinDAC(void);
+
+/* Timer related commands. */
 void MON_Timer_ON_OFF(void);
+void MON_Timer_Get_PS(void);
 void MON_Timer_Set_PS(void);
-void MON_Read_FILE(void);
 
 /** @var cmdStr 
  * The command string. */
@@ -79,17 +81,21 @@ BOOL cmdReady;
 /** @var actualBaudRate 
  * The configured UART baud rate. */
 UINT16 actualBaudRate;
+UINT16 numOfCmds;
 /** @var MON_COMMANDS 
  * The list of commands. */
 COMMANDS MON_COMMANDS[] = {
     {"HELP", " Display the list of commands avaliable. ", MON_GetHelp},
     {"TEST", " Test getting commands. FORMAT: TEST arg1 arg2. ", MON_GetInputTest},
-    {"FILES", " Lists all WAV files. ", MON_GetFileList},
-    {"DAC", " Tests the DAC by sending a value. FORMAT: DAC value. ", MON_TestDAC},
-    {"DACZ", " Sets all DAC outputs to zero. ", MON_ZeroDAC},
+    {"LIST", " Lists all WAV files. ", MON_GetFileList},
+    {"SET", " Sets the file to read. FORMAT: NAME fileName.", MON_Set_File},
+    {"READ", " Reads numOfBytes from current file. Read from beginning of the file if reset is set to 1. FORMAT: READ reset numOfBytes.", MON_Read_File},
+    {"DAC", " Sets an output value on the DAC. MIN: 0, MAX: 65535. FORMAT: DAC value. ", MON_TestDAC},
+    {"ZERO", " Sets all DAC outputs to zero. ", MON_ZeroDAC},
     {"SIN", " Tests the DAC using a sin wave. ", MON_SinDAC},
-    {"TON", " Toggles on/off the Audio Timer. ", MON_Timer_ON_OFF},
-    {"PRD", " Configures the timer prescalar. FORMAT: PRD prescalar .", MON_Timer_Set_PS},
+    {"TONE", " Toggles on/off the Audio Timer. ", MON_Timer_ON_OFF},
+    {"PDG", " Get the current period set on timer 3. FORMAT: PDG.", MON_Timer_Get_PS},
+    {"PDS", " Configures the timer period. FORMAT: PDS period .", MON_Timer_Set_PS},
     {"", "", NULL}
 };
 
@@ -100,6 +106,7 @@ COMMANDS MON_COMMANDS[] = {
 void UART_Init(void)
 { 
     cmdReady = FALSE;
+    numOfCmds = sizeof(MON_COMMANDS)/sizeof(MON_COMMANDS[0]);
     
     // Re-mapped pins RPB3R and RPA2 pins to U1RX and U1TX
     mSysUnlockOpLock({
@@ -269,6 +276,24 @@ BOOL MON_SendString(const char* str)
     INTEnable(INT_SOURCE_UART_TX(UART_MODULE_ID), INT_ENABLED);
 }
 
+BOOL MON_SendStringNR(const char* str)
+{
+    if(*str == '>')
+    {
+        FIFO_Push(&txBuffer, *str);
+    }
+    else
+    {
+        while(*str != '\0')
+        {
+            FIFO_Push(&txBuffer, *str);
+            str++;
+        }
+    }
+    
+    INTEnable(INT_SOURCE_UART_TX(UART_MODULE_ID), INT_ENABLED);
+}
+
 char MON_lowerToUpper(const char* ch)
 {
     char uChar = (*ch);
@@ -343,14 +368,14 @@ UINT16 MON_getStringLength(const char* string)
 COMMANDS MON_getCommand(const char* cmdName)
 {
     int i = 0;
-    for(i = 0; i < NUM_OF_CMD; i++)
+    for(i = 0; i < numOfCmds; i++)
     {
         if(MON_stringsMatch(cmdName, MON_COMMANDS[i].name))
         {
             return MON_COMMANDS[i];
         }
     }
-    return MON_COMMANDS[NUM_OF_CMD]; // returns an empty null command
+    return MON_COMMANDS[numOfCmds]; // returns an empty null command
 }
 
 /**
@@ -468,7 +493,7 @@ void MON_GetHelp(void)
     int i = 0;
     UINT16 strLength = 0;
     char buf[128] = "";
-    for(i = 0; i < NUM_OF_CMD; i++)
+    for(i = 0; i < numOfCmds; i++)
     {
         memset(&buf[0], 0, sizeof(buf)); // Clears the buffer for each command.
         strLength = MON_getStringLength(MON_COMMANDS[i].name);
@@ -494,12 +519,70 @@ void MON_GetInputTest(void)
 
 void MON_GetFileList(void)
 {
-    AUDIO_getFileList();
+    FILESNEW_ListFiles();
+}
+
+void MON_Set_File(void)
+{
+    if(AUDIONEW_setNewFile(cmdStr.arg1))
+    {
+        MON_SendString("The new file has been set.");
+    }
+    else
+    {
+        MON_SendString("Failed to open the file. Make sure the file exists.");
+    }
+}
+
+void MON_Read_File(void)
+{
+    UINT16 reset = atoi(cmdStr.arg1);
+    UINT16 bytesToRead = atoi(cmdStr.arg2);
+    BYTE* bufPtr;
+    char buf[16];
+    int i = 0;
+    
+    if(reset)
+    {
+        AUDIONEW_resetFilePtr();
+    }
+    
+    AUDIONEW_ReadDataFromMemory(bytesToRead);
+    bufPtr = (BYTE*)AUDIONEW_GetRecieveBuffer();
+
+    // Prints out the columns
+    MON_SendString("       0x00 0x01 0x02 0x03 0x04 0x05 0x06 0x07 0x08 0x09 0x0A 0x0B"); 
+    MON_SendString("     ---------------------------------------------------------------");
+    // Prints out the rows
+    MON_SendStringNR("0x00 | ");
+    
+    for(i = 1; i <= bytesToRead; i++)
+    {
+        snprintf(&buf[0], 16, "0x%02x ", bufPtr[i-1]);
+        MON_SendStringNR(&buf[0]);
+        if(i%12 == 0)
+        {
+            MON_SendString("");   // Adds a new line and returns
+            snprintf(&buf[0], 16, "0x%02x | ", i-1);
+            MON_SendStringNR(&buf[0]);
+        }
+    }
+    MON_SendString("");   // Adds a new line and returns
 }
 
 void MON_TestDAC(void)
 {
     UINT16 value = atoi(cmdStr.arg1);
+    
+    //Verifies that the value received is within range.
+    if(value >= 65,535)
+    {
+        value = 65,535;
+    }
+    else if(value <= 0)
+    {
+        value = 0;
+    }
     DAC_WriteToDAC(WRITE_UPDATE_CHN_A, value);
 }
 
@@ -670,14 +753,25 @@ void MON_Timer_ON_OFF(void)
     else
     {
         TIMER3_ON(FALSE);
-        AUDIO_setNewTone(0);
+        AUDIONEW_setNewTone(0);
     }
+}
+
+void MON_Timer_Get_PS(void)
+{   
+    char buf[32];
+    snprintf(&buf[0] ,32 ,"The current period: %d", (UINT16)PR3);
+    MON_SendString(&buf[0]);
 }
 
 void MON_Timer_Set_PS(void)
 {   
+    char buf[32];
     UINT16 prd = atoi(cmdStr.arg1);
     T3CONbits.ON = 0;
     PR3 = prd;
     TMR3 = 0;
+    
+    snprintf(&buf[0] ,32 ,"The period set to: %d", prd);
+    MON_SendString(&buf[0]);
 }
