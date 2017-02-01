@@ -10,7 +10,9 @@
 #include <plib.h>
 #include "HardwareProfile.h"
 #include "STDDEF.h"
-#include "Audio.h"
+#include "./fatfs/diskio.h"
+//#include "Audio.h"
+#include "AudioNew.h"
 #include "TIMER.h"
 
 /**  
@@ -30,7 +32,6 @@ void TIMER3_Init(void);
 
 /**@var ms_TICK 
  * Millisecond counter. */
-UINT32 us_TICK;
 UINT32 ms_TICK;
 BOOL Timer1_ON;
 BOOL Timer2_ON;
@@ -43,7 +44,6 @@ BOOL Timer3_ON;
  */
 void TIMER_Init(void)
 {
-    us_TICK = 0;
     ms_TICK = 0;
     
     TIMER1_Init();
@@ -172,7 +172,7 @@ void TIMER3_Init(void)
 void TIMER3_SetSampleRate(UINT16 sampleRate)
 {
     UINT16 period = ((GetPeripheralClock()/sampleRate)-1);
-    PR3 = 440;
+    PR3 = period;
     TMR3 = 0;
 }
 
@@ -217,11 +217,6 @@ UINT32 TIMER_GetMSecond(void)
     return ms_TICK;
 }
 
-UINT32 TIMER_GetUSecond(void)
-{
-    return us_TICK;
-}
-
 /**
  * @brief Timer 1 Interrupt Service Routine.
  * @details The interrupt service routine is used to increment the millisecond
@@ -233,23 +228,25 @@ void __ISR(_TIMER_1_VECTOR, IPL2AUTO) Timer1Handler(void)
     // Increments the millisecond counter.
     ms_TICK++;
     
+	disk_timerproc();	/* Drive timer procedure of low level disk I/O module */
+    
     // Clear the interrupt flag
     INTClearFlag(INT_T1);
 }
 
 void __ISR(_TIMER_2_VECTOR, IPL2AUTO) Timer2Handler(void)
 {
-    int bytesWritten = AUDIO_getBytesWritten();
-    int bytesRead = AUDIO_getBytesRead();
-    
-    if((bytesRead == bytesWritten) && (!AUDIO_isDoneReading()))
-    {
-        AUDIO_ReadDataFromMemory();
-    }
-    
-    if(AUDIO_isDoneReading()){
-        TIMER2_ON(FALSE);
-    }
+//    int bytesWritten = AUDIO_getBytesWritten();
+//    int bytesRead = AUDIO_getBytesRead();
+//    
+//    if((bytesRead == bytesWritten) && (!AUDIO_isDoneReading()))
+//    {
+//        AUDIO_ReadDataFromMemory();
+//    }
+//    
+//    if(AUDIO_isDoneReading()){
+//        TIMER2_ON(FALSE);
+//    }
     
     INTClearFlag(INT_T2);
 }
@@ -261,23 +258,23 @@ void __ISR(_TIMER_3_VECTOR, IPL2AUTO) Timer3Handler(void)
      * starts reading from memory again to fill in the buffer. Otherwise, write
      * data to the DAC.
      */
-    int bytesWritten = AUDIO_getBytesWritten();
-    int bytesRead = AUDIO_getBytesRead();
+    int bytesWritten = AUDIONEW_getBytesWritten();
+    int bytesRead = AUDIONEW_getBytesRead();
     
-    if((bytesRead == bytesWritten) && (!AUDIO_isDoneReading()))
+    if((bytesRead == bytesWritten) && (!AUDIONEW_isDoneReading()))
     {
-        AUDIO_ReadDataFromMemory();
+        AUDIONEW_ReadDataFromMemory(REC_BUF_SIZE);
     }
     else
     {
-        if(AUDIO_isDoneWriting())
+        if(AUDIONEW_isDoneWriting())
         {
+            AUDIONEW_setNewTone(0);        // Resets the note to the open string note
             TIMER3_ON(FALSE);
-            AUDIO_setNewTone(0);        // Resets the note to the open string note
         }
         else
         {
-            AUDIO_WriteDataToDAC();
+            AUDIONEW_WriteDataToDAC();
         }
     }
     

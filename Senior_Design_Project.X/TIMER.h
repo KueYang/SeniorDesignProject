@@ -13,7 +13,6 @@ extern "C" {
 
 void TIMER_Init(void);
 void TIMER_Process(void);
-UINT32 TIMER_GetUSecond(void);
 UINT32 TIMER_GetMSecond(void);
 void TIMER_MSecondDelay(int);
 
