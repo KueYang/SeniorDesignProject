@@ -16,6 +16,7 @@
 #include "AudioNew.h"
 #include "DAC.h"
 #include "UART.h"
+#include "TESTS.h"
 
 /** @def UART_MODULE_ID 
  * The UART module ID. */
@@ -48,7 +49,7 @@ COMMANDS MON_getCommand(const char* cmdName);
 
 /** Commands Handlers. */
 void MON_GetHelp(void);
-void MON_GetInputTest(void);
+void MON_Test(void);
 
 /* File related commands*/
 void MON_GetFileList(void);
@@ -86,7 +87,7 @@ UINT16 numOfCmds;
  * The list of commands. */
 COMMANDS MON_COMMANDS[] = {
     {"HELP", " Display the list of commands avaliable. ", MON_GetHelp},
-    {"TEST", " Test getting commands. FORMAT: TEST arg1 arg2. ", MON_GetInputTest},
+    {"TEST", " Unit Test, 0-read/write, 1-read, 2-write. FORMAT: TEST value. ", MON_Test},
     {"LIST", " Lists all WAV files. ", MON_GetFileList},
     {"SET", " Sets the file to read. FORMAT: NAME fileName.", MON_Set_File},
     {"READ", " Reads numOfBytes from current file. Read from beginning of the file if reset is set to 1. FORMAT: READ reset numOfBytes.", MON_Read_File},
@@ -507,14 +508,9 @@ void MON_GetHelp(void)
  * @brief Command used to test parsing commands. 
  * @return Void.
  */
-void MON_GetInputTest(void)
+void MON_Test(void)
 {
-    char buf[128] = "";
-    
-    strncpy(&buf[0], "TESTING ", 8);
-    strncat(&buf[8], cmdStr.arg1, sizeof(cmdStr.arg1));
-    strncat(&buf[sizeof(cmdStr.arg1)], cmdStr.arg2, (128-8-sizeof(cmdStr.arg1)));
-    MON_SendString(&buf[0]);
+    Test_SelectTest((UINT16)atoi(cmdStr.arg1));
 }
 
 void MON_GetFileList(void)

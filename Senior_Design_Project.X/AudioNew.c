@@ -96,10 +96,16 @@ void AUDIONEW_Init(void)
  * @return Void
  */
 void AUDIONEW_Process(void)
-{
-    
+{    
+    if(bytesRead == bytesWritten)
+    {
+        AUDIONEW_ReadDataFromMemory(REC_BUF_SIZE);
+        if(!TIMER3_IsON())
+        {
+            TIMER3_ON(TRUE);
+        }
+    }
 }
-
 
 void AUDIONEW_ListFiles(void)
 {

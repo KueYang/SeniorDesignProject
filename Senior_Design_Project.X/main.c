@@ -18,7 +18,7 @@
 #include "DAC.h"
 //#include "Audio.h"
 #include "AudioNew.h"
-#include "TestNew.h"
+#include "TESTS.h"
 
 /**
  * @defgroup usbConfig USB configurations
@@ -99,12 +99,12 @@ int main(void)
 //    AUDIO_Init();       // Initializes the Audio module.
     AUDIONEW_Init();
     DAC_Init();         // Initializes the DACs.
-    
 
     while(1)
     {
 //        WDTCONSET = 0x01;   // Clears the watchdog timer flag.
 //        TIMER_Process();
+//        AUDIONEW_Process();
     }
 
     return (0);

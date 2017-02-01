@@ -11,7 +11,6 @@
 #include "HardwareProfile.h"
 #include "STDDEF.h"
 #include "./fatfs/diskio.h"
-//#include "Audio.h"
 #include "AudioNew.h"
 #include "TIMER.h"
 
@@ -236,17 +235,7 @@ void __ISR(_TIMER_1_VECTOR, IPL2AUTO) Timer1Handler(void)
 
 void __ISR(_TIMER_2_VECTOR, IPL2AUTO) Timer2Handler(void)
 {
-//    int bytesWritten = AUDIO_getBytesWritten();
-//    int bytesRead = AUDIO_getBytesRead();
-//    
-//    if((bytesRead == bytesWritten) && (!AUDIO_isDoneReading()))
-//    {
-//        AUDIO_ReadDataFromMemory();
-//    }
-//    
-//    if(AUDIO_isDoneReading()){
-//        TIMER2_ON(FALSE);
-//    }
+
     
     INTClearFlag(INT_T2);
 }
@@ -258,24 +247,14 @@ void __ISR(_TIMER_3_VECTOR, IPL2AUTO) Timer3Handler(void)
      * starts reading from memory again to fill in the buffer. Otherwise, write
      * data to the DAC.
      */
-    int bytesWritten = AUDIONEW_getBytesWritten();
-    int bytesRead = AUDIONEW_getBytesRead();
-    
-    if((bytesRead == bytesWritten) && (!AUDIONEW_isDoneReading()))
+    if(AUDIONEW_isDoneReading() && AUDIONEW_isDoneWriting())
     {
-        AUDIONEW_ReadDataFromMemory(REC_BUF_SIZE);
+        TIMER3_ON(FALSE);
+        AUDIONEW_setNewTone(0);
     }
     else
     {
-        if(AUDIONEW_isDoneWriting())
-        {
-            AUDIONEW_setNewTone(0);        // Resets the note to the open string note
-            TIMER3_ON(FALSE);
-        }
-        else
-        {
-            AUDIONEW_WriteDataToDAC();
-        }
+        AUDIONEW_WriteDataToDAC();
     }
     
     // Clear the interrupt flag
