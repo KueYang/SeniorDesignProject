@@ -9,14 +9,16 @@
 #include <plib.h>
 #include "HardwareProfile.h"
 #include "STDDEF.h"
-#include "FILES.h"
+#include "FILESNEW.h"
 #include "IO.h"
 #include "TIMER.h"
 #include "ADC.h"
 #include "SPI.h"
 #include "UART.h"
 #include "DAC.h"
-#include "Audio.h"
+//#include "Audio.h"
+#include "AudioNew.h"
+#include "TestNew.h"
 
 /**
  * @defgroup usbConfig USB configurations
@@ -78,8 +80,6 @@
 #pragma config WDTPS = PS512         // Watchdog Timer Post-scaler, 32 ms timeout
 /**@}*/
 
-void TestFunction(void);
-
 /**
  * @brief The main entry point of the application.
  * @return An integer 0 upon exit success.
@@ -96,9 +96,11 @@ int main(void)
 //    ADC_Init();         // Initializes all ADC modules.
     SPI_Init();         // Initializes all SPI modules.
     UART_Init();        // Initializes all UART modules
-    AUDIO_Init();       // Initializes the Audio module.
+//    AUDIO_Init();       // Initializes the Audio module.
+    AUDIONEW_Init();
     DAC_Init();         // Initializes the DACs.
     
+
     while(1)
     {
 //        WDTCONSET = 0x01;   // Clears the watchdog timer flag.
