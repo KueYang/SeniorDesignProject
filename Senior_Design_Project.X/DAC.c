@@ -70,6 +70,5 @@ void DAC_Zero(void)
 
 void DAC_ZeroOutput(void)
 {
-    CLR = 0;
-    CLR = 1;
+    DAC_WriteToDAC(WRITE_UPDATE_CHN_A, 0);
 }
