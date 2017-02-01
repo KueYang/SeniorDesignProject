@@ -23,9 +23,9 @@ typedef struct FIFO
 {
     /**@{*/
     char buffer[BUFFERSIZE];    /**< Variable used to store the FIFO data. */
-    int  headPtr;               /**< Variable used to point to the front of the queue. */
-    int  tailPtr;               /**< Variable used to point to the back of the queue. */
-    int  bufferSize;            /**< Variable used to stores the queue size. */
+    UINT16  headPtr;               /**< Variable used to point to the front of the queue. */
+    UINT16  tailPtr;               /**< Variable used to point to the back of the queue. */
+    UINT16  bufferSize;            /**< Variable used to stores the queue size. */
     /**@}*/
 }FIFO;
 
