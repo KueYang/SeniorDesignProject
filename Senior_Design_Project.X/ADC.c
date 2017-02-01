@@ -93,7 +93,7 @@ void __ISR(_ADC_VECTOR, IPL2AUTO) ADCHandler(void)
     if(adcData[adcBufIndex++] > 10)
     {
         IO_scanFrets();                             // Scans for the fret press.
-        AUDIO_setNewTone(IO_getCurrentFret());      // Sets the file to be read.
+//        AUDIO_setNewTone(IO_getCurrentFret());      // Sets the file to be read.
         if(!TIMER3_IsON())
         {
             TIMER3_ON(TRUE);    // Kick starts reading the audio file process.
