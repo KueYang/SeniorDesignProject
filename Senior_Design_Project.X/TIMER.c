@@ -21,7 +21,7 @@
 
 /** @def PERIOD 
  * Timer 1 Period for one ms. */
-#define TEN_US_PERIOD           400
+#define ONE_HUNDRED_US_PERIOD   4000
 #define ONE_MS_PERIOD           40000
 #define TWENTY_US_PERIOD        12
 
@@ -31,6 +31,7 @@ void TIMER3_Init(void);
 
 /**@var ms_TICK 
  * Millisecond counter. */
+UINT32 one_hundred_us_TICK;
 UINT32 ms_TICK;
 BOOL Timer1_ON;
 BOOL Timer2_ON;
@@ -43,6 +44,7 @@ BOOL Timer3_ON;
  */
 void TIMER_Init(void)
 {
+    one_hundred_us_TICK = 0;
     ms_TICK = 0;
     
     TIMER1_Init();
@@ -105,9 +107,10 @@ void TIMER2_Init(void)
     T2CONbits.TCKPS = 0b000;    //PS = 1
     T2CONbits.TCS = 0;
     
-    PR2 = TWENTY_US_PERIOD;
+    PR2 = ONE_HUNDRED_US_PERIOD;
     TMR2 = 0;
     
+    T2CONbits.ON = 0;
     Timer2_ON = FALSE;
     
     // Set up the timer interrupt with a priority of 2
@@ -118,8 +121,7 @@ void TIMER2_Init(void)
 
 void TIMER2_SetSampleRate(UINT16 sampleRate)
 {
-    UINT16 period = ((GetPeripheralClock()/sampleRate)-1)/2;
-    PR2 = period;
+    PR2 = ((GetPeripheralClock()/sampleRate)-1)/2;
     TMR2 = 0;
 }
 
@@ -170,8 +172,7 @@ void TIMER3_Init(void)
 
 void TIMER3_SetSampleRate(UINT16 sampleRate)
 {
-    UINT16 period = ((GetPeripheralClock()/sampleRate)-1);
-    PR3 = period;
+    PR3 = ((GetPeripheralClock()/sampleRate)-1);
     TMR3 = 0;
 }
 
@@ -216,6 +217,11 @@ UINT32 TIMER_GetMSecond(void)
     return ms_TICK;
 }
 
+UINT32 TIMER_GetUSecond(void)
+{
+    return one_hundred_us_TICK/100;
+}
+
 /**
  * @brief Timer 1 Interrupt Service Routine.
  * @details The interrupt service routine is used to increment the millisecond
@@ -235,7 +241,7 @@ void __ISR(_TIMER_1_VECTOR, IPL2AUTO) Timer1Handler(void)
 
 void __ISR(_TIMER_2_VECTOR, IPL2AUTO) Timer2Handler(void)
 {
-
+    one_hundred_us_TICK++;
     
     INTClearFlag(INT_T2);
 }
@@ -247,15 +253,7 @@ void __ISR(_TIMER_3_VECTOR, IPL2AUTO) Timer3Handler(void)
      * starts reading from memory again to fill in the buffer. Otherwise, write
      * data to the DAC.
      */
-    if(AUDIONEW_isDoneReading() && AUDIONEW_isDoneWriting())
-    {
-        TIMER3_ON(FALSE);
-        AUDIONEW_setNewTone(0);
-    }
-    else
-    {
-        AUDIONEW_WriteDataToDAC();
-    }
+    AUDIONEW_WriteDataToDAC();
     
     // Clear the interrupt flag
     INTClearFlag(INT_T3);

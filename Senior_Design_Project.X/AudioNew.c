@@ -96,7 +96,7 @@ void AUDIONEW_Init(void)
  * @return Void
  */
 void AUDIONEW_Process(void)
-{    
+{
     if(bytesRead == bytesWritten)
     {
         AUDIONEW_ReadDataFromMemory(REC_BUF_SIZE);
@@ -253,14 +253,12 @@ UINT8 AUDIONEW_GetHeader(int index, UINT16 bytes, UINT16* readPtr)
  */
 BOOL AUDIONEW_GetAudioData(FILESNEW* file, UINT16 bytes)
 {
-    UINT16 blockAlign = file->audioInfo.blockAlign;
-    UINT16 blocks = blockAlign*bytes;
     UINT32 bytesLeft = (file->audioInfo.dataSize - bytesRead);
-    UINT16 readPtr;
+    UINT16 readPtr = 0;
     
-    if(blocks >= bytesLeft)
+    if(bytes > bytesLeft)
     {
-        blocks = bytesLeft;
+        bytes = bytesLeft;
     }
     
     if(FILESNEW_ReadFile(&file[0].File, &receiveBuffer[0], bytes, &readPtr) == FR_OK)
@@ -268,14 +266,16 @@ BOOL AUDIONEW_GetAudioData(FILESNEW* file, UINT16 bytes)
         int i = 0;
         UINT16 audioByte;
         UINT16 unsign_audio;
-        for(i = 0; i < blocks; i+=blockAlign)
+        for(i = 0; i < bytes; i+=4)
         {
             audioByte = ((receiveBuffer[i+1] << 8) | (receiveBuffer[i]));
-            if (audioByte & 0x8000) {
-                unsign_audio = ~(audioByte - 1);
+            if (audioByte & 0x8000) 
+            {
+                unsign_audio = ~(audioByte) + 1;
                 audioByte = AC_ZERO - unsign_audio;
             }
-            else {
+            else
+            {
                 audioByte = AC_ZERO + audioByte;
             }
             LSTACK[audioInPtr] = audioByte;
@@ -283,11 +283,13 @@ BOOL AUDIONEW_GetAudioData(FILESNEW* file, UINT16 bytes)
             if(file->audioInfo.numOfChannels == 2)
             {
                 audioByte = ((receiveBuffer[i+3] << 8) | (receiveBuffer[i+2]));
-                if (audioByte & 0x8000) {
-                    unsign_audio = ~(audioByte - 1);
+                if (audioByte & 0x8000) 
+                {
+                    unsign_audio = ~(audioByte) + 1;
                     audioByte = AC_ZERO - unsign_audio;
                 }
-                else {
+                else 
+                {
                     audioByte = AC_ZERO + audioByte;
                 }             
             }
@@ -298,7 +300,7 @@ BOOL AUDIONEW_GetAudioData(FILESNEW* file, UINT16 bytes)
                 audioInPtr = 0;
             }
         }
-        bytesRead += blocks;
+        bytesRead+=bytes;
         return TRUE;
     }
     return FALSE;
@@ -316,14 +318,25 @@ BYTE* AUDIONEW_GetRecieveBuffer(void)
 
 void AUDIONEW_WriteDataToDAC(void)
 {
-    /* Writes 1 WORD of data to the DAC. */
-    DAC_WriteToDAC(WRITE_UPDATE_CHN_A, LSTACK[audioOutPtr]);
-    DAC_WriteToDAC(WRITE_UPDATE_CHN_A, RSTACK[audioOutPtr++]);
-    
-    if(audioOutPtr >= STACK_BUF_SIZE)
+    if(AUDIONEW_isDoneReading() && AUDIONEW_isDoneWriting())
     {
-        audioOutPtr = 0;
+        TIMER3_ON(FALSE);
+        AUDIONEW_setNewTone(0);
     }
-    // Increments the byte written count.
-    bytesWritten+=4;
+    else
+    {
+        if(bytesRead > bytesWritten)
+        {
+            /* Writes 1 WORD of data to the DAC. */
+            DAC_WriteToDAC(WRITE_UPDATE_CHN_A, LSTACK[audioOutPtr]);
+            DAC_WriteToDAC(WRITE_UPDATE_CHN_B, RSTACK[audioOutPtr++]);
+
+            if(audioOutPtr >= STACK_BUF_SIZE)
+            {
+                audioOutPtr = 0;
+            }
+            // Increments the byte written count.
+            bytesWritten+=4;
+        }
+    }
 }

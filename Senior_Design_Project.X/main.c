@@ -104,7 +104,7 @@ int main(void)
     {
 //        WDTCONSET = 0x01;   // Clears the watchdog timer flag.
 //        TIMER_Process();
-//        AUDIONEW_Process();
+        AUDIONEW_Process();
     }
 
     return (0);
