@@ -53,7 +53,7 @@ void Test1_TimeReadWrite(void)
         bytesWritten = AUDIONEW_getBytesWritten();
         bytesRead = AUDIONEW_getBytesRead();
 
-        if(bytesRead == bytesWritten)
+        if((bytesRead == bytesWritten) && !AUDIONEW_isDoneReading())
         {
             AUDIONEW_ReadDataFromMemory(REC_BUF_SIZE);
         }
@@ -69,6 +69,7 @@ void Test1_TimeReadWrite(void)
     MON_SendString("Test 1 - Read and Write Test");
     snprintf(&buf[0] ,128 ,"startTime: %d, endTime: %d, timeToRead: %d", startTime, endTime, timeToRead);
     MON_SendString(&buf[0]);
+    AUDIONEW_resetFilePtr();
 }
 
 void Test2_TimeRead(void)
@@ -77,14 +78,20 @@ void Test2_TimeRead(void)
     endTime = 0;
     timeToRead = 0;
     
-    AUDIONEW_ReadDataFromMemory(REC_BUF_SIZE);
-    
-    endTime = TIMER_GetMSecond();
-    timeToRead = endTime - startTime;
-    
-    MON_SendString("Test 2 - Read Test");
-    snprintf(&buf[0] ,128 ,"startTime: %d, endTime: %d, timeToRead: %d", startTime, endTime, timeToRead);
-    MON_SendString(&buf[0]);
+    if(AUDIONEW_ReadDataFromMemory(REC_BUF_SIZE))
+    {
+        endTime = TIMER_GetMSecond();
+        timeToRead = endTime - startTime;
+
+        MON_SendString("Test 2 - Read Test");
+        snprintf(&buf[0] ,128 ,"startTime: %d, endTime: %d, timeToRead: %d", startTime, endTime, timeToRead);
+        MON_SendString(&buf[0]);
+        AUDIONEW_resetFilePtr();
+    }
+    else
+    {
+        MON_SendString("Test 2 - Failed to read file.");
+    }
 }
 
 void Test3_TimeWrite(void)
@@ -105,6 +112,7 @@ void Test3_TimeWrite(void)
     MON_SendString("Test 3 - Write Test");
     snprintf(&buf[0] ,128 ,"startTime: %d, endTime: %d, timeToRead: %d", startTime, endTime, timeToRead);
     MON_SendString(&buf[0]);
+    AUDIONEW_resetFilePtr();
 }
 
 
