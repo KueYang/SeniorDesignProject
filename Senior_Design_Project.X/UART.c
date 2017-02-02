@@ -571,9 +571,9 @@ void MON_TestDAC(void)
     UINT16 value = atoi(cmdStr.arg1);
     
     //Verifies that the value received is within range.
-    if(value >= 65,535)
+    if(value >= 65535)
     {
-        value = 65,535;
+        value = 65535;
     }
     else if(value <= 0)
     {
