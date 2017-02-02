@@ -15,7 +15,7 @@ extern "C" {
  * Selects the DAC to be used. Defaults to the AD5689R */
 #define DAC12B
 
-#define AC_ZERO                         2048
+#define AC_ZERO                         32766
     
 /** @def LDAC 
  * Defines the IO port used for updating the DAC. */
