@@ -15,14 +15,8 @@ extern "C" {
  * Selects the DAC to be used. Defaults to the AD5689R */
 #define DAC12B
 
-#define AC_ZERO                         32766
+#define AC_ZERO                         0x7777
     
-/** @def LDAC 
- * Defines the IO port used for updating the DAC. */
-#define LDAC                            PORTAbits.RA3
-/** @def CLR 
- * Defines the IO port used for clearing data on the DAC. */
-#define CLR                             PORTBbits.RB4
 /** @def SYNC 
  * Defines the IO port used to write data to DAC. */
 #define SYNC                            PORTAbits.RA4
@@ -78,10 +72,6 @@ extern "C" {
 #define WRITE_UPDATE_CHN_A_B            0x17
     
 #else
-/** @def RSTSEL 
- * Defines the IO port used for power-on reset. */
-#define RSTSEL                          PORTBbits.RB5
-
 /** @def DAC_A 
  * Defines the selection bit for channel A on the DAC. */
 #define DAC_A                           0x1

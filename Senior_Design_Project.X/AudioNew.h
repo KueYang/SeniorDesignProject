@@ -21,7 +21,7 @@ extern "C" {
     
 /** @def REC_BUF_SIZE 
  * Defines the audio buffer size. */
-#define REC_BUF_SIZE    4096
+#define REC_BUF_SIZE    2048
 #define STACK_BUF_SIZE  REC_BUF_SIZE/4
 
 void AUDIONEW_Init(void);

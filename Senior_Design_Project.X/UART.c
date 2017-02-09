@@ -568,7 +568,7 @@ void MON_Read_File(void)
 
 void MON_TestDAC(void)
 {
-    UINT16 value = atoi(cmdStr.arg1);
+    UINT32 value = atoi(cmdStr.arg1);
     
     //Verifies that the value received is within range.
     if(value >= 65535)
@@ -730,12 +730,12 @@ void MON_SinDAC(void)
             audioByte = ((testBytes[i+1] << 4) | (testBytes[i]));
             if (audioByte & 0x0800) {
                 unsign_audio = ~(audioByte - 1);
-                audioByte = 2048 - unsign_audio;
+                audioByte = AC_ZERO - unsign_audio;
             }
             else {
-                audioByte = 2048 + audioByte;
+                audioByte = AC_ZERO + audioByte;
             }
-            DAC_WriteToDAC(WRITE_UPDATE_CHN_A, audioByte);
+            DAC_WriteToDAC(WRITE_UPDATE_CHN_A_B, audioByte);
         }
     }
 }

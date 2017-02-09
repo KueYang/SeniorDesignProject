@@ -38,8 +38,6 @@ void IO_Init(void)
     // SPI IO, DAC
 //    TRISAbits.TRISA3 = 0;   // LDAC
     TRISAbits.TRISA4 = 0;   // SYNC
-    TRISBbits.TRISB4 = 0;   // CLR
-    TRISBbits.TRISB5 = 0;   // RSTSEL
     TRISBbits.TRISB2 = 1;   // SD_SDI2
     TRISBbits.TRISB1 = 0;   // SD_SDO2
     TRISBbits.TRISB15 = 0;  // SD_CLK2
@@ -50,7 +48,7 @@ void IO_Init(void)
     TRISBbits.TRISB11 = 1;  // SD_SDI1
     TRISBbits.TRISB13 = 0;  // SD_SDO1
     TRISBbits.TRISB14 = 0;  // SD_CLK1
-    
+        
     currentFret = 0;    // Sets the current fret to 0, indicating that the string is "opened."
 }
 

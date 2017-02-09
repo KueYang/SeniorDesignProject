@@ -4,11 +4,11 @@
     <logicalFolder name="HeaderFiles"
                    displayName="Header Files"
                    projectFiles="true">
-      <logicalFolder name="f1" displayName="SD_Card_Library" projectFiles="true">
-        <itemPath>FIO_Library/SD-SPI.h</itemPath>
-        <itemPath>FIO_Library/FSIO.h</itemPath>
-        <itemPath>FIO_Library/FSDefs.h</itemPath>
-        <itemPath>FIO_Library/FSconfig.h</itemPath>
+      <logicalFolder name="fatfs" displayName="fatfs" projectFiles="true">
+        <itemPath>fatfs/diskio.h</itemPath>
+        <itemPath>fatfs/ff.h</itemPath>
+        <itemPath>fatfs/ffconf.h</itemPath>
+        <itemPath>fatfs/mmc_pic32mx.h</itemPath>
       </logicalFolder>
       <itemPath>STDDEF.h</itemPath>
       <itemPath>ADC.h</itemPath>
@@ -18,10 +18,11 @@
       <itemPath>TIMER.h</itemPath>
       <itemPath>UART.h</itemPath>
       <itemPath>FIFO.h</itemPath>
-      <itemPath>Audio.h</itemPath>
-      <itemPath>FILES.h</itemPath>
       <itemPath>DAC.h</itemPath>
       <itemPath>HardwareProfile.h</itemPath>
+      <itemPath>AudioNew.h</itemPath>
+      <itemPath>FILESNEW.h</itemPath>
+      <itemPath>TESTS.h</itemPath>
     </logicalFolder>
     <logicalFolder name="LinkerScript"
                    displayName="Linker Files"
@@ -30,21 +31,22 @@
     <logicalFolder name="SourceFiles"
                    displayName="Source Files"
                    projectFiles="true">
-      <logicalFolder name="f1" displayName="File_Library" projectFiles="true">
-        <itemPath>FIO_Library/FSIO.c</itemPath>
-        <itemPath>FIO_Library/SD-SPI.c</itemPath>
+      <logicalFolder name="fatfs" displayName="fatfs" projectFiles="true">
+        <itemPath>fatfs/ff.c</itemPath>
+        <itemPath>fatfs/mmc_pic32mx.c</itemPath>
       </logicalFolder>
       <itemPath>main.c</itemPath>
       <itemPath>ADC.c</itemPath>
       <itemPath>I2C.c</itemPath>
       <itemPath>IO.c</itemPath>
       <itemPath>SPI.c</itemPath>
-      <itemPath>TIMER.c</itemPath>
       <itemPath>UART.c</itemPath>
       <itemPath>FIFO.c</itemPath>
-      <itemPath>Audio.c</itemPath>
-      <itemPath>FILES.c</itemPath>
       <itemPath>DAC.c</itemPath>
+      <itemPath>AudioNew.c</itemPath>
+      <itemPath>FILESNEW.c</itemPath>
+      <itemPath>TESTS.c</itemPath>
+      <itemPath>TIMER.c</itemPath>
     </logicalFolder>
     <logicalFolder name="ExternalFiles"
                    displayName="Important Files"
@@ -54,6 +56,7 @@
   </logicalFolder>
   <sourceRootList>
     <Elem></Elem>
+    <Elem>../../FatFsProject/FatFS32.X/fatfs</Elem>
   </sourceRootList>
   <projectmakefile>Makefile</projectmakefile>
   <confs>
@@ -197,7 +200,7 @@
       <C32Global>
         <property key="common-include-directories" value=""/>
         <property key="gp-relative-option" value=""/>
-        <property key="legacy-libc" value="true"/>
+        <property key="legacy-libc" value="false"/>
         <property key="relaxed-math" value="false"/>
         <property key="save-temps" value="false"/>
         <property key="wpo-lto" value="false"/>
@@ -239,6 +242,7 @@
         <property key="UART1" value="true"/>
         <property key="UART2" value="true"/>
         <property key="USB" value="true"/>
+        <property key="firmware.download.all" value="false"/>
         <property key="hwtoolclock.frcindebug" value="false"/>
         <property key="memories.aux" value="false"/>
         <property key="memories.bootflash" value="true"/>

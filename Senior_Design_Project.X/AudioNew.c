@@ -65,22 +65,21 @@ void AUDIONEW_Init(void)
     
     // Opens all related audio files.
     int i = 0;
+    UINT16 readPtr = 0;
     for(i = 0; i < MAX_NUM_OF_FILES; i++)
     {
         // Opens the given file and set a pointer to the file.
         FILESNEW_OpenFile(&files[i].File, fileNames[i],FA_READ);
+
         strncpy(&files[i].audioInfo.fileName[0], fileNames[i], sizeof(files[i].audioInfo.fileName));
+        AUDIONEW_GetHeader(i, WAV_HEADER_SIZE, &readPtr);
+        files[i].startPtr = files[i].File.fptr;
     }
 
-    UINT16 readPtr = 0;
-    AUDIONEW_GetHeader(0, WAV_HEADER_SIZE, &readPtr);
-    TIMER3_SetSampleRate(files[0].audioInfo.sampleRate);
-    
-    files[0].startPtr = files[0].File.fptr;
-    
     // Initializes the index to the first file.
     fileIndex = 0;
-    AUDIONEW_setNewTone(0);
+    AUDIONEW_setNewTone(fileIndex);
+    TIMER3_SetSampleRate(files[fileIndex].audioInfo.sampleRate);
     
     // Lists the files in memory
     FILESNEW_ListFiles(&files[fileIndex].audioInfo.fileName[0]);
@@ -97,14 +96,7 @@ void AUDIONEW_Init(void)
  */
 void AUDIONEW_Process(void)
 {
-    if(bytesRead == bytesWritten)
-    {
-        AUDIONEW_ReadDataFromMemory(REC_BUF_SIZE);
-        if(!TIMER3_IsON())
-        {
-            TIMER3_ON(TRUE);
-        }
-    }
+   
 }
 
 void AUDIONEW_ListFiles(void)
@@ -325,7 +317,11 @@ void AUDIONEW_WriteDataToDAC(void)
     }
     else
     {
-        if(bytesRead > bytesWritten)
+        if(bytesRead == bytesWritten)
+        {
+            AUDIONEW_ReadDataFromMemory(REC_BUF_SIZE);
+        }
+        else if(bytesRead > bytesWritten)
         {
             /* Writes 1 WORD of data to the DAC. */
             DAC_WriteToDAC(WRITE_UPDATE_CHN_A, LSTACK[audioOutPtr]);
@@ -336,7 +332,7 @@ void AUDIONEW_WriteDataToDAC(void)
                 audioOutPtr = 0;
             }
             // Increments the byte written count.
-            bytesWritten+=4;
+            bytesWritten+=8;
         }
     }
 }
