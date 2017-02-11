@@ -29,14 +29,13 @@ int currentFret;
 void IO_Init(void)
 {   
     // Digital IO
-    TRISBbits.TRISB7 = 0;   // Used to test Timer
+    TRISBbits.TRISB5 = 0;   // Used to test Timer LED
     
     // UART IO
     TRISAbits.TRISA2 = 1;   // U1RX
     TRISBbits.TRISB3 = 0;   // U1TX
     
     // SPI IO, DAC
-//    TRISAbits.TRISA3 = 0;   // LDAC
     TRISAbits.TRISA4 = 0;   // SYNC
     TRISBbits.TRISB2 = 1;   // SD_SDI2
     TRISBbits.TRISB1 = 0;   // SD_SDO2
@@ -48,7 +47,11 @@ void IO_Init(void)
     TRISBbits.TRISB11 = 1;  // SD_SDI1
     TRISBbits.TRISB13 = 0;  // SD_SDO1
     TRISBbits.TRISB14 = 0;  // SD_CLK1
-        
+    
+    // ADC 
+    TRISBbits.TRISB0 = 1;   // set RB0 as an input
+    ANSELBbits.ANSB0 = 1;   // set RB0 (AN2) to analog
+    
     currentFret = 0;    // Sets the current fret to 0, indicating that the string is "opened."
 }
 
