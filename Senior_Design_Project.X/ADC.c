@@ -37,8 +37,8 @@ void ADC_Init(void)
     
     /* AD3CON configurations. Configured for 1000 ksps. */
     AD1CON3bits.ADRC = 0;           // ADC conversion clock is PBCLK
-    AD1CON3bits.SAMC = 0b01111;     // Sample Time period, 15 TADs
-    AD1CON3bits.ADCS = 0x01;        // ADC conversion clock, TAD = 4*TPB = 100 ns
+    AD1CON3bits.ADCS = 0xFF;        // ADC conversion clock, TAD = 512*TPB = 12.8 us
+    AD1CON3bits.SAMC = 0b11111;     // Sample Time period, 31 TADs
     
     /* AD1CH configurations */
     AD1CHSbits.CH0NA = 0;           // Channel 0 negative input is VREFL
@@ -79,16 +79,15 @@ void __ISR(_ADC_VECTOR, IPL2AUTO) ADCHandler(void)
     adcData[adcBufIndex] = (WORD)ADC1BUF0;
     
     // Checks if strumming occur, strumming occurs if the voltage read is non-zero
-//    if(adcData[adcBufIndex] > 10)
-//    {
-//        DAC_WriteToDAC(WRITE_UPDATE_CHN_A, adcData[adcBufIndex++]);
+    if(adcData[adcBufIndex++] > 10)
+    {
 //        IO_scanFrets();                             // Scans for the fret press.
 //        AUDIO_setNewTone(IO_getCurrentFret());      // Sets the file to be read.
 //        if(!TIMER3_IsON())
 //        {
 //            TIMER3_ON(TRUE);    // Kick starts reading the audio file process.
 //        }
-//    }
+    }
     
     if(adcBufIndex >= ADC_BUF_SIZE)
     {
