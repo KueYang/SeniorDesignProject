@@ -1,139 +1,98 @@
 /**
- * @file FILES.c
+ * @file FILESNEW.c
  * @author Kue Yang
  * @date 11/22/2016
- * @details The FILES module will handle all file related tasks. Tasks includes:
+ * @details The FILESNEW module will handle all file related tasks. Tasks includes:
  * opening and closing files, searching for files and reading files. 
  */
 
 #include <p32xxxx.h>
 #include <plib.h>
 #include "STDDEF.h"
-#include "./FIO_Library/FSIO.h"
-#include "FILES.h"
+#include "./fatfs/diskio.h"
+#include "./fatfs/ffconf.h"
+#include "./fatfs/ff.h"
+#include "FILESNEW.h"
 
 /**  
  * @privatesection
  * @{
  */
-/** @var file_attributes 
- * Stores the attributes of files to be read. */
-BYTE file_attributes;
+FATFS FatFs;			/* File system object */
 /** @} */
 
 /**
- * @brief Initializes the FILES module.
+ * @brief Initializes the FILESNEW module.
  * @details Initializes Microchip MDD File System library. Updates the file attributes
  * that will be used for file related operations. 
  * @remark Requires Microchip's MDD File System library.
  * @return Void
  */
-void FILES_Init(void)
+void FILESNEW_Init(void)
 {
-    // Initialize the library
-    while(!FSInit());
-    
-    // Files and Search configurations.
-    file_attributes = ATTR_ARCHIVE | ATTR_READ_ONLY | ATTR_HIDDEN;
+    // Initialize the sd card to logical drive 0
+    while(disk_initialize(0));
+    // Mounts the sd card to logical drive 0
+    while(f_mount(&FatFs, "", 0));
 }
 
-/**
- * @brief Opens a given file to be read.
- * @arg fileName The name of the file to open.
- * @arg rec A pointer that will store information on the opened file.
- * @return Returns a boolean indicating if the file was open successfully.
- * @retval TRUE If the file was open successfully.
- * @retval FALSE If the file was open unsuccessfully.
- */
-FSFILE* FILES_OpenFile(const char* fileName, SearchRec* rec)
+FATFS FILESNEW_getFileSystem(void)
 {
-    // Checks if the specific file is found on the external storage.
-    if(FILES_FindFile(fileName, rec))
-    {
-        return FSfopen(fileName, "r");
-    }
-    return NULL;
+    return FatFs;
 }
 
-/**
- * @brief Closes an open file.
- * @arg pointer The pointer that points to the file.
- * @return Returns a boolean indicating if the file was closed successfully.
- * @retval TRUE If the file was closed successfully.
- * @retval FALSE If the file was closed unsuccessfully.
- */
-BOOL FILES_CloseFile(FSFILE* pointer)
+FRESULT FILESNEW_OpenFile(FIL* file, const char* fileName, int mode)
 {
-   if(FSfclose(pointer))
-   {
-       return FALSE;
-   }
-   return TRUE;
+    return f_open(file, fileName, mode);
 }
 
-/**
- * @brief Displays a list of files.
- * @arg rec A pointer that has information on an opened file.
- * @remarks Requires the UART module to initialized.
- * @return Returns a boolean indicating if there are files to be displayed.
- * @retval TRUE If there are files listed.
- * @retval FALSE If there are no files to be listed.
- */
-BOOL FILES_ListFiles(SearchRec* rec)
+FRESULT FILESNEW_CloseFile(FIL* file)
 {
-    char buf[FILENAME_LENGTH];
+   return f_close(file);
+}
+
+BOOL FILESNEW_ListFiles(const char* selectedName)
+{
+    char buf[128];
+    FRESULT res;        /* Stores the results of the operation. */
+    DIR dir;            /* Stores information on the directory */
+    FILINFO Finfo;      /* Stores file information. */
     
     MON_SendString("Showing all WAV files in root directory:");
-    if (FindFirst("*.WAV", file_attributes, rec) == 0) 
+    
+    // Searches for the first file in the directory.
+    res = f_findfirst(&dir, &Finfo, "", "*.wav");
+    if(res == FR_OK)
     {
-        snprintf(buf, FILENAME_LENGTH, "%s\t%u KB", rec->filename, rec->filesize/1000);
-        MON_SendString(&buf[0]);
-        while (FindNext(rec) == 0) 
-        {
-            snprintf(buf, FILENAME_LENGTH, "%s\t%u KB", rec->filename, rec->filesize/1000);
+        while (res == FR_OK && Finfo.fname[0]) {
+            // Prints out the file name and file size.
+            if(MON_stringsMatch(selectedName, &Finfo.fname[0]))
+            {
+                snprintf(&buf[0], 128, "%s\t%u KB ***", Finfo.fname, Finfo.fsize/1000);
+            }
+            else
+            {
+                snprintf(&buf[0], 128, "%s\t%u KB", Finfo.fname, Finfo.fsize/1000);
+            }
             MON_SendString(&buf[0]);
+            
+            // Searches for the next file in the directory.
+            res = f_findnext(&dir, &Finfo);
         }
         return TRUE;
     }
     return FALSE;
 }
 
-/**
- * @brief Finds a file.
- * @arg fileName The name of the file to be searched for.
- * @arg rec A pointer that has information on an opened file.
- * @remarks Requires the UART module to initialized.
- * @return Returns a boolean indicating if the specified file is found.
- * @retval TRUE if there the specified file is found.
- * @retval FALSE if there the specified file is not found.
- */
-BOOL FILES_FindFile(const char* fileName, SearchRec* rec)
+FRESULT FILESNEW_FindFile(DIR* dir, FILINFO* fileInfo, const char* fileName)
 {
-   if(FindFirst(fileName, file_attributes, rec) == 0)
-   {
-       return TRUE;
-   }
-   return FALSE;
+   return f_findfirst(dir, fileInfo, fileName, ".wav");
 }
 
-/**
- * @brief Reads from a file.
- * @arg buffer The buffer used to store the data read from the specified file.
- * @arg bytes The number of bytes to be read from the file.
- * @arg blocks The block sizes of the data to be read.
- * @arg pointer A pointer to the file being read.
- * @return Returns a boolean indicating if the specified file is found.
- * @retval TRUE if there the specified file is found.
- * @retval FALSE if there the specified file is not found.
- */
-BOOL FILES_ReadFile(BYTE* buffer, UINT8 bytes, UINT32 blocks, FSFILE* pointer)
+FRESULT FILESNEW_ReadFile(FIL* file, BYTE* buffer, UINT16 bytes, UINT16* ptr)
 {
-    /* Reads bytes-Byte blocks from the file and stores it in the receive buffer. */
-    if(FSfread((void*)buffer, bytes, blocks, pointer) != blocks)
-    {
-        return FALSE;
-    }
-    return TRUE;
+     return f_read(file, buffer, bytes, ptr);
 }
+
 
 
