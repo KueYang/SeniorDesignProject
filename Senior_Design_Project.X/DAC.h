@@ -13,7 +13,7 @@ extern "C" {
     
 /**@def DAC12B
  * Selects the DAC to be used. Defaults to the AD5689R */
-#define DAC12B
+//#define DAC12B
 
 #define AC_ZERO                         0x7777
     
@@ -81,6 +81,8 @@ extern "C" {
 /** @def DAC_B_A 
  * Defines the selection bit for both channel A and channel B. */  
 #define DAC_B_A                         DAC_B | DAC_A
+
+#define POWER_ON_DAC_B_A                0x3C
 
 #define CMD_WRITE_TO_DAC                0x1
 #define CMD_UPDATE_DAC                  0x2
