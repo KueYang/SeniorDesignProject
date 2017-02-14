@@ -77,7 +77,7 @@ void AUDIONEW_Init(void)
     }
 
     // Initializes the index to the first file.
-    fileIndex = 0;
+    fileIndex = 9;
     AUDIONEW_setNewTone(fileIndex);
     TIMER3_SetSampleRate(files[fileIndex].audioInfo.sampleRate);
     
@@ -313,7 +313,7 @@ void AUDIONEW_WriteDataToDAC(void)
     if(AUDIONEW_isDoneReading() && AUDIONEW_isDoneWriting())
     {
         TIMER3_ON(FALSE);
-        AUDIONEW_setNewTone(0);
+        AUDIONEW_setNewTone(9);
     }
     else
     {
