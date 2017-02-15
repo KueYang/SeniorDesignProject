@@ -18,12 +18,12 @@
 #include "DAC.h"
 #include "AUDIO.h"
 
-#define TEMP_BUF_SIZE       2048
+UINT8 AUDIO_GetHeader(int index);
+BOOL AUDIO_GetAudioData(FILES* file, UINT16 bytes);
+BOOL AUDIO_ReadFile(UINT16 bytesToRead);
+BOOL AUDIO_PushToFifo(BYTE* buffer, UINT16 bytesRead);
 
-UINT8 AUDIO_GetHeader(int index, UINT16* readPtr);
-BOOL AUDIO_GetAudioData(FILES* file, RECEIVE_FIFO* buffer, UINT16 bytes);
-BOOL AUDIO_ReadFile(RECEIVE_FIFO* buffer, UINT16 bytesToRead);
-BOOL AUDIO_ReadToTempBuffer(void);
+#define TEMP_BUF_SIZE   REC_BUF_SIZE/2
 
 /** @var files 
  * The list of audio files that are to be used. */
@@ -70,24 +70,28 @@ void AUDIO_Init(void)
     
     // Opens all related audio files.
     int i = 0;
-    UINT16 readPtr = 0;
     for(i = 0; i < MAX_NUM_OF_FILES; i++)
     {
         // Opens the given file and set a pointer to the file.
         FILES_OpenFile(&files[i].File, fileNames[i],FA_READ);
-
+        // Copies the files name.
         strncpy(&files[i].audioInfo.fileName[0], fileNames[i], sizeof(files[i].audioInfo.fileName));
-        AUDIO_GetHeader(i, &readPtr);
+        // Reads the file headers.
+        AUDIO_GetHeader(i);
+        // Sets the file start pointer.
         files[i].startPtr = files[i].File.fptr;
     }
 
     // Initializes the index to the first file.
     fileIndex = 9;
+    // Sets the initial tone.
     AUDIO_setNewTone(fileIndex);
+    // Sets the TIMER clock period to write out audio data.
     TIMER3_SetSampleRate(files[fileIndex].audioInfo.sampleRate);
-    
     // Lists the files in memory
     FILES_ListFiles(&files[fileIndex].audioInfo.fileName[0]);
+    // Reads the first file.
+    AUDIO_ReadFile(REC_BUF_SIZE);
 }
 
 /**
@@ -101,7 +105,10 @@ void AUDIO_Init(void)
  */
 void AUDIO_Process(void)
 {
-   
+    if((bytesRead >= bytesWritten) && (bytesWritten%TEMP_BUF_SIZE == 0))
+    {
+        AUDIO_GetAudioData(&files[fileIndex], AUDIO_BUF_SIZE);
+    }
 }
 
 void AUDIO_ListFiles(void)
@@ -112,8 +119,6 @@ void AUDIO_ListFiles(void)
 BOOL AUDIO_setNewFile(const char* fileName)
 {
     int i = 0;
-    
-    // Searches the list of files for the specified file.
     for(i = 0; i < MAX_NUM_OF_FILES; i++)
     {
         if(MON_stringsMatch(&files[i].audioInfo.fileName[0], fileName))
@@ -133,10 +138,12 @@ void AUDIO_setNewTone(int fret)
     bytesWritten = 0;
     /* Sets the file index to the specified fret. */
     fileIndex = fret;
-    
+    /* Resets the file pointer. */
     files[fileIndex].File.fptr = files[fileIndex].startPtr;
-    
+    /* Sets the DAC's output to zero. */
     DAC_ZeroOutput();
+    /* Reads in the next set of bytes. */
+    AUDIO_ReadFile(REC_BUF_SIZE);
     
     MON_SendString("Setting new a tone.");
 }
@@ -151,7 +158,7 @@ FILES* AUDIO_getFilePtr(void)
     return &files[fileIndex];
 }
 
-int AUDIO_getBytesRead(void)
+UINT32 AUDIO_getBytesRead(void)
 {
     return bytesRead;
 }
@@ -165,7 +172,7 @@ BOOL AUDIO_isDoneReading()
     return FALSE;
 }
 
-int AUDIO_getBytesWritten(void)
+UINT32 AUDIO_getBytesWritten(void)
 {
     return bytesWritten;
 }
@@ -190,47 +197,48 @@ BOOL AUDIO_isDoneWriting()
  * @retval 6, Chunk ID 1 Data is invalid
  * @retval 7, Chunk ID 2 is invalid
  */
-UINT8 AUDIO_GetHeader(int index, UINT16* readPtr)
+UINT8 AUDIO_GetHeader(int index)
 {
-    if(FILES_ReadFile(&files[index].File, &receiveFifo.buffer[0], WAV_HEADER_SIZE, readPtr) == FR_OK)
+    UINT16 readPtr = 0;
+    if(FILES_ReadFile(&files[index].File, &tempBuffer[0], WAV_HEADER_SIZE, &readPtr) == FR_OK)
     {
-        if((receiveFifo.buffer[WAV_CHUNK_ID] != 'R')|
-                (receiveFifo.buffer[WAV_CHUNK_ID+1] != 'I')|
-                (receiveFifo.buffer[WAV_CHUNK_ID+2] != 'F')|
-                (receiveFifo.buffer[WAV_CHUNK_ID+3] != 'F'))
+        if((tempBuffer[WAV_CHUNK_ID] != 'R')|
+                (tempBuffer[WAV_CHUNK_ID+1] != 'I')|
+                (tempBuffer[WAV_CHUNK_ID+2] != 'F')|
+                (tempBuffer[WAV_CHUNK_ID+3] != 'F'))
         {
             return WAV_CHUNK_ID_ERROR;
         }
-        else if((receiveFifo.buffer[WAV_FORMAT] != 'W')|
-                (receiveFifo.buffer[WAV_FORMAT+1] != 'A')|
-                (receiveFifo.buffer[WAV_FORMAT+2] != 'V')|
-                (receiveFifo.buffer[WAV_FORMAT+3] != 'E'))
+        else if((tempBuffer[WAV_FORMAT] != 'W')|
+                (tempBuffer[WAV_FORMAT+1] != 'A')|
+                (tempBuffer[WAV_FORMAT+2] != 'V')|
+                (tempBuffer[WAV_FORMAT+3] != 'E'))
         {
             return WAV_FORMAT_ERROR;
         }
-        else if((receiveFifo.buffer[WAV_CHUNK1_SUB_ID] != 'f')|
-                (receiveFifo.buffer[WAV_CHUNK1_SUB_ID+1] != 'm')|
-                (receiveFifo.buffer[WAV_CHUNK1_SUB_ID+2] != 't'))
+        else if((tempBuffer[WAV_CHUNK1_SUB_ID] != 'f')|
+                (tempBuffer[WAV_CHUNK1_SUB_ID+1] != 'm')|
+                (tempBuffer[WAV_CHUNK1_SUB_ID+2] != 't'))
         {
             return WAV_SUB_CHUNK1_ID_ERROR;
         }
-        else if((receiveFifo.buffer[WAV_CHUNK2_SUB_ID] != 'd')|
-                (receiveFifo.buffer[WAV_CHUNK2_SUB_ID+1] != 'a')|
-                (receiveFifo.buffer[WAV_CHUNK2_SUB_ID+2] != 't')|
-                (receiveFifo.buffer[WAV_CHUNK2_SUB_ID+3] != 'a'))
+        else if((tempBuffer[WAV_CHUNK2_SUB_ID] != 'd')|
+                (tempBuffer[WAV_CHUNK2_SUB_ID+1] != 'a')|
+                (tempBuffer[WAV_CHUNK2_SUB_ID+2] != 't')|
+                (tempBuffer[WAV_CHUNK2_SUB_ID+3] != 'a'))
         {
             return WAV_SUB_CHUNK2_ID_ERROR;
         }
         
-        files[index].audioInfo.sampleRate = receiveFifo.buffer[WAV_SAMPLE_RATE+1] << 8 | 
-                                    receiveFifo.buffer[WAV_SAMPLE_RATE];
-        files[index].audioInfo.bitsPerSample = receiveFifo.buffer[WAV_BITS_PER_SAMPLE];
-        files[index].audioInfo.blockAlign = receiveFifo.buffer[WAV_BLOCK_ALIGN];
-        files[index].audioInfo.numOfChannels = receiveFifo.buffer[WAV_NUM_CHANNELS];
-        files[index].audioInfo.dataSize = (receiveFifo.buffer[WAV_DATA-1] << 24) | 
-                                    (receiveFifo.buffer[WAV_DATA-2] << 16) |
-                                    (receiveFifo.buffer[WAV_DATA-3] << 8) |
-                                    (receiveFifo.buffer[WAV_DATA-4]);
+        files[index].audioInfo.sampleRate = tempBuffer[WAV_SAMPLE_RATE+1] << 8 | 
+                                    tempBuffer[WAV_SAMPLE_RATE];
+        files[index].audioInfo.bitsPerSample = tempBuffer[WAV_BITS_PER_SAMPLE];
+        files[index].audioInfo.blockAlign = tempBuffer[WAV_BLOCK_ALIGN];
+        files[index].audioInfo.numOfChannels = tempBuffer[WAV_NUM_CHANNELS];
+        files[index].audioInfo.dataSize = (tempBuffer[WAV_DATA-1] << 24) | 
+                                    (tempBuffer[WAV_DATA-2] << 16) |
+                                    (tempBuffer[WAV_DATA-3] << 8) |
+                                    (tempBuffer[WAV_DATA-4]);
         return WAV_SUCCESS;
     }
     return WAV_HEADER_SIZE_ERROR;
@@ -242,26 +250,32 @@ UINT8 AUDIO_GetHeader(int index, UINT16* readPtr)
  * @retval TRUE if the file was read successfully.
  * @retval FALSE if the file was read unsuccessfully.
  */
-BOOL AUDIO_GetAudioData(FILES* file, RECEIVE_FIFO* fifo, UINT16 bytes)
+BOOL AUDIO_GetAudioData(FILES* file, UINT16 bytes)
 {
     UINT32 bytesLeft = (file->audioInfo.dataSize - bytesRead);
     UINT16 readPtr = 0;
     
+    // Calculates the number of bytes left to read.
     if(bytes > bytesLeft)
     {
         bytes = bytesLeft;
     }
     
-    if(FILES_ReadFile(&(file->File), &(fifo->buffer[0]), bytes, &readPtr) == FR_OK)
+    // Reads the file and verifies that the file is read.
+    if(FILES_ReadFile(&(file->File), &tempBuffer[0], bytes, &readPtr) == FR_OK)
     {   
+        // Pushes the read bytes to the receive fifo.
+        AUDIO_PushToFifo(&tempBuffer[0], bytes);
+        
+        // Converts and writes read bytes to audio buffers.
         int i = 0;
-        UINT16 audioByte;
-        UINT16 unsign_audio;
+        UINT16 audioByte, unsign_audio;
         BYTE LSB, MSB;
         for(i = 0; i < bytes; i+=4)
         {
-            LSB = fifo->FIFO_ReceivePop(fifo);
-            MSB = fifo->FIFO_ReceivePop(fifo);
+            // Left Channel
+            LSB = receiveFifo.FIFO_ReceivePop(&receiveFifo);
+            MSB = receiveFifo.FIFO_ReceivePop(&receiveFifo);
             audioByte = ((MSB << 8) | LSB);
             if (audioByte & 0x8000) 
             {
@@ -274,10 +288,11 @@ BOOL AUDIO_GetAudioData(FILES* file, RECEIVE_FIFO* fifo, UINT16 bytes)
             }
             LAUDIOSTACK.FIFO_AudioPush(&LAUDIOSTACK, audioByte);
 
+            // Right Channel
             if(file->audioInfo.numOfChannels == 2)
             {
-                LSB = fifo->FIFO_ReceivePop(fifo);
-                MSB = fifo->FIFO_ReceivePop(fifo);
+                LSB = receiveFifo.FIFO_ReceivePop(&receiveFifo);
+                MSB = receiveFifo.FIFO_ReceivePop(&receiveFifo);
                 audioByte = ((MSB << 8) | LSB);
                 if (audioByte & 0x8000) 
                 {
@@ -297,37 +312,18 @@ BOOL AUDIO_GetAudioData(FILES* file, RECEIVE_FIFO* fifo, UINT16 bytes)
     return FALSE;
 }
 
-BOOL AUDIO_ReadFile(RECEIVE_FIFO* buffer, UINT16 bytesToRead)
+BOOL AUDIO_PushToFifo(BYTE* buffer, UINT16 bytesRead)
 {
-    return AUDIO_GetAudioData(&files[fileIndex], buffer, bytesToRead);
-}
-
-BOOL AUDIO_ReadToTempBuffer(void)
-{
-    UINT32 bytesLeft = (files[fileIndex].audioInfo.dataSize - bytesRead);
-    UINT16 bytes = TEMP_BUF_SIZE;
-    UINT16 readPtr = 0;
-    
-    if(bytes > bytesLeft)
+    int i =0;
+    for(i = 0; i < bytesRead; i++)
     {
-        bytes = bytesLeft;
+        receiveFifo.FIFO_ReceivePush(&receiveFifo, buffer[i]);
     }
-    
-    if(FILES_ReadFile(&files[fileIndex].File, &tempBuffer[0], bytes, &readPtr) == FR_OK)
-    {   
-        int i = 0;
-        for(i = 0; i <= TEMP_BUF_SIZE; i++)
-        {
-            receiveFifo.FIFO_ReceivePush(&receiveFifo, tempBuffer[i]);
-        }
-        return TRUE;
-    }
-    return FALSE;
 }
 
-BOOL AUDIO_ReadFileBytes(UINT16 bytesToRead)
+BOOL AUDIO_ReadFile(UINT16 bytesToRead)
 {
-    return AUDIO_GetAudioData(&files[fileIndex], &receiveFifo, bytesToRead);
+    return AUDIO_GetAudioData(&files[fileIndex], bytesToRead);
 }
 
 BYTE* AUDIO_GetRecieveBuffer(void)
@@ -344,15 +340,7 @@ void AUDIO_WriteDataToDAC(void)
     }
     else
     {
-        if(bytesRead == bytesWritten)
-        {
-            AUDIO_ReadFile(&receiveFifo, REC_BUF_SIZE);
-        }
-        else if(bytesWritten%TEMP_BUF_SIZE == 0)
-        {
-            AUDIO_ReadToTempBuffer();
-        }
-        else if(bytesRead > bytesWritten)
+        if(bytesRead > bytesWritten)
         {
             /* Writes 1 WORD of data to the DAC. */
             DAC_WriteToDAC(WRITE_UPDATE_CHN_A, LAUDIOSTACK.FIFO_AudioPop());

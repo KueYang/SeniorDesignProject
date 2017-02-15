@@ -26,14 +26,12 @@ void AUDIO_ListFiles(void);
 void AUDIO_setNewTone(int fret);
 BOOL AUDIO_setNewFile(const char* fileName);
 void AUDIO_resetFilePtr(void);
-int AUDIO_getBytesRead(void);
-int AUDIO_getBytesWritten(void);
+UINT32 AUDIO_getBytesRead(void);
+UINT32 AUDIO_getBytesWritten(void);
 
 BYTE* AUDIO_GetRecieveBuffer(void);
-void AUDIO_WriteDataToDAC(void);
 BOOL AUDIO_ReadFileBytes(UINT16 bytesToRead);
-
-
+void AUDIO_WriteDataToDAC(void);
 
 #ifdef	__cplusplus
 }

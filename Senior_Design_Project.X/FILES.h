@@ -1,12 +1,12 @@
 /* 
- * File:   FILESNEW.h
+ * File:   FILES.h
  * Author: Belinda Yang
  *
  * Created on January 28, 2017, 10:38 AM
  */
 
-#ifndef FILESNEW_H
-#define	FILESNEW_H
+#ifndef FILES_H
+#define	FILES_H
 
 #ifdef	__cplusplus
 extern "C" {
@@ -14,7 +14,7 @@ extern "C" {
     
 #include "./fatfs/ff.h"
 
-typedef struct AUDIOINFONEW
+typedef struct AUDIOINFO
 {
     /**@{*/
     UINT16  bitsPerSample;
@@ -24,26 +24,26 @@ typedef struct AUDIOINFONEW
     UINT32  dataSize;           /**< Variable used to store the size of the data. */
     char fileName[16];
     /**@}*/
-}AUDIOINFONEW;
+}AUDIOINFO;
     
-typedef struct FILESNEW
+typedef struct FILES
 {
     /**@{*/
     FIL File;			/* File objects */
     FSIZE_t startPtr;
-    AUDIOINFONEW audioInfo;
+    AUDIOINFO audioInfo;
     /**@}*/
-}FILESNEW;
+}FILES;
 
-FRESULT FILESNEW_ReadFile(FIL* file, BYTE* buffer, UINT16 bytes, UINT16* ptr);
-FRESULT FILESNEW_FindFile(DIR* dir, FILINFO* fileInfo, const char* fileName);
-BOOL FILESNEW_ListFiles(const char* selectedName);
-FRESULT FILESNEW_CloseFile(FIL* file);
-FRESULT FILESNEW_OpenFile(FIL* file, const char* fileName, int mode);
+FRESULT FILES_ReadFile(FIL* file, BYTE* buffer, UINT16 bytes, UINT16* ptr);
+FRESULT FILES_FindFile(DIR* dir, FILINFO* fileInfo, const char* fileName);
+BOOL FILES_ListFiles(const char* selectedName);
+FRESULT FILES_CloseFile(FIL* file);
+FRESULT FILES_OpenFile(FIL* file, const char* fileName, int mode);
 
 #ifdef	__cplusplus
 }
 #endif
 
-#endif	/* FILESNEW_H */
+#endif	/* FILES_H */
 
