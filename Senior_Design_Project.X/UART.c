@@ -13,7 +13,7 @@
 #include "HardwareProfile.h"
 #include "Timer.h"
 #include "FIFO.h"
-#include "AudioNew.h"
+#include "AUDIO.h"
 #include "DAC.h"
 #include "UART.h"
 #include "TESTS.h"
@@ -38,13 +38,13 @@
 int UART_GetBaudRate(int desireBaud);
 
 /** FIFO helper functions. */
-BOOL UART_isBufferEmpty(FIFO* buffer);
-char UART_getNextChar(FIFO* buffer);
-void UART_putNextChar(FIFO* buffer, char ch);
+BOOL UART_isBufferEmpty(MON_FIFO* buffer);
+char UART_getNextChar(MON_FIFO* buffer);
+void UART_putNextChar(MON_FIFO* buffer, char ch);
 
 /** Command Helper Functions. */
 void UART_processCommand(void);
-int MON_parseCommand(COMMANDSTR* cmd, FIFO* buffer);
+int MON_parseCommand(COMMANDSTR* cmd, MON_FIFO* buffer);
 COMMANDS MON_getCommand(const char* cmdName);
 
 /** Commands Handlers. */
@@ -72,10 +72,10 @@ void MON_Timer_Set_PS(void);
 COMMANDSTR cmdStr;
 /** @var rxBuffer 
  * The UART receive buffer. */
-FIFO rxBuffer;
+MON_FIFO rxBuffer;
 /** @var txBuffer 
  * The UART transmit buffer. */
-FIFO txBuffer;
+MON_FIFO txBuffer;
 /** @var cmdReady 
  * The UART command receive flag. */
 BOOL cmdReady;
@@ -198,7 +198,7 @@ void UART_processCommand(void)
  * @arg buffer The receive buffer.
  * @return Returns the number of command arguments.
  */
-int MON_parseCommand(COMMANDSTR* cmd, FIFO* buffer)
+int MON_parseCommand(COMMANDSTR* cmd, MON_FIFO* buffer)
 {   
     int i = 0, numOfArgs = 0;
     int argIndexes[3] = {0,0,0};
@@ -252,7 +252,7 @@ int MON_parseCommand(COMMANDSTR* cmd, FIFO* buffer)
 
 BOOL MON_SendChar(const char* character)
 {
-    FIFO_Push(&txBuffer, *character);
+    txBuffer.FIFO_MonPush(&txBuffer, *character);
     INTEnable(INT_SOURCE_UART_TX(UART_MODULE_ID), INT_ENABLED);
 }
 
@@ -260,18 +260,18 @@ BOOL MON_SendString(const char* str)
 {
     if(*str == '>')
     {
-        FIFO_Push(&txBuffer, *str);
+        txBuffer.FIFO_MonPush(&txBuffer, *str);
     }
     else
     {
         while(*str != '\0')
         {
-            FIFO_Push(&txBuffer, *str);
+            txBuffer.FIFO_MonPush(&txBuffer, *str);
             str++;
         }
 
-        FIFO_Push(&txBuffer, '\n');
-        FIFO_Push(&txBuffer, '\r');
+        txBuffer.FIFO_MonPush(&txBuffer, '\n');
+        txBuffer.FIFO_MonPush(&txBuffer, '\r');
     }
     
     INTEnable(INT_SOURCE_UART_TX(UART_MODULE_ID), INT_ENABLED);
@@ -281,13 +281,13 @@ BOOL MON_SendStringNR(const char* str)
 {
     if(*str == '>')
     {
-        FIFO_Push(&txBuffer, *str);
+        txBuffer.FIFO_MonPush(&txBuffer, *str);
     }
     else
     {
         while(*str != '\0')
         {
-            FIFO_Push(&txBuffer, *str);
+            txBuffer.FIFO_MonPush(&txBuffer, *str);
             str++;
         }
     }
@@ -454,9 +454,9 @@ void __ISR(_UART1_VECTOR, IPL4AUTO) IntUart1Handler(void)
  * @arg ch The character to push into buffer.
  * @return Void.
  */
-void UART_putNextChar(FIFO* buffer, char ch)
+void UART_putNextChar(MON_FIFO* buffer, char ch)
 {
-    FIFO_Push(buffer, ch);
+    buffer->FIFO_MonPush(buffer, ch);
 }
 
 /**
@@ -464,9 +464,9 @@ void UART_putNextChar(FIFO* buffer, char ch)
  * @arg buffer The buffer to pop the character from.
  * @return Returns the character that is popped off from the buffer.
  */
-char UART_getNextChar(FIFO* buffer)
+char UART_getNextChar(MON_FIFO* buffer)
 {
-    return FIFO_Pop(buffer);
+    return FIFO_MonPop(buffer);
 }
 
 /**
@@ -476,7 +476,7 @@ char UART_getNextChar(FIFO* buffer)
  * @retval TRUE if the buffer is empty.
  * @retval FALSE if the buffer is not empty.
  */
-BOOL UART_isBufferEmpty(FIFO* buffer)
+BOOL UART_isBufferEmpty(MON_FIFO* buffer)
 {
     if(buffer->bufferSize > 0)
     {
@@ -515,12 +515,12 @@ void MON_Test(void)
 
 void MON_GetFileList(void)
 {
-    AUDIONEW_ListFiles();
+    AUDIO_ListFiles();
 }
 
 void MON_Set_File(void)
 {
-    if(AUDIONEW_setNewFile(cmdStr.arg1))
+    if(AUDIO_setNewFile(cmdStr.arg1))
     {
         MON_SendString("The new file has been set.");
     }
@@ -540,11 +540,11 @@ void MON_Read_File(void)
     
     if(reset)
     {
-        AUDIONEW_resetFilePtr();
+        AUDIO_resetFilePtr();
     }
     
-    AUDIONEW_ReadDataFromMemory(bytesToRead);
-    bufPtr = (BYTE*)AUDIONEW_GetRecieveBuffer();
+    AUDIO_ReadFile(bytesToRead);
+    bufPtr = (BYTE*)AUDIO_GetRecieveBuffer();
 
     // Prints out the columns
     MON_SendString("       0x00 0x01 0x02 0x03 0x04 0x05 0x06 0x07 0x08 0x09 0x0A 0x0B"); 
@@ -749,7 +749,7 @@ void MON_Timer_ON_OFF(void)
     else
     {
         TIMER3_ON(FALSE);
-        AUDIONEW_setNewTone(0);
+        AUDIO_setNewTone(0);
     }
 }
 
