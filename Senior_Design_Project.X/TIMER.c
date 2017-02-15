@@ -11,13 +11,14 @@
 #include "HardwareProfile.h"
 #include "STDDEF.h"
 #include "./fatfs/diskio.h"
-#include "AudioNew.h"
+#include "AUDIO.h"
 #include "TIMER.h"
 
 /**  
  * @privatesection
  * @{
  */
+#define INT32_MAX_NUM           1<<31
 
 /** @def PERIOD 
  * Timer 1 Period for one ms. */
@@ -173,7 +174,7 @@ void TIMER3_Init(void)
 void TIMER3_SetSampleRate(UINT16 sampleRate)
 {
     UINT16 period = ((GetPeripheralClock()/sampleRate)-1);
-    PR3 = period + (period/3);
+    PR3 = period;//+ (period/3);
     TMR3 = 0;
 }
 
@@ -234,6 +235,12 @@ void __ISR(_TIMER_1_VECTOR, IPL2AUTO) Timer1Handler(void)
     // Increments the millisecond counter.
     ms_TICK++;
     
+    // Resets the ms tick if overflows
+    if(ms_TICK >= INT32_MAX_NUM)
+    {
+        ms_TICK = 0;
+    }
+    
 	disk_timerproc();	/* Drive timer procedure of low level disk I/O module */
     
     // Clear the interrupt flag
@@ -254,7 +261,7 @@ void __ISR(_TIMER_3_VECTOR, IPL2AUTO) Timer3Handler(void)
      * starts reading from memory again to fill in the buffer. Otherwise, write
      * data to the DAC.
      */
-    AUDIONEW_WriteDataToDAC();
+    AUDIO_WriteDataToDAC();
     
     // Clear the interrupt flag
     INTClearFlag(INT_T3);
