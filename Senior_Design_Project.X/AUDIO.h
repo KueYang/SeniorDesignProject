@@ -18,6 +18,12 @@ extern "C" {
 /** @def MAX_NUM_OF_FILES 
  * Defines the max number of audio files to be open. */
 #define MAX_NUM_OF_FILES        10
+/** @def REC_BUF_SIZE 
+ * Defines the receive buffer size. */
+#define REC_BUF_SIZE    8192
+/** @def REC_BUF_SIZE 
+ * Defines the audio buffer size. */
+#define AUDIO_BUF_SIZE  REC_BUF_SIZE/4
 
 void AUDIO_Init(void);
 void AUDIO_Process(void);

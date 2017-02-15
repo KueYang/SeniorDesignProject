@@ -456,7 +456,7 @@ void __ISR(_UART1_VECTOR, IPL4AUTO) IntUart1Handler(void)
  */
 void UART_putNextChar(MON_FIFO* buffer, char ch)
 {
-    buffer->FIFO_MonPush(buffer, ch);
+    FIFO_MonPush(buffer, ch);
 }
 
 /**
@@ -466,7 +466,7 @@ void UART_putNextChar(MON_FIFO* buffer, char ch)
  */
 char UART_getNextChar(MON_FIFO* buffer)
 {
-    return buffer->FIFO_MonPop(buffer);
+    return FIFO_MonPop(buffer);
 }
 
 /**
