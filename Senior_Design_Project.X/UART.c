@@ -252,7 +252,7 @@ int MON_parseCommand(COMMANDSTR* cmd, MON_FIFO* buffer)
 
 BOOL MON_SendChar(const char* character)
 {
-    txBuffer.FIFO_MonPush(&txBuffer, *character);
+    UART_putNextChar(&txBuffer, *character);
     INTEnable(INT_SOURCE_UART_TX(UART_MODULE_ID), INT_ENABLED);
 }
 
@@ -260,18 +260,18 @@ BOOL MON_SendString(const char* str)
 {
     if(*str == '>')
     {
-        txBuffer.FIFO_MonPush(&txBuffer, *str);
+        UART_putNextChar(&txBuffer, *str);
     }
     else
     {
         while(*str != '\0')
         {
-            txBuffer.FIFO_MonPush(&txBuffer, *str);
+            UART_putNextChar(&txBuffer, *str);
             str++;
         }
 
-        txBuffer.FIFO_MonPush(&txBuffer, '\n');
-        txBuffer.FIFO_MonPush(&txBuffer, '\r');
+        UART_putNextChar(&txBuffer, '\n');
+        UART_putNextChar(&txBuffer, '\r');
     }
     
     INTEnable(INT_SOURCE_UART_TX(UART_MODULE_ID), INT_ENABLED);
@@ -281,13 +281,13 @@ BOOL MON_SendStringNR(const char* str)
 {
     if(*str == '>')
     {
-        txBuffer.FIFO_MonPush(&txBuffer, *str);
+        UART_putNextChar(&txBuffer, *str);
     }
     else
     {
         while(*str != '\0')
         {
-            txBuffer.FIFO_MonPush(&txBuffer, *str);
+            UART_putNextChar(&txBuffer, *str);
             str++;
         }
     }
@@ -466,7 +466,7 @@ void UART_putNextChar(MON_FIFO* buffer, char ch)
  */
 char UART_getNextChar(MON_FIFO* buffer)
 {
-    return FIFO_MonPop(buffer);
+    return buffer->FIFO_MonPop(buffer);
 }
 
 /**
