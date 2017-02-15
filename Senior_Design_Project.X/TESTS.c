@@ -9,8 +9,9 @@
 #include <plib.h>
 #include "TIMER.h"
 #include "UART.h"
+#include "FIFO.h"
 #include "DAC.h"
-#include "AudioNew.h"
+#include "AUDIO.h"
 #include "TESTS.h"
 
 void Test1_TimeReadWrite(void);
@@ -48,18 +49,18 @@ void Test1_TimeReadWrite(void)
     int bytesWritten = 0;
     int bytesRead = 0;
     
-    while(!(AUDIONEW_isDoneReading() && AUDIONEW_isDoneWriting()))
+    while(!(AUDIO_isDoneReading() && AUDIO_isDoneWriting()))
     {
-        bytesWritten = AUDIONEW_getBytesWritten();
-        bytesRead = AUDIONEW_getBytesRead();
+        bytesWritten = AUDIO_getBytesWritten();
+        bytesRead = AUDIO_getBytesRead();
 
-        if((bytesRead == bytesWritten) && !AUDIONEW_isDoneReading())
+        if((bytesRead == bytesWritten) && !AUDIO_isDoneReading())
         {
-            AUDIONEW_ReadDataFromMemory(REC_BUF_SIZE);
+            AUDIO_ReadFile(REC_BUF_SIZE);
         }
         else
         {
-            AUDIONEW_WriteDataToDAC();
+            AUDIO_WriteDataToDAC();
         }
     }
     
@@ -69,7 +70,7 @@ void Test1_TimeReadWrite(void)
     MON_SendString("Test 1 - Read and Write Test");
     snprintf(&buf[0] ,128 ,"startTime: %d, endTime: %d, timeToRead: %d", startTime, endTime, timeToRead);
     MON_SendString(&buf[0]);
-    AUDIONEW_resetFilePtr();
+    AUDIO_resetFilePtr();
 }
 
 void Test2_TimeRead(void)
@@ -78,7 +79,7 @@ void Test2_TimeRead(void)
     endTime = 0;
     timeToRead = 0;
     
-    if(AUDIONEW_ReadDataFromMemory(REC_BUF_SIZE))
+    if(AUDIO_ReadFile(REC_BUF_SIZE))
     {
         endTime = TIMER_GetMSecond();
         timeToRead = endTime - startTime;
@@ -86,7 +87,7 @@ void Test2_TimeRead(void)
         MON_SendString("Test 2 - Read Test");
         snprintf(&buf[0] ,128 ,"startTime: %d, endTime: %d, timeToRead: %d", startTime, endTime, timeToRead);
         MON_SendString(&buf[0]);
-        AUDIONEW_resetFilePtr();
+        AUDIO_resetFilePtr();
     }
     else
     {
@@ -100,11 +101,11 @@ void Test3_TimeWrite(void)
     endTime = 0;
     timeToRead = 0;
     
-    AUDIONEW_ReadDataFromMemory(REC_BUF_SIZE);
+    AUDIO_ReadFile(REC_BUF_SIZE);
     
     startTime = TIMER_GetMSecond();
     
-    AUDIONEW_WriteDataToDAC();
+    AUDIO_WriteDataToDAC();
     
     endTime = TIMER_GetMSecond();
     timeToRead = endTime - startTime;
@@ -112,7 +113,7 @@ void Test3_TimeWrite(void)
     MON_SendString("Test 3 - Write Test");
     snprintf(&buf[0] ,128 ,"startTime: %d, endTime: %d, timeToRead: %d", startTime, endTime, timeToRead);
     MON_SendString(&buf[0]);
-    AUDIONEW_resetFilePtr();
+    AUDIO_resetFilePtr();
 }
 
 
