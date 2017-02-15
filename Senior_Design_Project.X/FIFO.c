@@ -8,7 +8,6 @@
 
 #include "STDDEF.h"
 #include "FIFO.h"
-#include "UART.h"
 
 /**
  * @brief Pushes data into the FIFO queue.
@@ -18,35 +17,84 @@
  * @retval TRUE If pushing data to queue is successful.
  * @retval FALSE If pushing data to queue is unsuccessful.
  */
-BOOL FIFO_Push(FIFO* fifo, char ch)
+BOOL FIFO_MonPush(MON_FIFO* fifo, char ch)
 {
-    if(fifo->bufferSize >= BUFFERSIZE)
+    if(fifo->bufferSize >= MON_BUFFERSIZE)
     {
         return FALSE;
     }
     fifo->buffer[fifo->tailPtr++] = ch;
     fifo->bufferSize++;
     
-    if(fifo->tailPtr >= BUFFERSIZE)
+    if(fifo->tailPtr >= MON_BUFFERSIZE)
     {
         fifo->tailPtr = 0;
     }
     return TRUE;
 }
 
-/**
- * @brief Pops data from the FIFO queue.
- * @arg fifo The FIFO buffer that data will be read from.
- * @return Returns a boolean to indicate whether the operation is successful or not.
- * @retval TRUE If popping data from the queue is successful.
- * @retval FALSE If popping data from the queue fails.
- */
-char FIFO_Pop(FIFO* fifo)
+char FIFO_MonPop(MON_FIFO* fifo)
 {
     fifo->bufferSize--;
     char ch = fifo->buffer[fifo->headPtr++];
     
-    if(fifo->headPtr >= BUFFERSIZE)
+    if(fifo->headPtr >= MON_BUFFERSIZE)
+    {
+        fifo->headPtr = 0;
+    }
+    return ch;
+}
+
+BOOL FIFO_ReceivePush(RECEIVE_FIFO* fifo, char ch)
+{
+    if(fifo->bufferSize >= MON_BUFFERSIZE)
+    {
+        return FALSE;
+    }
+    fifo->buffer[fifo->tailPtr++] = ch;
+    fifo->bufferSize++;
+    
+    if(fifo->tailPtr >= REC_BUF_SIZE)
+    {
+        fifo->tailPtr = 0;
+    }
+    return TRUE;
+}
+
+char FIFO_ReceivePop(RECEIVE_FIFO* fifo)
+{
+    fifo->bufferSize--;
+    char ch = fifo->buffer[fifo->headPtr++];
+    
+    if(fifo->headPtr >= REC_BUF_SIZE)
+    {
+        fifo->headPtr = 0;
+    }
+    return ch;
+}
+
+BOOL FIFO_AudioPush(AUDIO_FIFO* fifo, char ch)
+{
+    if(fifo->bufferSize >= AUDIO_BUF_SIZE)
+    {
+        return FALSE;
+    }
+    fifo->buffer[fifo->tailPtr++] = ch;
+    fifo->bufferSize++;
+    
+    if(fifo->tailPtr >= AUDIO_BUF_SIZE)
+    {
+        fifo->tailPtr = 0;
+    }
+    return TRUE;
+}
+
+char FIFO_AudioPop(AUDIO_FIFO* fifo)
+{
+    fifo->bufferSize--;
+    char ch = fifo->buffer[fifo->headPtr++];
+    
+    if(fifo->headPtr >= AUDIO_BUF_SIZE)
     {
         fifo->headPtr = 0;
     }
