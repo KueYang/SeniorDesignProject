@@ -20,7 +20,7 @@ extern "C" {
 #define MAX_NUM_OF_FILES        10
 /** @def REC_BUF_SIZE 
  * Defines the receive buffer size. */
-#define REC_BUF_SIZE            4096//10240
+#define REC_BUF_SIZE            8192//10240
 /** @def AUDIO_BUF_SIZE 
  * Defines the audio buffer size. */
 #define AUDIO_BUF_SIZE          REC_BUF_SIZE/4

@@ -122,7 +122,7 @@ void AUDIO_Init(void)
     }
 
     // Initializes the index to the first file.
-    fileIndex = FILE_0;
+    fileIndex = FILE_1;
     // Sets the initial tone.
     AUDIO_setNewTone(fileIndex);
     // Sets the TIMER clock period to write out audio data.
@@ -433,7 +433,7 @@ void AUDIO_WriteDataToDAC(void)
     if(AUDIO_isDoneReading() && AUDIO_isDoneWriting())
     {
         TIMER3_ON(FALSE);
-        AUDIO_setNewTone(FILE_0);
+        AUDIO_setNewTone(FILE_1);
     }
     else
     {
