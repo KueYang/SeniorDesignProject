@@ -9,15 +9,13 @@
 #include <plib.h>
 #include "HardwareProfile.h"
 #include "STDDEF.h"
-#include "FILESNEW.h"
 #include "IO.h"
 #include "TIMER.h"
 #include "ADC.h"
 #include "SPI.h"
 #include "UART.h"
 #include "DAC.h"
-//#include "Audio.h"
-#include "AudioNew.h"
+#include "AUDIO.h"
 #include "TESTS.h"
 
 /**
@@ -92,18 +90,17 @@ int main(void)
     
     /* Peripheral Initializations */
     IO_Init();          // Initializes all digital IO.
-//    TIMER_Init();       // Initializes all timer modules.
-    ADC_Init();         // Initializes all ADC modules.
-//    SPI_Init();         // Initializes all SPI modules.
-//    UART_Init();        // Initializes all UART modules
-//    AUDIONEW_Init();    // Initializes the Audio module.
-//    DAC_Init();         // Initializes the DACs.
+    TIMER_Init();       // Initializes all timer modules.
+//    ADC_Init();         // Initializes all ADC modules.
+    SPI_Init();         // Initializes all SPI modules.
+    UART_Init();        // Initializes all UART modules
+    AUDIO_Init();    // Initializes the Audio module.
+    DAC_Init();         // Initializes the DACs.
 
     while(1)
     {
 //        WDTCONSET = 0x01;   // Clears the watchdog timer flag.
-//        TIMER_Process();
-//        ADC_Process();
+        AUDIO_Process();
     }
 
     return (0);
