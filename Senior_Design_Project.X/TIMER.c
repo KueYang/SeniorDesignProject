@@ -18,22 +18,27 @@
  * @privatesection
  * @{
  */
+/** @def INT32_MAX_NUM 
+ * Defines the max value for a 32-bit variable. */
 #define INT32_MAX_NUM           1<<31
 
 /** @def PERIOD 
  * Timer 1 Period for one ms. */
-#define TWENTY_US_PERIOD        12
 #define ONE_MS_PERIOD           40000
-
-void TIMER1_Init(void);
-void TIMER3_Init(void);
 
 /**@var ms_TICK 
  * Millisecond counter. */
 UINT32 ms_TICK;
+/**@var Timer1_ON 
+ * Boolean used to indicated if Timer 1 is on/off. */
 BOOL Timer1_ON;
+/**@var Timer3_ON 
+ * Boolean used to indicated if Timer 3 is on/off. */
 BOOL Timer3_ON;
 /** @} */
+
+void TIMER1_Init(void);
+void TIMER3_Init(void);
 
 /**
  * @brief Initializes all timer modules.
@@ -65,7 +70,16 @@ void TIMER_Process(void)
  */
 void TIMER1_Init(void)
 {
-    OpenTimer1(T1_ON | T1_SOURCE_INT | T1_PS_1_1, ONE_MS_PERIOD);
+    T1CONbits.ON = 0;
+    T1CONbits.SIDL = 0;
+    T1CONbits.TGATE = 0;
+    T1CONbits.TCKPS = 0b000;    //PS = 1
+    T1CONbits.TCS = 0;
+    
+    PR1 = ONE_MS_PERIOD;
+    TMR1 = 0;
+    
+    T1CONbits.ON = 1;
     
     // Set up the timer interrupt with a priority of 2
     INTEnable(INT_T1, INT_ENABLED);
@@ -73,11 +87,22 @@ void TIMER1_Init(void)
     INTSetVectorSubPriority(INT_TIMER_1_VECTOR, INT_SUB_PRIORITY_LEVEL_0);
 }
 
+/**
+ * @brief Checks if Timer 1 is on/off.
+ * @return Returns a boolean indicating if Timer 1 is on/off.
+ * @retval TRUE, Timer 1 is on.
+ * @retval FALSE, Timer 1 is off.
+ */
 BOOL TIMER1_IsON(void)
 {
     return Timer1_ON;
 }
 
+/**
+ * @brief Toggles on/off Timer 1.
+ * @arg ON Toggles the timer on/off (TRUE/FALSE).
+ * @return Void
+ */
 void TIMER1_ON(BOOL ON)
 {
     if(ON == TRUE)
@@ -143,14 +168,13 @@ void __ISR(_TIMER_1_VECTOR, IPL2AUTO) Timer1Handler(void)
  */
 void TIMER3_Init(void)
 {
-//    OpenTimer3(T3_OFF | T3_SOURCE_INT | T3_PS_1_8, SIX_US_PERIOD);
     T3CONbits.ON = 0;
     T3CONbits.SIDL = 0;
     T3CONbits.TGATE = 0;
     T3CONbits.TCKPS = 0b000;    //PS = 1
     T3CONbits.TCS = 0;
     
-    PR3 = TWENTY_US_PERIOD;
+    PR3 = ONE_MS_PERIOD;
     TMR3 = 0;
     
     Timer3_ON = FALSE;
@@ -160,7 +184,11 @@ void TIMER3_Init(void)
     INTSetVectorPriority(INT_TIMER_3_VECTOR, INT_PRIORITY_LEVEL_2);
     INTSetVectorSubPriority(INT_TIMER_3_VECTOR, INT_SUB_PRIORITY_LEVEL_3);
 }
-
+/**
+ * @brief Sets the Timer 3 period
+ * @arg sampleRate The sample rate to set Timer 3 at.
+ * @return Void
+ */
 void TIMER3_SetSampleRate(UINT16 sampleRate)
 {
     UINT16 period = ((GetPeripheralClock()/sampleRate)-1);
@@ -168,11 +196,22 @@ void TIMER3_SetSampleRate(UINT16 sampleRate)
     TMR3 = 0;
 }
 
+/**
+ * @brief Checks if Timer 3 is on/off.
+ * @return Returns a boolean indicating if Timer 3 is on/off.
+ * @retval TRUE, Timer 3 is on.
+ * @retval FALSE, Timer 3 is off.
+ */
 BOOL TIMER3_IsON(void)
 {
     return Timer3_ON;
 }
 
+/**
+ * @brief Toggles on/off Timer 3.
+ * @arg ON Toggles the timer on/off (TRUE/FALSE).
+ * @return Void
+ */
 void TIMER3_ON(BOOL ON)
 {
     if(ON == TRUE)
@@ -189,6 +228,12 @@ void TIMER3_ON(BOOL ON)
     }
 }
 
+/**
+ * @brief Timer 3 Interrupt Service Routine.
+ * @details The interrupt service routine is used to write audio data to the 
+ * DAC in a set interval.
+ * @return Void.
+ */
 void __ISR(_TIMER_3_VECTOR, IPL2AUTO) Timer3Handler(void)
 {
     /* 
