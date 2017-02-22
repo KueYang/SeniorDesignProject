@@ -27,8 +27,6 @@ void DAC_Init(void)
 #else    
     DAC_WriteToDAC(POWER_ON_OFF_CHN_A_B , POWER_ON_DAC_B_A);
 #endif
-//    DAC_WriteToDAC(WRITE_UPDATE_CHN_A_B, 0xFFFF);
-//    DAC_Zero();
 }
 
 /**
