@@ -1,28 +1,47 @@
+/* 
+ * File:   FILES.h
+ * Author: Belinda Yang
+ *
+ * Created on January 28, 2017, 10:38 AM
+ */
+
 #ifndef FILES_H
 #define	FILES_H
 
 #ifdef	__cplusplus
 extern "C" {
 #endif
-
-#include "./FIO_Library/FSIO.h"
     
-#define FILENAME_LENGTH     32
+#include "./fatfs/ff.h"
+
+typedef struct AUDIOINFO
+{
+    /**@{*/
+    UINT16  bitsPerSample;
+    UINT16  numOfChannels;
+    UINT16  sampleRate;
+    UINT16  blockAlign;
+    UINT32  dataSize;           /**< Variable used to store the size of the data. */
+    char fileName[16];
+    /**@}*/
+}AUDIOINFO;
     
 typedef struct FILES
 {
-    FSFILE* pointer;            // Variable used to point to the current file.
-    SearchRec rec;              // Variable used to search for files.
-    UINT32  dataSize;           // Size of the data
-    char*   fileName;           // File name
+    /**@{*/
+    FIL File;			/* File objects */
+    FSIZE_t startPtr;
+    DWORD cluster;
+    DWORD sector;
+    AUDIOINFO audioInfo;
+    /**@}*/
 }FILES;
 
-void FILES_Init(void);
-BOOL FILES_OpenFile(const char* file, FSFILE* pointer , SearchRec* rec);
-BOOL FILES_CloseFile(FSFILE* pointer);
-BOOL FILES_FindFile(const char* file, SearchRec* rec);
-BOOL FILES_ListFiles(SearchRec* rec);
-BOOL FILES_ReadFile(BYTE* buffer, UINT8 bytes, UINT32 blocks, FSFILE* pointer);
+FRESULT FILES_ReadFile(FIL* file, BYTE* buffer, UINT16 bytes, UINT16* ptr);
+FRESULT FILES_FindFile(DIR* dir, FILINFO* fileInfo, const char* fileName);
+BOOL FILES_ListFiles(const char* selectedName);
+FRESULT FILES_CloseFile(FIL* file);
+FRESULT FILES_OpenFile(FIL* file, const char* fileName, int mode);
 
 #ifdef	__cplusplus
 }

@@ -1,78 +1,98 @@
+/**
+ * @file FILES.c
+ * @author Kue Yang
+ * @date 11/22/2016
+ * @details The FILES module will handle all file related tasks. Tasks includes:
+ * opening and closing files, searching for files and reading files. 
+ */
+
 #include <p32xxxx.h>
 #include <plib.h>
 #include "STDDEF.h"
-#include "./FIO_Library/FSIO.h"
+#include "./fatfs/diskio.h"
+#include "./fatfs/ffconf.h"
+#include "./fatfs/ff.h"
 #include "FILES.h"
 
-BYTE file_attributes;
-UINT8 attributes = 0x3f;
+/**  
+ * @privatesection
+ * @{
+ */
+FATFS FatFs;			/* File system object */
+/** @} */
 
+/**
+ * @brief Initializes the FILES module.
+ * @details Initializes Microchip MDD File System library. Updates the file attributes
+ * that will be used for file related operations. 
+ * @remark Requires Microchip's MDD File System library.
+ * @return Void
+ */
 void FILES_Init(void)
 {
-    // Initialize the library
-    while(!FSInit());
-    
-    // Files and Search configurations.
-    file_attributes = ATTR_ARCHIVE | ATTR_READ_ONLY | ATTR_HIDDEN;
+    // Initialize the sd card to logical drive 0
+    while(disk_initialize(0));
+    // Mounts the sd card to logical drive 0
+    while(f_mount(&FatFs, "", 0));
 }
 
-BOOL FILES_OpenFile(const char* file, FSFILE* pointer , SearchRec* rec)
+FATFS FILES_getFileSystem(void)
 {
-    if(FILES_FindFile(file, rec))
+    return FatFs;
+}
+
+FRESULT FILES_OpenFile(FIL* file, const char* fileName, int mode)
+{
+    return f_open(file, fileName, mode);
+}
+
+FRESULT FILES_CloseFile(FIL* file)
+{
+   return f_close(file);
+}
+
+BOOL FILES_ListFiles(const char* selectedName)
+{
+    char buf[128];
+    FRESULT res;        /* Stores the results of the operation. */
+    DIR dir;            /* Stores information on the directory */
+    FILINFO Finfo;      /* Stores file information. */
+    
+    MON_SendString("Showing all WAV files in root directory:");
+    
+    // Searches for the first file in the directory.
+    res = f_findfirst(&dir, &Finfo, "", "*.wav");
+    if(res == FR_OK)
     {
-        pointer = FSfopen(file, "r");
-        if (pointer == NULL)
-        {
-            return FALSE;
+        while (res == FR_OK && Finfo.fname[0]) {
+            // Prints out the file name and file size.
+            if(MON_stringsMatch(selectedName, &Finfo.fname[0]))
+            {
+                snprintf(&buf[0], 128, "%s\t%u KB ***", Finfo.fname, Finfo.fsize/1000);
+            }
+            else
+            {
+                snprintf(&buf[0], 128, "%s\t%u KB", Finfo.fname, Finfo.fsize/1000);
+            }
+            MON_SendString(&buf[0]);
+            
+            // Searches for the next file in the directory.
+            res = f_findnext(&dir, &Finfo);
         }
         return TRUE;
     }
     return FALSE;
 }
 
-BOOL FILES_CloseFile(FSFILE* pointer)
+FRESULT FILES_FindFile(DIR* dir, FILINFO* fileInfo, const char* fileName)
 {
-   if(FSfclose(pointer))
-   {
-       return FALSE;
-   }
-   return TRUE;
+   return f_findfirst(dir, fileInfo, fileName, ".wav");
 }
 
-BOOL FILES_ListFiles(SearchRec* rec)
+FRESULT FILES_ReadFile(FIL* file, BYTE* buffer, UINT16 bytes, UINT16* ptr)
 {
-    char buf[FILENAME_LENGTH];
-    
-    UART_sendString("\n\rShowing all WAV files in root directory:\n\r");
-    if (FindFirst("*.WAV", file_attributes, rec) == 0) 
-    {
-        snprintf(buf, FILENAME_LENGTH, "%s\t%u KB \n\r", rec->filename, rec->filesize/1000);
-        UART_sendString(&buf[0]);
-        while (FindNext(rec) == 0) 
-        {
-            snprintf(buf, FILENAME_LENGTH, "%s\t%u KB \n\r", rec->filename, rec->filesize/1000);
-            UART_sendString(&buf[0]);
-        }
-    }
+     return f_read(file, buffer, bytes, ptr);
 }
 
-BOOL FILES_FindFile(const char* file, SearchRec* rec)
-{
-   if(FindFirst(file, file_attributes, rec) == 0)
-   {
-       return TRUE;
-   }
-   return FALSE;
-}
-
-BOOL FILES_ReadFile(BYTE* buffer, UINT8 bytes, UINT32 blocks, FSFILE* pointer)
-{
-    /* Reads bytes-Byte blocks from the file and stores it in the receive buffer. */
-    if(FSfread(buffer, bytes, blocks, pointer) != blocks)
-    {
-        return FALSE;
-    }
-    return TRUE;
-}
 
 

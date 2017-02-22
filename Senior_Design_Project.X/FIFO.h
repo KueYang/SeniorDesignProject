@@ -1,3 +1,9 @@
+/**
+ * @file FIFO.h
+ * @author Kue Yang
+ * @date 11/22/2016
+ */
+
 #ifndef FIFO_H
 #define	FIFO_H
 
@@ -5,19 +11,26 @@
 extern "C" {
 #endif
 
-#define BUFFERSIZE  1024
-    
-typedef struct fifo{
-    char buffer[BUFFERSIZE];
-    int  headPtr;
-    int  tailPtr;
-    int  bufferSize;
-}FIFO;
+/**@def BUFFERSIZE 
+ * Defines the buffer size used for the FIFO queue. */
+#define MON_BUFFERSIZE  1024
 
-    
-char FIFO_Pop(FIFO* fifo);
-BOOL FIFO_Push(FIFO* fifo, char ch);
+/**
+ * @brief FIFO data structure.
+ * @details The FIFO data structure is used to create and store a FIFO queue.
+ */
+typedef struct MON_FIFO
+{
+    /**@{*/
+    char buffer[MON_BUFFERSIZE];    /**< Variable used to store the FIFO data. */
+    UINT16  headPtr;               /**< Variable used to point to the front of the queue. */
+    UINT16  tailPtr;               /**< Variable used to point to the back of the queue. */
+    UINT16  bufferSize;            /**< Variable used to stores the queue size. */
+    /**@}*/
+}MON_FIFO;
 
+char FIFO_MonPop(MON_FIFO* fifo);
+BOOL FIFO_MonPush(MON_FIFO* fifo, char ch);
 
 #ifdef	__cplusplus
 }
