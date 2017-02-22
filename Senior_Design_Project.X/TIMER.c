@@ -22,20 +22,16 @@
 
 /** @def PERIOD 
  * Timer 1 Period for one ms. */
-#define ONE_HUNDRED_US_PERIOD   4000
-#define ONE_MS_PERIOD           40000
 #define TWENTY_US_PERIOD        12
+#define ONE_MS_PERIOD           40000
 
 void TIMER1_Init(void);
-void TIMER2_Init(void);
 void TIMER3_Init(void);
 
 /**@var ms_TICK 
  * Millisecond counter. */
-UINT32 one_hundred_us_TICK;
 UINT32 ms_TICK;
 BOOL Timer1_ON;
-BOOL Timer2_ON;
 BOOL Timer3_ON;
 /** @} */
 
@@ -45,11 +41,9 @@ BOOL Timer3_ON;
  */
 void TIMER_Init(void)
 {
-    one_hundred_us_TICK = 0;
     ms_TICK = 0;
     
     TIMER1_Init();
-    TIMER2_Init();
     TIMER3_Init();
 }
 
@@ -100,105 +94,6 @@ void TIMER1_ON(BOOL ON)
     }
 }
 
-void TIMER2_Init(void)
-{
-    T2CONbits.ON = 0;
-    T2CONbits.SIDL = 0;
-    T2CONbits.TGATE = 0;
-    T2CONbits.TCKPS = 0b000;    //PS = 1
-    T2CONbits.TCS = 0;
-    
-    PR2 = ONE_HUNDRED_US_PERIOD;
-    TMR2 = 0;
-    
-    T2CONbits.ON = 0;
-    Timer2_ON = FALSE;
-    
-    // Set up the timer interrupt with a priority of 2
-    INTEnable(INT_T2, INT_ENABLED);
-    INTSetVectorPriority(INT_TIMER_2_VECTOR, INT_PRIORITY_LEVEL_2);
-    INTSetVectorSubPriority(INT_TIMER_2_VECTOR, INT_SUB_PRIORITY_LEVEL_3);
-}
-
-void TIMER2_SetSampleRate(UINT16 sampleRate)
-{
-    PR2 = ((GetPeripheralClock()/sampleRate)-1);
-    TMR2 = 0;
-}
-
-BOOL TIMER2_IsON(void)
-{
-    return Timer2_ON;
-}
-
-void TIMER2_ON(BOOL ON)
-{
-    if(ON == TRUE)
-    {
-        T2CONbits.ON = 1;
-        Timer2_ON = TRUE;
-        INTClearFlag(INT_T2);
-    }
-    else
-    {
-        T2CONbits.ON = 0;
-        Timer2_ON = FALSE;
-        INTClearFlag(INT_T2);
-    }
-}
-
-/**
- * @brief Initializes Timer 3 module.
- * @return Void
- */
-void TIMER3_Init(void)
-{
-//    OpenTimer3(T3_OFF | T3_SOURCE_INT | T3_PS_1_8, SIX_US_PERIOD);
-    T3CONbits.ON = 0;
-    T3CONbits.SIDL = 0;
-    T3CONbits.TGATE = 0;
-    T3CONbits.TCKPS = 0b000;    //PS = 1
-    T3CONbits.TCS = 0;
-    
-    PR3 = TWENTY_US_PERIOD;
-    TMR3 = 0;
-    
-    Timer3_ON = FALSE;
-    
-    // Set up the timer interrupt with a priority of 2
-    INTEnable(INT_T3, INT_ENABLED);
-    INTSetVectorPriority(INT_TIMER_3_VECTOR, INT_PRIORITY_LEVEL_2);
-    INTSetVectorSubPriority(INT_TIMER_3_VECTOR, INT_SUB_PRIORITY_LEVEL_2);
-}
-
-void TIMER3_SetSampleRate(UINT16 sampleRate)
-{
-    UINT16 period = ((GetPeripheralClock()/sampleRate)-1);
-    PR3 = period;//+ (period/3);
-    TMR3 = 0;
-}
-
-BOOL TIMER3_IsON(void)
-{
-    return Timer3_ON;
-}
-
-void TIMER3_ON(BOOL ON)
-{
-    if(ON == TRUE)
-    {
-        T3CONbits.ON = 1;
-        Timer3_ON = TRUE;
-        INTClearFlag(INT_T3);
-    }
-    else
-    {
-        T3CONbits.ON = 0;
-        Timer3_ON = FALSE;
-        INTClearFlag(INT_T3);
-    }
-}
-
 /**
  * @brief Delays the application for a given set time.
  * @arg timeDelay The delay in milliseconds.
@@ -217,11 +112,6 @@ void TIMER_MSecondDelay(int timeDelay)
 UINT32 TIMER_GetMSecond(void)
 {
     return ms_TICK;
-}
-
-UINT32 TIMER_GetUSecond(void)
-{
-    return one_hundred_us_TICK/100;
 }
 
 /**
@@ -247,11 +137,56 @@ void __ISR(_TIMER_1_VECTOR, IPL2AUTO) Timer1Handler(void)
     INTClearFlag(INT_T1);
 }
 
-void __ISR(_TIMER_2_VECTOR, IPL2AUTO) Timer2Handler(void)
+/**
+ * @brief Initializes Timer 3 module.
+ * @return Void
+ */
+void TIMER3_Init(void)
 {
-    one_hundred_us_TICK++;
+//    OpenTimer3(T3_OFF | T3_SOURCE_INT | T3_PS_1_8, SIX_US_PERIOD);
+    T3CONbits.ON = 0;
+    T3CONbits.SIDL = 0;
+    T3CONbits.TGATE = 0;
+    T3CONbits.TCKPS = 0b000;    //PS = 1
+    T3CONbits.TCS = 0;
     
-    INTClearFlag(INT_T2);
+    PR3 = TWENTY_US_PERIOD;
+    TMR3 = 0;
+    
+    Timer3_ON = FALSE;
+    
+    // Set up the timer interrupt with a priority of 2
+    INTEnable(INT_T3, INT_ENABLED);
+    INTSetVectorPriority(INT_TIMER_3_VECTOR, INT_PRIORITY_LEVEL_2);
+    INTSetVectorSubPriority(INT_TIMER_3_VECTOR, INT_SUB_PRIORITY_LEVEL_3);
+}
+
+void TIMER3_SetSampleRate(UINT16 sampleRate)
+{
+    UINT16 period = ((GetPeripheralClock()/sampleRate)-1);
+    PR3 = period;
+    TMR3 = 0;
+}
+
+BOOL TIMER3_IsON(void)
+{
+    return Timer3_ON;
+}
+
+void TIMER3_ON(BOOL ON)
+{
+    if(ON == TRUE)
+    {
+        T3CONbits.ON = 1;
+        Timer3_ON = TRUE;
+        INTClearFlag(INT_T3);
+    }
+    else
+    {
+        T3CONbits.ON = 0;
+        Timer3_ON = FALSE;
+        INTClearFlag(INT_T3);
+    }
 }
 
 void __ISR(_TIMER_3_VECTOR, IPL2AUTO) Timer3Handler(void)
