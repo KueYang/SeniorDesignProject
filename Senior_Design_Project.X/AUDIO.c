@@ -117,10 +117,12 @@ void AUDIO_Init(void)
         AUDIO_GetHeader(i);
         // Sets the file start pointer.
         files[i].startPtr = files[i].File.fptr;
+        files[i].cluster = files[i].File.clust;
+        files[i].sector = files[i].File.sect;
     }
 
     // Initializes the index to the first file.
-    fileIndex = FILE_9;
+    fileIndex = FILE_0;
     // Sets the initial tone.
     AUDIO_setNewTone(fileIndex);
     // Sets the TIMER clock period to write out audio data.
@@ -203,7 +205,7 @@ void AUDIO_setNewTone(int fret)
     /* Sets the bytes written to zero. */
     bytesWritten = 0;
     /* Resets the file pointer. */
-    files[fileIndex].File.fptr = files[fileIndex].startPtr;
+    AUDIO_resetFilePtr();
     /* Sets the file index to the specified fret. */
     fileIndex = fret;
     /* Sets the DAC's output to zero. */
@@ -219,6 +221,8 @@ void AUDIO_setNewTone(int fret)
 void AUDIO_resetFilePtr(void)
 {
     files[fileIndex].File.fptr = files[fileIndex].startPtr;
+    files[fileIndex].File.clust = files[fileIndex].cluster;
+    files[fileIndex].File.sect = files[fileIndex].sector;
 }
 
 /**

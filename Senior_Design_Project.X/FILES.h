@@ -31,6 +31,8 @@ typedef struct FILES
     /**@{*/
     FIL File;			/* File objects */
     FSIZE_t startPtr;
+    DWORD cluster;
+    DWORD sector;
     AUDIOINFO audioInfo;
     /**@}*/
 }FILES;
