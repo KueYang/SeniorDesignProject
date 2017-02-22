@@ -33,6 +33,11 @@ BOOL FIFO_MonPush(MON_FIFO* fifo, char ch)
     return TRUE;
 }
 
+/**
+ * @brief Pops data from the FIFO queue.
+ * @arg fifo The FIFO buffer that will be reading data from.
+ * @return Returns the next character in the FIFO buffer.
+ */
 char FIFO_MonPop(MON_FIFO* fifo)
 {
     fifo->bufferSize--;
