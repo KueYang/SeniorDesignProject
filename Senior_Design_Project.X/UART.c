@@ -9,14 +9,14 @@
 
 #include <p32xxxx.h>
 #include <plib.h>
-#include "STDDEF.h"
 #include "HardwareProfile.h"
+#include "STDDEF.h"
 #include "Timer.h"
 #include "FIFO.h"
-#include "AUDIO.h"
 #include "DAC.h"
-#include "UART.h"
+#include "AUDIO.h"
 #include "TESTS.h"
+#include "UART.h"
 
 /** @def UART_MODULE_ID 
  * The UART module ID. */
@@ -55,6 +55,7 @@ void MON_Test(void);
 void MON_GetFileList(void);
 void MON_Get_File(void);
 void MON_Set_File(void);
+void MON_Reset_File(void);
 void MON_Read_File(void);
 
 /* DAC related commands. */
@@ -89,7 +90,8 @@ COMMANDS MON_COMMANDS[] = {
     {"HELP", " Display the list of commands avaliable. ", MON_GetHelp},
     {"TEST", " Unit Test, 0-read/write, 1-read, 2-write. FORMAT: TEST value. ", MON_Test},
     {"LIST", " Lists all WAV files. ", MON_GetFileList},
-    {"SET", " Sets the file to read. FORMAT: NAME fileName.", MON_Set_File},
+    {"SET", " Sets the file to read. FORMAT: SET fileName.", MON_Set_File},
+    {"SET", " Resets the file pointer to beginning of file.", MON_Reset_File},
     {"READ", " Reads numOfBytes from current file. Read from beginning of the file if reset is set to 1. FORMAT: READ reset numOfBytes.", MON_Read_File},
     {"DAC", " Sets an output value on the DAC. MIN: 0, MAX: 65535. FORMAT: DAC value. ", MON_TestDAC},
     {"ZERO", " Sets all DAC outputs to zero. ", MON_ZeroDAC},
@@ -530,6 +532,12 @@ void MON_Set_File(void)
     }
 }
 
+void MON_Reset_File(void)
+{
+    AUDIO_resetFilePtr();
+    MON_SendString("The file pointer has been reset.");
+}
+
 void MON_Read_File(void)
 {
     UINT16 reset = atoi(cmdStr.arg1);
@@ -581,7 +589,6 @@ void MON_TestDAC(void)
     }
     DAC_WriteToDAC(WRITE_UPDATE_CHN_A, value);
 }
-
 
 void MON_ZeroDAC(void)
 {

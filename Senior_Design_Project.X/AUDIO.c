@@ -11,31 +11,50 @@
 #include <p32xxxx.h>
 #include <plib.h>
 #include "STDDEF.h"
-#include "IO.h"
-#include "FILES.h"
-#include "UART.h"
-#include "FIFO.h"
 #include "DAC.h"
+#include "FILES.h"
 #include "AUDIO.h"
+
+#define FILE_0      0
+#define FILE_1      1
+#define FILE_2      2
+#define FILE_3      3
+#define FILE_4      4
+#define FILE_5      5
+#define FILE_6      6
+#define FILE_7      7
+#define FILE_8      8
+#define FILE_9      9
 
 UINT8 AUDIO_GetHeader(int index);
 BOOL AUDIO_GetAudioData(FILES* file, UINT16 bytes);
-BOOL AUDIO_ReadFile(UINT16 bytesToRead);
 
 /** @var files 
  * The list of audio files that are to be used. */
 FILES files[MAX_NUM_OF_FILES];
-/** @var receiveFifo.buffer 
+/** @var receiveBuffer
  * A buffer used to store data read from the audio file. */
 BYTE receiveBuffer[REC_BUF_SIZE];
+/** @var LAUDIOSTACK.buffer 
+ * A buffer used to store left channel audio data. */
 UINT16 LAUDIOSTACK[AUDIO_BUF_SIZE];
+/** @var RAUDIOSTACK
+ * A buffer used to store right channel audio data. */
 UINT16 RAUDIOSTACK[AUDIO_BUF_SIZE];
 /** @var fileIndex 
  * The index used to specify the audio file that is being read. */
 UINT16 fileIndex;
+/** @var audioInPtr 
+ * The index used to store audio data into to audio buffer. */
 UINT16 audioInPtr;
+/** @var audioOutPtr 
+ * The index used to write audio data out of the audio buffer. */
 UINT16 audioOutPtr;
+/** @var bytesRead 
+ * Stores the number of bytes that have been read. */
 UINT32 bytesRead;
+/** @var bytesWritten 
+ * Stores the number of bytes that have been written. */
 UINT32 bytesWritten;
 
 const char* fileNames[MAX_NUM_OF_FILES] = {
@@ -61,25 +80,25 @@ const char* fileNames[MAX_NUM_OF_FILES] = {
  */
 void AUDIO_Init(void)
 {
-    // Checks to make sure that the SD card is attached
+    // Checks to make sure that the SD card is attached and initialized
     FILES_Init();
     
     // Opens all related audio files.
     int i = 0;
     for(i = 0; i < MAX_NUM_OF_FILES; i++)
     {
-        // Opens the given file and set a pointer to the file.
+        // Opens the given file and sets a pointer to the file.
         FILES_OpenFile(&files[i].File, fileNames[i],FA_READ);
         // Copies the files name.
         strncpy(&files[i].audioInfo.fileName[0], fileNames[i], sizeof(files[i].audioInfo.fileName));
-        // Reads the file headers.
+        // Reads the file header.
         AUDIO_GetHeader(i);
         // Sets the file start pointer.
         files[i].startPtr = files[i].File.fptr;
     }
 
     // Initializes the index to the first file.
-    fileIndex = 9;
+    fileIndex = FILE_9;
     // Sets the initial tone.
     AUDIO_setNewTone(fileIndex);
     // Sets the TIMER clock period to write out audio data.
@@ -99,7 +118,10 @@ void AUDIO_Init(void)
  */
 void AUDIO_Process(void)
 {
-    
+    if(TIMER3_IsON())
+    {
+        AUDIO_ReadFile(REC_BUF_SIZE);
+    }
 }
 
 void AUDIO_ListFiles(void)
@@ -123,6 +145,12 @@ BOOL AUDIO_setNewFile(const char* fileName)
 
 void AUDIO_setNewTone(int fret)
 {
+    // Disables the timer if it is on.
+    if(TIMER3_IsON())
+    {
+        TIMER3_ON(FALSE);
+    }
+    
     /* Sets the audio in pointer to zero. */
     audioInPtr = 0;
     /* Sets the audio out pointer to zero. */
@@ -131,10 +159,10 @@ void AUDIO_setNewTone(int fret)
     bytesRead = 0;
     /* Sets the bytes written to zero. */
     bytesWritten = 0;
-    /* Sets the file index to the specified fret. */
-    fileIndex = fret;
     /* Resets the file pointer. */
     files[fileIndex].File.fptr = files[fileIndex].startPtr;
+    /* Sets the file index to the specified fret. */
+    fileIndex = fret;
     /* Sets the DAC's output to zero. */
     DAC_ZeroOutput();
     
@@ -299,6 +327,11 @@ BOOL AUDIO_GetAudioData(FILES* file, UINT16 bytes)
 
 BOOL AUDIO_ReadFile(UINT16 bytesToRead)
 {
+    if(AUDIO_isDoneReading())
+    {
+        return FALSE;
+    }
+
     return AUDIO_GetAudioData(&files[fileIndex], bytesToRead);
 }
 
@@ -312,15 +345,11 @@ void AUDIO_WriteDataToDAC(void)
     if(AUDIO_isDoneReading() && AUDIO_isDoneWriting())
     {
         TIMER3_ON(FALSE);
-        AUDIO_setNewTone(9);
+        AUDIO_setNewTone(FILE_0);
     }
     else
     {
-        if(bytesRead == bytesWritten)
-        {
-            AUDIO_ReadFile(REC_BUF_SIZE);
-        }
-        else if(bytesRead > bytesWritten)
+        if(bytesRead > bytesWritten)
         {
             /* Writes 1 WORD of data to the DAC. */
             DAC_WriteToDAC(WRITE_UPDATE_CHN_A, LAUDIOSTACK[audioOutPtr]);

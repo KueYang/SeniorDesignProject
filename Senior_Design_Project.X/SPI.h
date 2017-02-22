@@ -12,9 +12,7 @@ extern "C" {
 #endif
     
 void SPI_Init(void);
-void SPI_Process();
 BYTE SPI2_ReadWrite(BYTE);
-
 
 /**@def SD_CS SD Chip Select Output bit. */
 #define SD_CS               LATBbits.LATB7

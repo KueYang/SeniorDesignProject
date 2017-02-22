@@ -9,7 +9,6 @@
 #include <plib.h>
 #include "TIMER.h"
 #include "UART.h"
-#include "FIFO.h"
 #include "DAC.h"
 #include "AUDIO.h"
 #include "TESTS.h"
