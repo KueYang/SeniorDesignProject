@@ -91,7 +91,7 @@ COMMANDS MON_COMMANDS[] = {
     {"TEST", " Unit Test, 0-read/write, 1-read, 2-write. FORMAT: TEST value. ", MON_Test},
     {"LIST", " Lists all WAV files. ", MON_GetFileList},
     {"SET", " Sets the file to read. FORMAT: SET fileName.", MON_Set_File},
-    {"SET", " Resets the file pointer to beginning of file.", MON_Reset_File},
+    {"RESET", " Resets the file pointer to beginning of file.", MON_Reset_File},
     {"READ", " Reads numOfBytes from current file. Read from beginning of the file if reset is set to 1. FORMAT: READ reset numOfBytes.", MON_Read_File},
     {"DAC", " Sets an output value on the DAC. MIN: 0, MAX: 65535. FORMAT: DAC value. ", MON_TestDAC},
     {"ZERO", " Sets all DAC outputs to zero. ", MON_ZeroDAC},
