@@ -100,6 +100,11 @@ BYTE SPI2_ReadWrite(BYTE ch)
     return dummy;
 }
 
+/**
+ * @brief Initializes the SPI1 module.
+ * @arg clk The clock rate to set the SPI module to.
+ * @return Void.
+ */
 void SPI1_Init(int clk)
 {
     // Re-mapped pins RPB11 and RPB13 pins to SDI1 and SDO1
@@ -130,11 +135,21 @@ void SPI1_Init(int clk)
     SPI1CONbits.ON = 1;             // Enable SPI Module
 }
 
+/**
+ * @brief Returns the SPIBRG value corresponding to the specified baud rate.
+ * @arg clk The clock rate to set.
+ * @return Returns the SPIBRG value corresponding to the specified clk value.
+ */
 UINT16 SPI_GetBaudRate(int clk)
 {
     return GetPeripheralClock()/(2*clk) - 1;
 }
 
+/**
+ * @brief Reads and write data to SPI buffer.
+ * @arg ch The data to be written to SPI buffer.
+ * @return Returns the data read from the SPI buffer.
+ */
 BYTE SPI1_ReadWrite(BYTE ch)
 {
     BYTE dummy = 0;
@@ -147,9 +162,12 @@ BYTE SPI1_ReadWrite(BYTE ch)
     return dummy;
 }
 
-
-//buff - data to be sent
-// cnt - Number of bytes to send
+/**
+ * @brief Writes multiple data blocks to SPI buffer.
+ * @arg buff The data buffer to send.
+ * @arg cnt The number of bytes to write.
+ * @return Void
+ */
 void SPI1_MultiWrite (const BYTE* buff,	UINT16 cnt )
 {
 	do {
@@ -158,8 +176,12 @@ void SPI1_MultiWrite (const BYTE* buff,	UINT16 cnt )
 	} while (cnt -= 2);
 }
 
-// buff - Buffer to store received data
-// cnt - Number of bytes to receive s
+/**
+ * @brief Reads multiple data blocks to SPI buffer.
+ * @arg buff The data buffer to store the received values.
+ * @arg cnt The number of bytes to receive.
+ * @return Void
+ */
 void SPI1_MultiRead ( BYTE* buff, UINT16 cnt)
 {
 	do {
