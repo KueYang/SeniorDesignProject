@@ -54,13 +54,22 @@ BOOL DAC_WriteToDAC(BYTE cmd_addr, WORD data)
    
    SYNC = 1;    // Shifts the latch high to end write
 }
-
+/**
+ * @brief Sets the DAC output to mid-scale.
+ * @remark Requires SPI and the DAC to be initialized. 
+ * @return Void
+ */
 void DAC_Zero(void)
 {
     DAC_WriteToDAC(WRITE_UPDATE_CHN_A, AC_ZERO);
     DAC_WriteToDAC(WRITE_UPDATE_CHN_B, AC_ZERO);
 }
 
+/**
+ * @brief Sets the DAC output to zero.
+ * @remark Requires SPI and the DAC to be initialized. 
+ * @return Void
+ */
 void DAC_ZeroOutput(void)
 {
     DAC_WriteToDAC(WRITE_UPDATE_CHN_A, 0);
