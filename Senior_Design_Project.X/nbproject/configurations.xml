@@ -12,7 +12,6 @@
       </logicalFolder>
       <itemPath>STDDEF.h</itemPath>
       <itemPath>ADC.h</itemPath>
-      <itemPath>I2C.h</itemPath>
       <itemPath>IO.h</itemPath>
       <itemPath>SPI.h</itemPath>
       <itemPath>TIMER.h</itemPath>
@@ -20,9 +19,9 @@
       <itemPath>FIFO.h</itemPath>
       <itemPath>DAC.h</itemPath>
       <itemPath>HardwareProfile.h</itemPath>
-      <itemPath>AudioNew.h</itemPath>
-      <itemPath>FILESNEW.h</itemPath>
       <itemPath>TESTS.h</itemPath>
+      <itemPath>FILES.h</itemPath>
+      <itemPath>AUDIO.h</itemPath>
     </logicalFolder>
     <logicalFolder name="LinkerScript"
                    displayName="Linker Files"
@@ -37,16 +36,15 @@
       </logicalFolder>
       <itemPath>main.c</itemPath>
       <itemPath>ADC.c</itemPath>
-      <itemPath>I2C.c</itemPath>
       <itemPath>IO.c</itemPath>
       <itemPath>SPI.c</itemPath>
       <itemPath>UART.c</itemPath>
       <itemPath>FIFO.c</itemPath>
       <itemPath>DAC.c</itemPath>
-      <itemPath>AudioNew.c</itemPath>
-      <itemPath>FILESNEW.c</itemPath>
+      <itemPath>FILES.c</itemPath>
       <itemPath>TESTS.c</itemPath>
       <itemPath>TIMER.c</itemPath>
+      <itemPath>AUDIO.c</itemPath>
     </logicalFolder>
     <logicalFolder name="ExternalFiles"
                    displayName="Important Files"
