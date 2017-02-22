@@ -21,7 +21,6 @@ extern "C" {
 /** @def REC_BUF_SIZE 
  * Defines the receive buffer size. */
 #define REC_BUF_SIZE            10240
-#define START_READ_SIZE         REC_BUF_SIZE/2
 /** @def AUDIO_BUF_SIZE 
  * Defines the audio buffer size. */
 #define AUDIO_BUF_SIZE          REC_BUF_SIZE/4
@@ -32,7 +31,7 @@ BYTE* AUDIO_GetRecieveBuffer(void);
 BOOL AUDIO_ReadFile(UINT16 bytesToRead);
 void AUDIO_WriteDataToDAC(void);
 
-/* UART related functions*/
+/* UART related functions */
 void AUDIO_ListFiles(void);
 void AUDIO_setNewTone(int fret);
 BOOL AUDIO_setNewFile(const char* fileName);

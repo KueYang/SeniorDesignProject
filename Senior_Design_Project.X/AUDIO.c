@@ -3,9 +3,10 @@
  * @author Kue Yang
  * @date 11/22/2016
  * @details The Audio module will handle all audio processing related tasks.
- * Tasks includes: initializing the DAC and Microchip's MDD File System library, 
+ * Tasks includes: initializing the DAC and Fatfs File System library, 
  * reading data from external memory and writing audio data to the DACs.
- * @remarks The Audio module requires Microchip's MDD File System library.
+ * @remarks The Audio module requires Fatfs File System library. The library
+ * uses the library from the pic24 example project.
  */
 
 #include <p32xxxx.h>
@@ -15,15 +16,35 @@
 #include "FILES.h"
 #include "AUDIO.h"
 
+/** @def FILE_0 
+ * Defines file index 0. */
 #define FILE_0      0
+/** @def FILE_1 
+ * Defines file index 1. */
 #define FILE_1      1
+/** @def FILE_2 
+ * Defines file index 2. */
 #define FILE_2      2
+/** @def FILE_3 
+ * Defines file index 3. */
 #define FILE_3      3
+/** @def FILE_4 
+ * Defines file index 4. */
 #define FILE_4      4
+/** @def FILE_5 
+ * Defines file index 5. */
 #define FILE_5      5
+/** @def FILE_6 
+ * Defines file index 6. */
 #define FILE_6      6
+/** @def FILE_7 
+ * Defines file index 7. */
 #define FILE_7      7
+/** @def FILE_8 
+ * Defines file index 8. */
 #define FILE_8      8
+/** @def FILE_9 
+ * Defines file index 9. */
 #define FILE_9      9
 
 UINT8 AUDIO_GetHeader(int index);
@@ -56,7 +77,8 @@ UINT32 bytesRead;
 /** @var bytesWritten 
  * Stores the number of bytes that have been written. */
 UINT32 bytesWritten;
-
+/** @var fileNames 
+ * Stores the list of audio file names. */
 const char* fileNames[MAX_NUM_OF_FILES] = {
     "OST_02.WAV",
     "S1ELOW.WAV",
@@ -124,11 +146,25 @@ void AUDIO_Process(void)
     }
 }
 
+/**
+ * @brief Displays the list of audio files.
+ * @details Finds all WAV files in the root directory of the SD card and displays
+ * them via UART to serial.
+ * @remarks Requires the UART module and SD card to be initialized. 
+ * @return Void
+ */
 void AUDIO_ListFiles(void)
 {
     FILES_ListFiles(&files[fileIndex].audioInfo.fileName[0]);
 }
 
+/**
+ * @brief Sets a new file to be read.
+ * @arg fileName The file name that is being set to.
+ * @return A boolean indicating if the file has been set successfully.
+ * @retval TRUE, file has been set successfully.
+ * @retval FALSE, file has not been set successfully.
+ */
 BOOL AUDIO_setNewFile(const char* fileName)
 {
     int i = 0;
@@ -143,6 +179,13 @@ BOOL AUDIO_setNewFile(const char* fileName)
     return FALSE;
 }
 
+/**
+ * @brief Sets a new tone.
+ * @details Sets a new tone based on the fret that is passed into the function.
+ * Resets all related variables prior to reading the new tone.
+ * @arg fret The fret that is being played.
+ * @return Void
+ */
 void AUDIO_setNewTone(int fret)
 {
     // Disables the timer if it is on.
@@ -169,22 +212,31 @@ void AUDIO_setNewTone(int fret)
     MON_SendString("Setting new a tone.");
 }
 
+/**
+ * @brief Resets the file pointer for selected file.
+ * @return Void
+ */
 void AUDIO_resetFilePtr(void)
 {
     files[fileIndex].File.fptr = files[fileIndex].startPtr;
 }
 
-FILES* AUDIO_getFilePtr(void)
-{
-    return &files[fileIndex];
-}
-
+/**
+ * @brief Returns the number of bytes read.
+ * @return Returns the number of bytes read
+ */
 UINT32 AUDIO_getBytesRead(void)
 {
     return bytesRead;
 }
 
-BOOL AUDIO_isDoneReading()
+/**
+ * @brief Checks if reading the selected file is done.
+ * @return Returns a boolean indicating if done reading the selected audio file.
+ * @retval TRUE, if done reading the file.
+ * @retval FALSE, if not done reading the file.
+ */
+BOOL AUDIO_isDoneReading(void)
 {
     if(bytesRead >= files[fileIndex].audioInfo.dataSize)
     {
@@ -193,12 +245,22 @@ BOOL AUDIO_isDoneReading()
     return FALSE;
 }
 
+/**
+ * @brief Returns the number of bytes written.
+ * @return Returns the number of bytes written.
+ */
 UINT32 AUDIO_getBytesWritten(void)
 {
     return bytesWritten;
 }
 
-BOOL AUDIO_isDoneWriting()
+/**
+ * @brief Checks if writing to the DAC is done.
+ * @return Returns a boolean indicating if writing to the DAC is done.
+ * @retval TRUE, if done writing to the DAC.
+ * @retval FALSE, if not done writing to the DAC.
+ */
+BOOL AUDIO_isDoneWriting(void)
 {
     if(bytesWritten >= files[fileIndex].audioInfo.dataSize)
     {
@@ -209,6 +271,7 @@ BOOL AUDIO_isDoneWriting()
 
 /**
  * @brief Reads the header of a WAV file.
+ * @arg index The file that is being read.
  * @return A code indicating if reading the file is successful or not.
  * @retval 1, Read the header successfully
  * @retval 2, Header size is invalid
@@ -251,6 +314,7 @@ UINT8 AUDIO_GetHeader(int index)
             return WAV_SUB_CHUNK2_ID_ERROR;
         }
         
+        // Stores the corresponding header information
         files[index].audioInfo.sampleRate = receiveBuffer[WAV_SAMPLE_RATE+1] << 8 | 
                                     receiveBuffer[WAV_SAMPLE_RATE];
         files[index].audioInfo.bitsPerSample = receiveBuffer[WAV_BITS_PER_SAMPLE];
@@ -266,7 +330,9 @@ UINT8 AUDIO_GetHeader(int index)
 }
 
 /**
- * @brief Reads the data block of the audio file.
+ * @brief Reads a number of bytes from the audio file.
+ * @arg file The files to read from.
+ * @arg bytes The number of bytes to read.
  * @return Returns a boolean indicating if the file was read successfully.
  * @retval TRUE if the file was read successfully.
  * @retval FALSE if the file was read unsuccessfully.
@@ -325,6 +391,13 @@ BOOL AUDIO_GetAudioData(FILES* file, UINT16 bytes)
     return FALSE;
 }
 
+/**
+ * @brief Reads a number of bytes from the audio file.
+ * @arg bytesToRead The number of bytes to read.
+ * @return Returns a boolean indicating if the file was read successfully.
+ * @retval TRUE if the file was read successfully.
+ * @retval FALSE if the file was read unsuccessfully or is already done reading.
+ */
 BOOL AUDIO_ReadFile(UINT16 bytesToRead)
 {
     if(AUDIO_isDoneReading())
@@ -334,12 +407,23 @@ BOOL AUDIO_ReadFile(UINT16 bytesToRead)
 
     return AUDIO_GetAudioData(&files[fileIndex], bytesToRead);
 }
-
+/**
+ * @brief Gets buffer pointer.
+ * @details Gets a pointer to the buffer that stores the bytes read from the SD 
+ * Card.
+ * @return Returns a pointer to the read buffer. 
+ */
 BYTE* AUDIO_GetRecieveBuffer(void)
 {
     return &receiveBuffer[0];
 }
 
+/**
+ * @brief Writes audio data out to the DAC
+ * @details Writes audio data out to the DAC. Handles stopping and resetting all 
+ * the selected after writing all audio data out to the DAC.
+ * @return Void
+ */
 void AUDIO_WriteDataToDAC(void)
 {
     if(AUDIO_isDoneReading() && AUDIO_isDoneWriting())
@@ -351,8 +435,9 @@ void AUDIO_WriteDataToDAC(void)
     {
         if(bytesRead > bytesWritten)
         {
-            /* Writes 1 WORD of data to the DAC. */
+            /* Writes 1 WORD of data to the DAC Channel A, left channel. */
             DAC_WriteToDAC(WRITE_UPDATE_CHN_A, LAUDIOSTACK[audioOutPtr]);
+            /* Writes 1 WORD of data to the DAC Channel B, right channel. */
             DAC_WriteToDAC(WRITE_UPDATE_CHN_B, RAUDIOSTACK[audioOutPtr++]);
 
             if(audioOutPtr >= AUDIO_BUF_SIZE)
