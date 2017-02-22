@@ -74,8 +74,8 @@
  * @{
  * @details The watch dog is disabled for this application.
  */
-#pragma config FWDTEN = OFF          // Watchdog Timer Enabled
-#pragma config WDTPS = PS512         // Watchdog Timer Post-scaler, 32 ms timeout
+#pragma config FWDTEN = OFF         // Watchdog Timer Enabled
+#pragma config WDTPS = PS32         // Watchdog Timer Post-scaler, 32 ms timeout
 /**@}*/
 
 /**
@@ -94,7 +94,7 @@ int main(void)
 //    ADC_Init();         // Initializes all ADC modules.
     SPI_Init();         // Initializes all SPI modules.
     UART_Init();        // Initializes all UART modules
-    AUDIO_Init();    // Initializes the Audio module.
+    AUDIO_Init();       // Initializes the Audio module.
     DAC_Init();         // Initializes the DACs.
 
     while(1)
