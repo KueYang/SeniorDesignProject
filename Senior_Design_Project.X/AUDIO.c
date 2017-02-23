@@ -433,7 +433,7 @@ void AUDIO_WriteDataToDAC(void)
     if(AUDIO_isDoneReading() && AUDIO_isDoneWriting())
     {
         TIMER3_ON(FALSE);
-        AUDIO_setNewTone(FILE_1);
+        AUDIO_setNewTone(FILE_0);
     }
     else
     {
