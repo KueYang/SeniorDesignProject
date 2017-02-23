@@ -29,10 +29,12 @@ int currentFret;
  */
 void IO_Init(void)
 {   
-    // Digital IO, INPUTS
+    // Digital IO
+    TRISBbits.TRISB5 = 0;   // LED
+    
+    // Frets
     TRISAbits.TRISA3 = 1;   // Fret 1, Group 1
     TRISBbits.TRISB4 = 1;   // Fret 2, Group 1
-    TRISBbits.TRISB5 = 1;   // Fret 3, Group 1
     TRISBbits.TRISB7 = 1;   // Fret 4, Group 1
     TRISBbits.TRISB8 = 0;   // Group 1, Output
     
@@ -174,6 +176,7 @@ int IO_scanGroupFrets(int fret)
 {
     switch(fret)
     {
+        /* Group 1 */
         case 1:
             return FRET1;
         case 2:
@@ -184,6 +187,7 @@ int IO_scanGroupFrets(int fret)
             return FRET4;
         case 5:
             return FRET5;
+        /* Group 2 */
         case 6:
             return FRET6;
         case 7:
@@ -194,6 +198,7 @@ int IO_scanGroupFrets(int fret)
             return FRET9;
         case 10:
             return FRET10;
+        /* Group 3 */
         case 11:
             return FRET11;
         case 12:
@@ -204,6 +209,7 @@ int IO_scanGroupFrets(int fret)
             return FRET14;
         case 15:
             return FRET15;
+        /* Group 4 */
         case 16:
             return FRET16;
         case 17:
