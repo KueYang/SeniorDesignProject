@@ -11,6 +11,7 @@
 #include <p32xxxx.h>
 #include <plib.h>
 #include "HardwareProfile.h"
+#include "STDDEF.h"
 #include "IO.h"
 
 #define FRET_GROUP_COUNT    4
@@ -28,8 +29,12 @@ int currentFret;
  */
 void IO_Init(void)
 {   
-    // Digital IO
-    TRISBbits.TRISB5 = 0;   // Used to test Timer LED
+    // Digital IO, INPUTS
+    TRISAbits.TRISA3 = 1;   // Fret 1, Group 1
+    TRISBbits.TRISB4 = 1;   // Fret 2, Group 1
+    TRISBbits.TRISB5 = 1;   // Fret 3, Group 1
+    TRISBbits.TRISB7 = 1;   // Fret 4, Group 1
+    TRISBbits.TRISB8 = 0;   // Group 1, Output
     
     // UART IO
     TRISAbits.TRISA2 = 1;   // U1RX
@@ -52,7 +57,7 @@ void IO_Init(void)
     TRISBbits.TRISB0 = 1;   // set RB0 as an input
     ANSELBbits.ANSB0 = 1;   // set RB0 (AN2) to analog
     
-    currentFret = 0;    // Sets the current fret to 0, indicating that the string is "opened."
+    currentFret = 0;        // Sets the current fret to 0, indicating that the string is "opened."
 }
 
 /**
@@ -64,27 +69,44 @@ void IO_Process(void)
     
 }
 
+/**
+ * @brief Sets the currently selected fret.
+ * @arg fret The fret to select
+ * @return Void
+ */
 void IO_setCurrentFret(int fret)
 {
     currentFret = fret;
 }
 
+/**
+ * @brief Returns the currently selected fret.
+ * @return Returns the currently selected fret.
+ */
 int IO_getCurrentFret(void)
 {
     return currentFret;
 }
 
+/**
+ * @brief Scans a selection of frets.
+ * @details Scans all frets groups to determine which fret was pressed. Sets the
+ * currently selected fret to the fret that is pressed. Defaults to an open fret.
+ * @return Void
+ */
 void IO_scanFrets(void)
 {
     int groupIndex, fretIndex;
     BOOL setNewFret = FALSE;
     
-    // Scans through all the frets.
+    /* Scans through all the fret groups. */
     for(groupIndex = 1; groupIndex <= FRET_GROUP_COUNT; groupIndex+=5)
     {
-        IO_setGroupOutput(groupIndex); // Sets the output pin high for the group.
+        /* Selects the fret group. */
+        IO_setGroupOutput(groupIndex); 
         for(fretIndex = 0; fretIndex < FRETS_PER_GROUP; fretIndex++)
         {
+            /* Scans through each fret group. */
             if(IO_scanGroupFrets(groupIndex + fretIndex) == 1)
             {
                 currentFret = groupIndex + fretIndex;
@@ -93,13 +115,18 @@ void IO_scanFrets(void)
             }
         }
     }
-    // If no frets were pressed, set the fret to 0, indicating an open string.
+    /* If no frets were pressed, set the fret to 0, indicating an open string. */
     if(!setNewFret)
     {
         currentFret = 0;
     }
 }
 
+/**
+ * @brief Sets the fret group to be scan.
+ * @arg group The fret group to be scan.
+ * @return Void
+ */
 void IO_setGroupOutput(int group)
 {
     switch(group)
@@ -137,9 +164,15 @@ void IO_setGroupOutput(int group)
     }
 }
 
-int IO_scanGroupFrets(int index)
+/**
+ * @brief Sets the fret group to be scan.
+ * @arg fret The selected fret group to scan.
+ * @return Returns the fret that is selected.
+ * @retval 0, if no frets were scanned.
+ */
+int IO_scanGroupFrets(int fret)
 {
-    switch(index)
+    switch(fret)
     {
         case 1:
             return FRET1;
@@ -182,6 +215,6 @@ int IO_scanGroupFrets(int index)
         case 20:
             return FRET20;
     }
-    return 0;
+    return FRET0;
 }
 
