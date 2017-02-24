@@ -17,10 +17,9 @@
 #define FRET_GROUP_COUNT    4
 #define FRETS_PER_GROUP     5
 
-void IO_setGroupOutput(int group);
-int IO_scanGroupFrets(int index);
-
 int currentFret;
+
+void IO_setGroupOutput(int group);
 
 /**
  * @brief Initializes the IO module.
@@ -100,21 +99,27 @@ void IO_scanFrets(void)
 {
     int groupIndex, fretIndex;
     BOOL setNewFret = FALSE;
+    int fretFound = 0;
     
     /* Scans through all the fret groups. */
     for(groupIndex = 1; groupIndex <= FRET_GROUP_COUNT; groupIndex+=5)
     {
         /* Selects the fret group. */
-        IO_setGroupOutput(groupIndex); 
-        for(fretIndex = 0; fretIndex < FRETS_PER_GROUP; fretIndex++)
+        IO_setGroupOutput(groupIndex);
+        
+        /* Scans through the five fret inputs. */
+        if(FRET1 == 1) {fretFound = 1;}
+        if(FRET2 == 1) {fretFound = 2;}
+        if(FRET3 == 1) {fretFound = 3;}
+        if(FRET4 == 1) {fretFound = 4;}
+        if(FRET5 == 1) {fretFound = 5;}
+        
+        /* Checks if any frets were pressed. */
+        if(fretFound > 0)
         {
-            /* Scans through each fret group. */
-            if(IO_scanGroupFrets(groupIndex + fretIndex) == 1)
-            {
-                currentFret = groupIndex + fretIndex;
-                setNewFret = TRUE;
-                break;
-            }
+            currentFret = groupIndex + fretFound;
+            setNewFret = TRUE;
+            break;
         }
     }
     /* If no frets were pressed, set the fret to 0, indicating an open string. */
@@ -165,62 +170,3 @@ void IO_setGroupOutput(int group)
             break;
     }
 }
-
-/**
- * @brief Sets the fret group to be scan.
- * @arg fret The selected fret group to scan.
- * @return Returns the fret that is selected.
- * @retval 0, if no frets were scanned.
- */
-int IO_scanGroupFrets(int fret)
-{
-    switch(fret)
-    {
-        /* Group 1 */
-        case 1:
-            return FRET1;
-        case 2:
-            return FRET2;
-        case 3:
-            return FRET3;
-        case 4:
-            return FRET4;
-        case 5:
-            return FRET5;
-        /* Group 2 */
-        case 6:
-            return FRET6;
-        case 7:
-            return FRET7;
-        case 8:
-            return FRET8;
-        case 9:
-            return FRET9;
-        case 10:
-            return FRET10;
-        /* Group 3 */
-        case 11:
-            return FRET11;
-        case 12:
-            return FRET12;
-        case 13:
-            return FRET13;
-        case 14:
-            return FRET14;
-        case 15:
-            return FRET15;
-        /* Group 4 */
-        case 16:
-            return FRET16;
-        case 17:
-            return FRET17;
-        case 18:
-            return FRET18;
-        case 19:
-            return FRET19;
-        case 20:
-            return FRET20;
-    }
-    return FRET0;
-}
-

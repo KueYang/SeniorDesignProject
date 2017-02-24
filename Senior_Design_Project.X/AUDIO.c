@@ -12,6 +12,7 @@
 #include <p32xxxx.h>
 #include <plib.h>
 #include "STDDEF.h"
+#include "IO.h"
 #include "DAC.h"
 #include "FILES.h"
 #include "AUDIO.h"
@@ -433,6 +434,7 @@ void AUDIO_WriteDataToDAC(void)
     if(AUDIO_isDoneReading() && AUDIO_isDoneWriting())
     {
         TIMER3_ON(FALSE);
+        IO_setCurrentFret(FILE_0);
         AUDIO_setNewTone(FILE_0);
     }
     else

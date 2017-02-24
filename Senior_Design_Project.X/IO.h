@@ -17,32 +17,14 @@ extern "C" {
 #define GROUP3_OUT  PORTBbits.RB5   
 #define GROUP4_OUT  PORTBbits.RB5   
 
-/* Open String */
+/* Open String Pins */
 #define FRET0       PORTBbits.RB5
-/* Group 1 */
+/* Fret Pins */
 #define FRET1       PORTAbits.RA3
 #define FRET2       PORTBbits.RB4
 #define FRET3       PORTBbits.RB7
 #define FRET4       PORTBbits.RB5
 #define FRET5       PORTBbits.RB5
-/* Group 2 */
-#define FRET6       PORTBbits.RB5
-#define FRET7       PORTBbits.RB5
-#define FRET8       PORTBbits.RB5
-#define FRET9       PORTBbits.RB5
-#define FRET10      PORTBbits.RB5
-/* Group 3 */
-#define FRET11      PORTBbits.RB5
-#define FRET12      PORTBbits.RB5
-#define FRET13      PORTBbits.RB5
-#define FRET14      PORTBbits.RB5
-#define FRET15      PORTBbits.RB5
-/* Group 4 */
-#define FRET16      PORTBbits.RB5
-#define FRET17      PORTBbits.RB5
-#define FRET18      PORTBbits.RB5
-#define FRET19      PORTBbits.RB5
-#define FRET20      PORTBbits.RB5
 
 void IO_Init(void);
 void IO_Process(void);
