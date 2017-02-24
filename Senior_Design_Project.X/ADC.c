@@ -8,10 +8,12 @@
 
 /**@def NUM_OF_ADCCHANNELS Defines the number of ADC channels used. */
 #define NUM_OF_ADCCHANNELS      1
-#define ADC_BUF_SIZE            128
-#define ADC_MID_SCALE           1<<5
-#define ADC_MIN_THREADHOLD      10
 #define ADC_ARRAY_SIZE          5
+#define ADC_BUF_SIZE            128
+#define ADC_MAXRAIL             1<<10   // maxrail value
+#define ADC_MIDRAIL             1<<5    // midrail value
+#define ADC_MAXMAG              400     // max_mag is the maximum threshold magnitude
+#define ADC_MINMAG              50      // min_mag is the minimum threshold magnitude
 
 BYTE adcData[ADC_BUF_SIZE];
 int adcBufIndex;
@@ -51,10 +53,10 @@ void ADC_Init(void)
     AD1CON2bits.BUFM = 0;           // Buffer  is configured as one 16-Word buffer
     AD1CON2bits.ALTS = 0;           // Always use sample A input multiplexer settings
     
-    /* AD3CON configurations. Configured for 1000 ksps. */
-    AD1CON3bits.ADRC = 0;           // ADC conversion clock is PBCLK
+    /* AD3CON configurations. Samples every 256 us.*/
+    AD1CON3bits.ADRC = 0;           // ADC conversion clock is PBCLK, TPB = 1/PCLK = 25 ns
     AD1CON3bits.ADCS = 0xFF;        // ADC conversion clock, TAD = 512*TPB = 12.8 us
-    AD1CON3bits.SAMC = 0b11111;     // Sample Time period, 31 TADs
+    AD1CON3bits.SAMC = 0b10100;     // Sample Time period, 20 TADs
     
     /* AD1CH configurations */
     AD1CHSbits.CH0NA = 0;           // Channel 0 negative input is VREFL
@@ -91,15 +93,15 @@ void ADC_ZeroBuffer(void)
 {
     adcBufIndex = 0;
     
-    peakMax[0] = ADC_MID_SCALE; peakMax[1] = ADC_MID_SCALE; peakMax[2] = ADC_MID_SCALE;
-    peakMax[3] = ADC_MID_SCALE; peakMax[4] = ADC_MID_SCALE; 
-    peakMin[0] = ADC_MID_SCALE; peakMin[1] = ADC_MID_SCALE; peakMin[2] = ADC_MID_SCALE;
-    peakMin[3] = ADC_MID_SCALE; peakMin[4] = ADC_MID_SCALE; 
+    peakMax[0] = ADC_MIDRAIL; peakMax[1] = ADC_MIDRAIL; peakMax[2] = ADC_MIDRAIL;
+    peakMax[3] = ADC_MIDRAIL; peakMax[4] = ADC_MIDRAIL; 
+    peakMin[0] = ADC_MIDRAIL; peakMin[1] = ADC_MIDRAIL; peakMin[2] = ADC_MIDRAIL;
+    peakMin[3] = ADC_MIDRAIL; peakMin[4] = ADC_MIDRAIL; 
     
-    localMax[0] = ADC_MID_SCALE; localMax[1] = ADC_MID_SCALE; localMax[2] = ADC_MID_SCALE;
-    localMax[3] = ADC_MID_SCALE; localMax[4] = ADC_MID_SCALE; 
-    localMin[0] = ADC_MID_SCALE; localMin[1] = ADC_MID_SCALE; localMin[2] = ADC_MID_SCALE;
-    localMin[3] = ADC_MID_SCALE; localMin[4] = ADC_MID_SCALE; 
+    localMax[0] = ADC_MIDRAIL; localMax[1] = ADC_MIDRAIL; localMax[2] = ADC_MIDRAIL;
+    localMax[3] = ADC_MIDRAIL; localMax[4] = ADC_MIDRAIL; 
+    localMin[0] = ADC_MIDRAIL; localMin[1] = ADC_MIDRAIL; localMin[2] = ADC_MIDRAIL;
+    localMin[3] = ADC_MIDRAIL; localMin[4] = ADC_MIDRAIL; 
 }
 
 /**
@@ -111,7 +113,7 @@ void __ISR(_ADC_VECTOR, IPL2AUTO) ADCHandler(void)
 {
     // Reads the ADC buffer
     adcData[adcBufIndex] = (WORD)ADC1BUF0;
-    if(adcData[adcBufIndex] >= ADC_MID_SCALE)
+    if(adcData[adcBufIndex] >= ADC_MIDRAIL)
     {
         isPositive = TRUE;
     }
@@ -139,7 +141,7 @@ void __ISR(_ADC_VECTOR, IPL2AUTO) ADCHandler(void)
     }
     
     // Checks if sample changes polarity
-    if(!isPositive && (previousValue > ADC_MID_SCALE))
+    if(!isPositive && (previousValue > ADC_MIDRAIL))
     {
         // Takes the average of the local max
 		localMax[4] = localMax[3];
@@ -159,7 +161,7 @@ void __ISR(_ADC_VECTOR, IPL2AUTO) ADCHandler(void)
                 TIMER3_ON(TRUE);                        // Kick starts reading the audio file process.
             }
         }
-        else if((localMax[0] - ADC_MID_SCALE) < ADC_MIN_THREADHOLD)
+        else if((localMax[0] - ADC_MIDRAIL) < ADC_MINMAG)
         {
             if(TIMER3_IsON())
             {
@@ -167,7 +169,7 @@ void __ISR(_ADC_VECTOR, IPL2AUTO) ADCHandler(void)
             }
         }
     }
-    else if(isPositive && (previousValue < ADC_MID_SCALE))
+    else if(isPositive && (previousValue < ADC_MIDRAIL))
     {
         localMin[4] = localMin[3];
 		localMin[3] = localMin[2];
@@ -186,7 +188,7 @@ void __ISR(_ADC_VECTOR, IPL2AUTO) ADCHandler(void)
                 TIMER3_ON(TRUE);                        // Kick starts reading the audio file process.
             }
         }
-        else if((localMin[0] - ADC_MID_SCALE) < ADC_MIN_THREADHOLD)
+        else if((localMin[0] - ADC_MIDRAIL) < ADC_MINMAG)
         {
             if(TIMER3_IsON())
             {
