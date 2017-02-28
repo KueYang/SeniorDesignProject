@@ -192,7 +192,7 @@ void TIMER3_Init(void)
 void TIMER3_SetSampleRate(UINT16 sampleRate)
 {
     UINT16 period = ((GetPeripheralClock()/sampleRate)-1);
-    PR3 = period + (period/3);
+    PR3 = period + (period/2);
     TMR3 = 0;
 }
 
