@@ -1,9 +1,16 @@
+/**
+ * @file ADC.c
+ * @author Kue Yang
+ * @date 2/27/2017
+ * @details The ADC module will handle reading strumming sensor data and 
+ * kick start the audio playback process.
+ */
+
 #include <p32xxxx.h>
 #include <plib.h>
 #include "STDDEF.h"
 #include "IO.h"
 #include "TIMER.h"
-#include "DAC.h"
 #include "ADC.h"
 
 /**@def NUM_OF_ADCCHANNELS 
