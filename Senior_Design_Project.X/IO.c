@@ -14,9 +14,15 @@
 #include "STDDEF.h"
 #include "IO.h"
 
+/** @def FRET_GROUP_COUNT 
+ * Defines the number of fret groups. */
 #define FRET_GROUP_COUNT    4
+/** @def FRETS_PER_GROUP 
+ * Defines the number of frets per group. */
 #define FRETS_PER_GROUP     5
 
+/** @var currentFret 
+ * The current fret that is selected. */
 int currentFret;
 
 void IO_setGroupOutput(int group);
@@ -97,7 +103,7 @@ int IO_getCurrentFret(void)
  */
 void IO_scanFrets(void)
 {
-    int groupIndex, fretIndex;
+    int groupIndex;
     BOOL setNewFret = FALSE;
     int fretFound = 0;
     
