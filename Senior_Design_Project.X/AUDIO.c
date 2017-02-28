@@ -3,7 +3,7 @@
  * @author Kue Yang
  * @date 11/22/2016
  * @details The Audio module will handle all audio processing related tasks.
- * Tasks includes: initializing the DAC and Fatfs File System library, 
+ * Tasks includes: initializing Fatfs File System library, 
  * reading data from external memory and writing audio data to the DACs.
  * @remarks The Audio module requires Fatfs File System library. The library
  * uses the library from the pic24 example project.
@@ -97,8 +97,6 @@ const char* fileNames[MAX_NUM_OF_FILES] = {
  * @brief Initializes the Audio module.
  * @details Initializes the SD card and Microchip MDD File library. After 
  * initialization, all the audio files that are specific to the PIC are opened.
- * The DAC is also powered on with only one of its channels on (channel A is on
- * by default). 
  * @return Void
  */
 void AUDIO_Init(void)
@@ -434,8 +432,8 @@ void AUDIO_WriteDataToDAC(void)
     if(AUDIO_isDoneReading() && AUDIO_isDoneWriting())
     {
         TIMER3_ON(FALSE);
-        IO_setCurrentFret(FILE_0);
-        AUDIO_setNewTone(FILE_0);
+        IO_setCurrentFret(FILE_1);
+        AUDIO_setNewTone(FILE_1);
     }
     else
     {
