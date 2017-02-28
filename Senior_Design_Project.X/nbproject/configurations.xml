@@ -22,6 +22,7 @@
       <itemPath>TESTS.h</itemPath>
       <itemPath>FILES.h</itemPath>
       <itemPath>AUDIO.h</itemPath>
+      <itemPath>WAVDEF.h</itemPath>
     </logicalFolder>
     <logicalFolder name="LinkerScript"
                    displayName="Linker Files"
