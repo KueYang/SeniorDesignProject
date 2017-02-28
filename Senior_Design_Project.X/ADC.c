@@ -6,28 +6,33 @@
 #include "DAC.h"
 #include "ADC.h"
 
-/**@def NUM_OF_ADCCHANNELS Defines the number of ADC channels used. */
+/**@def NUM_OF_ADCCHANNELS 
+ * Defines the number of ADC channels used. */
 #define NUM_OF_ADCCHANNELS      1
+/** @def ADC_ARRAY_SIZE 
+ * Defines the ADC array size. */
 #define ADC_ARRAY_SIZE          5
-#define ADC_BUF_SIZE            128
-#define ADC_MAXRAIL             1<<10   // maxrail value
-#define ADC_MIDRAIL             1<<5    // midrail value
-#define ADC_MAXMAG              400     // max_mag is the maximum threshold magnitude
-#define ADC_MINMAG              50      // min_mag is the minimum threshold magnitude
+/** @def ADC_MIDRAIL 
+ * Defines the ADC mid-rail. */
+#define ADC_MIDRAIL             479
+/** @def ADC_MINMAG 
+ * Defines the minimum magnitude ADC threashold. */
+#define ADC_MINMAG              140         
 
-BYTE adcData[ADC_BUF_SIZE];
-int adcBufIndex;
-BOOL isStrumming;
-
+/** @var isPositive 
+ * Indicates if the sample is the positive or negative part of signal. */
 BOOL isPositive;
-UINT16 previousValue;
-
-// Stores values for a single peak
+/** @var peakMax 
+ * Stores max values for a single peak. */
 UINT16 peakMax[ADC_ARRAY_SIZE];
+/** @var peakMin 
+ * Stores min values for a single peak. */
 UINT16 peakMin[ADC_ARRAY_SIZE];
-
-// Stores values for different peaks
+/** @var localMax 
+ * Stores max values for different peaks. */
 UINT16 localMax[ADC_ARRAY_SIZE];
+/** @var localMin 
+ * Stores min values for different peaks. */
 UINT16 localMin[ADC_ARRAY_SIZE];
 
 void ADC_ZeroBuffer(void);
@@ -75,9 +80,7 @@ void ADC_Init(void)
     
     // Initializes strumming variables
     ADC_ZeroBuffer();
-    isStrumming = FALSE;
     isPositive = FALSE;
-    previousValue = 0;
 }
 
 /**
@@ -89,19 +92,20 @@ void ADC_Process(void)
     
 }
 
+/**
+ * @brief Reinitializes ADC buffers to the midrail.
+ * @return Void
+ */
 void ADC_ZeroBuffer(void)
 {
-    adcBufIndex = 0;
-    
-    peakMax[0] = ADC_MIDRAIL; peakMax[1] = ADC_MIDRAIL; peakMax[2] = ADC_MIDRAIL;
-    peakMax[3] = ADC_MIDRAIL; peakMax[4] = ADC_MIDRAIL; 
-    peakMin[0] = ADC_MIDRAIL; peakMin[1] = ADC_MIDRAIL; peakMin[2] = ADC_MIDRAIL;
-    peakMin[3] = ADC_MIDRAIL; peakMin[4] = ADC_MIDRAIL; 
-    
-    localMax[0] = ADC_MIDRAIL; localMax[1] = ADC_MIDRAIL; localMax[2] = ADC_MIDRAIL;
-    localMax[3] = ADC_MIDRAIL; localMax[4] = ADC_MIDRAIL; 
-    localMin[0] = ADC_MIDRAIL; localMin[1] = ADC_MIDRAIL; localMin[2] = ADC_MIDRAIL;
-    localMin[3] = ADC_MIDRAIL; localMin[4] = ADC_MIDRAIL; 
+    int i = 0;
+    for(i = 0; i < ADC_ARRAY_SIZE; i++)
+    {
+        peakMax[i] = ADC_MIDRAIL;
+        peakMin[i] = ADC_MIDRAIL;
+        localMax[i] = ADC_MIDRAIL;
+        localMin[i] = ADC_MIDRAIL;
+    }
 }
 
 /**
@@ -112,96 +116,97 @@ void ADC_ZeroBuffer(void)
 void __ISR(_ADC_VECTOR, IPL2AUTO) ADCHandler(void)
 {
     // Reads the ADC buffer
-    adcData[adcBufIndex] = (WORD)ADC1BUF0;
-    if(adcData[adcBufIndex] >= ADC_MIDRAIL)
-    {
-        isPositive = TRUE;
-    }
-    else
-    {
-        isPositive = FALSE;
-    }
+    UINT16 adcSample = (UINT16)ADC1BUF0;
     
-    // Stores the biggest sample read by magnitude
-    if(isPositive && (adcData[adcBufIndex] > peakMax[0]))
+    if(adcSample >= (ADC_MIDRAIL + ADC_MINMAG) || adcSample <= (ADC_MIDRAIL-ADC_MINMAG))
     {
-        peakMax[4] = peakMax[3];
-        peakMax[3] = peakMax[2]; 
-        peakMax[2] = peakMax[1];
-        peakMax[1] = peakMax[0]; 
-        peakMax[0] = adcData[adcBufIndex];
-    }
-    else if(!isPositive && (adcData[adcBufIndex] < peakMin[0]))
-    {
-        peakMin[4] = peakMin[3];
-        peakMin[3] = peakMin[2]; 
-        peakMin[2] = peakMin[1];
-        peakMin[1] = peakMin[0]; 
-        peakMin[0] = adcData[adcBufIndex];
-    }
-    
-    // Checks if sample changes polarity
-    if(!isPositive && (previousValue > ADC_MIDRAIL))
-    {
-        // Takes the average of the local max
-		localMax[4] = localMax[3];
-		localMax[3] = localMax[2];
-		localMax[2] = localMax[1];
-		localMax[1] = localMax[0];
-        localMax[0] = (peakMax[4] + peakMax[3] + peakMax[2] + peakMax[1] + peakMax[0])/5;
-        UINT16 tempMax = (localMax[4] + localMax[3] + localMax[2] + localMax[1])/4;
-        
-        // Compares local maxs to determine if user has strum.
-        if(localMax[0] > tempMax)
+       if(adcSample >= ADC_MIDRAIL)
         {
-            IO_scanFrets();                             // Scans for the fret press.
-            AUDIO_setNewTone(IO_getCurrentFret());      // Sets the file to be read.
-            if(!TIMER3_IsON())
-            {
-                TIMER3_ON(TRUE);                        // Kick starts reading the audio file process.
-            }
+            isPositive = TRUE;
         }
-        else if((localMax[0] - ADC_MIDRAIL) < ADC_MINMAG)
+        else
         {
-            if(TIMER3_IsON())
-            {
-                TIMER3_ON(FALSE);                        // Stops the audio file process.
-            }
+            isPositive = FALSE;
         }
-    }
-    else if(isPositive && (previousValue < ADC_MIDRAIL))
-    {
-        localMin[4] = localMin[3];
-		localMin[3] = localMin[2];
-		localMin[2] = localMin[1];
-		localMin[1] = localMin[0];
-        localMin[0] = (peakMin[4] + peakMin[3] + peakMin[2] + peakMin[1] + peakMin[0])/5;
-        UINT16 tempMin = (localMin[4] + localMin[3] + localMin[2] + localMin[1])/5;
-        
-        // Compares local mins to determine if user has strum.
-        if(localMin[0] > tempMin)
+
+        // Stores the biggest sample read by magnitude
+        if(isPositive && (adcSample > peakMax[0]))
         {
-            IO_scanFrets();                             // Scans for the fret press.
-            AUDIO_setNewTone(IO_getCurrentFret());      // Sets the file to be read.
-            if(!TIMER3_IsON())
-            {
-                TIMER3_ON(TRUE);                        // Kick starts reading the audio file process.
-            }
+            peakMax[4] = peakMax[3];
+            peakMax[3] = peakMax[2]; 
+            peakMax[2] = peakMax[1];
+            peakMax[1] = peakMax[0]; 
+            peakMax[0] = adcSample;
         }
-        else if((localMin[0] - ADC_MIDRAIL) < ADC_MINMAG)
+        else if(!isPositive && (adcSample < peakMin[0]))
         {
-            if(TIMER3_IsON())
-            {
-                TIMER3_ON(FALSE);                        // Stops the audio file process.
-            }
+            peakMin[4] = peakMin[3];
+            peakMin[3] = peakMin[2]; 
+            peakMin[2] = peakMin[1];
+            peakMin[1] = peakMin[0]; 
+            peakMin[0] = adcSample;
         }
-    }
-    
-    previousValue = adcData[adcBufIndex];   // Stores the previous read value.
-    
-    if((adcBufIndex++) >= ADC_BUF_SIZE)
-    {
-        adcBufIndex = 0;
+
+        // Checks if sample changes polarity
+        if(!isPositive && (peakMax[0] > ADC_MIDRAIL))
+        {
+            // Takes the average of the local max
+            localMax[4] = localMax[3];
+            localMax[3] = localMax[2];
+            localMax[2] = localMax[1];
+            localMax[1] = localMax[0];
+            localMax[0] = (peakMax[4] + peakMax[3] + peakMax[2] + peakMax[1] + peakMax[0])/5;
+            UINT16 tempMax = (localMax[4] + localMax[3] + localMax[2] + localMax[1])/4;
+
+            // Compares local maxs to determine if user has strum.
+            if(localMax[0] > tempMax)
+            {
+                IO_scanFrets();                                 // Scans for the fret press.
+                AUDIO_setNewTone(IO_getCurrentFret());          // Sets the file to be read.
+                if(!TIMER3_IsON())
+                {
+                    TIMER3_ON(TRUE);                            // Kick starts reading the audio file process.
+                }
+            }
+            else if((localMax[0] - ADC_MIDRAIL) < ADC_MINMAG)
+            {
+                if(TIMER3_IsON())
+                {
+                    TIMER3_ON(FALSE);                           // Stops the audio file process.
+                }
+            }
+
+            ADC_ZeroBuffer();
+        }
+        else if(isPositive && (peakMin[0] < ADC_MIDRAIL))
+        {
+            localMin[4] = localMin[3];
+            localMin[3] = localMin[2];
+            localMin[2] = localMin[1];
+            localMin[1] = localMin[0];
+            localMin[0] = (peakMin[4] + peakMin[3] + peakMin[2] + peakMin[1] + peakMin[0])/5;
+            UINT16 tempMin = (localMin[4] + localMin[3] + localMin[2] + localMin[1])/5;
+
+            // Compares local mins to determine if user has strum.
+            if(localMin[0] > tempMin)
+            {
+                IO_scanFrets();                                 // Scans for the fret press.
+                AUDIO_setNewTone(IO_getCurrentFret());          // Sets the file to be read.
+                if(!TIMER3_IsON())
+                {
+                    TIMER3_ON(TRUE);                            // Kick starts reading the audio file process.
+                }
+            }
+            else if((ADC_MIDRAIL - localMin[0]) < ADC_MINMAG)
+            {
+                if(TIMER3_IsON())
+                {
+                    TIMER3_ON(FALSE);                           // Stops the audio file process.
+                }
+            }
+
+            ADC_ZeroBuffer();                                   // Resets the mid-rails.
+        } 
     }
     
     // Clear the interrupt flag
