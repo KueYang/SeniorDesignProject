@@ -90,8 +90,8 @@ void TIMER1_Init(void)
 /**
  * @brief Checks if Timer 1 is on/off.
  * @return Returns a boolean indicating if Timer 1 is on/off.
- * @retval TRUE, Timer 1 is on.
- * @retval FALSE, Timer 1 is off.
+ * @retval TRUE Timer 1 is on.
+ * @retval FALSE Timer 1 is off.
  */
 BOOL TIMER1_IsON(void)
 {
@@ -199,8 +199,8 @@ void TIMER3_SetSampleRate(UINT16 sampleRate)
 /**
  * @brief Checks if Timer 3 is on/off.
  * @return Returns a boolean indicating if Timer 3 is on/off.
- * @retval TRUE, Timer 3 is on.
- * @retval FALSE, Timer 3 is off.
+ * @retval TRUE Timer 3 is on.
+ * @retval FALSE Timer 3 is off.
  */
 BOOL TIMER3_IsON(void)
 {
