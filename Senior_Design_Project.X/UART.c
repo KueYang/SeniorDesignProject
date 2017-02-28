@@ -83,6 +83,8 @@ BOOL cmdReady;
 /** @var actualBaudRate 
  * The configured UART baud rate. */
 UINT16 actualBaudRate;
+/** @var numOfCmds 
+ * The number of commands. */
 UINT16 numOfCmds;
 /** @var MON_COMMANDS 
  * The list of commands. */
@@ -252,13 +254,25 @@ int MON_parseCommand(COMMANDSTR* cmd, MON_FIFO* buffer)
     return numOfArgs;
 }
 
-BOOL MON_SendChar(const char* character)
+/**
+ * @brief Transmit a character.
+ * @details Add character to transmit fifo buffer.
+ * @arg character The character to transmit.
+ * @return Void.
+ */
+void MON_SendChar(const char* character)
 {
     UART_putNextChar(&txBuffer, *character);
     INTEnable(INT_SOURCE_UART_TX(UART_MODULE_ID), INT_ENABLED);
 }
 
-BOOL MON_SendString(const char* str)
+/**
+ * @brief Transmit a string.
+ * @details Adds string to transmit fifo buffer.
+ * @arg str The string to transmit.
+ * @return Void.
+ */
+void MON_SendString(const char* str)
 {
     if(*str == '>')
     {
@@ -279,7 +293,13 @@ BOOL MON_SendString(const char* str)
     INTEnable(INT_SOURCE_UART_TX(UART_MODULE_ID), INT_ENABLED);
 }
 
-BOOL MON_SendStringNR(const char* str)
+/**
+ * @brief Transmit a string.
+ * @details Transmit a string without a newline or return character.
+ * @arg str The string to transmit.
+ * @return Void.
+ */
+void MON_SendStringNR(const char* str)
 {
     if(*str == '>')
     {
@@ -297,6 +317,12 @@ BOOL MON_SendStringNR(const char* str)
     INTEnable(INT_SOURCE_UART_TX(UART_MODULE_ID), INT_ENABLED);
 }
 
+/**
+ * @brief Changes character to undercase.
+ * @details Changes character to undercase.
+ * @arg ch The character to undercase.
+ * @return The undercase character
+ */
 char MON_lowerToUpper(const char* ch)
 {
     char uChar = (*ch);
@@ -352,6 +378,11 @@ void MON_removeWhiteSpace(const char* string)
     }
 }
 
+/**
+ * @brief Gets the length of a string.
+ * @arg string The string that is being modified.
+ * @return Returns the string length.
+ */
 UINT16 MON_getStringLength(const char* string)
 {
     UINT16 length = 0;
@@ -515,11 +546,19 @@ void MON_Test(void)
     Test_SelectTest((UINT16)atoi(cmdStr.arg1));
 }
 
+/**
+ * @brief Command used to display a list of files.
+ * @return Void.
+ */
 void MON_GetFileList(void)
 {
     AUDIO_ListFiles();
 }
 
+/**
+ * @brief Command used to select a specific file.
+ * @return Void.
+ */
 void MON_Set_File(void)
 {
     if(AUDIO_setNewFile(cmdStr.arg1))
@@ -532,12 +571,20 @@ void MON_Set_File(void)
     }
 }
 
+/**
+ * @brief Command used to reset the selected file pointer
+ * @return Void.
+ */
 void MON_Reset_File(void)
 {
     AUDIO_resetFilePtr();
     MON_SendString("The file pointer has been reset.");
 }
 
+/**
+ * @brief Command used to read the selected file.
+ * @return Void.
+ */
 void MON_Read_File(void)
 {
     UINT16 reset = atoi(cmdStr.arg1);
@@ -574,6 +621,10 @@ void MON_Read_File(void)
     MON_SendString("");   // Adds a new line and returns
 }
 
+/**
+ * @brief Command used to write data to the DAC.
+ * @return Void.
+ */
 void MON_TestDAC(void)
 {
     UINT32 value = atoi(cmdStr.arg1);
@@ -590,11 +641,19 @@ void MON_TestDAC(void)
     DAC_WriteToDAC(WRITE_UPDATE_CHN_A, value);
 }
 
+/**
+ * @brief Command used to zero the DAC's output.
+ * @return Void.
+ */
 void MON_ZeroDAC(void)
 {
     DAC_ZeroOutput();
 }
 
+/**
+ * @brief Command used to write a sin wav to the DAC.
+ * @return Void.
+ */
 void MON_SinDAC(void)
 {
     WORD testBytes[1024] = {0x400,0x406,0x40d,0x413,0x419,0x41f,0x426,0x42c,
@@ -747,6 +806,10 @@ void MON_SinDAC(void)
     }
 }
 
+/**
+ * @brief Command used to Toggle on/off the Timer 3 module.
+ * @return Void.
+ */
 void MON_Timer_ON_OFF(void)
 {
     if(!TIMER3_IsON())
@@ -756,10 +819,14 @@ void MON_Timer_ON_OFF(void)
     else
     {
         TIMER3_ON(FALSE);
-        AUDIO_setNewTone(0);
+        AUDIO_setNewTone(1);
     }
 }
 
+/**
+ * @brief Command used to display a Timer 3 period.
+ * @return Void.
+ */
 void MON_Timer_Get_PS(void)
 {   
     char buf[32];
@@ -767,6 +834,10 @@ void MON_Timer_Get_PS(void)
     MON_SendString(&buf[0]);
 }
 
+/**
+ * @brief Command used to set Timer 3 period.
+ * @return Void.
+ */
 void MON_Timer_Set_PS(void)
 {   
     char buf[32];

@@ -51,9 +51,9 @@ BOOL MON_stringsMatch(const char* str1, const char* str2);
 char MON_lowerToUpper(const char* ch);
 
 /* UART character and string handlers. */
-BOOL MON_SendStringNR(const char* str);
-BOOL MON_SendString(const char* str);
-BOOL MON_SendChar(const char* character);
+void MON_SendStringNR(const char* str);
+void MON_SendString(const char* str);
+void MON_SendChar(const char* character);
 
 #ifdef	__cplusplus
 }
