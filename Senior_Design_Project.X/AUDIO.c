@@ -356,32 +356,32 @@ BOOL AUDIO_GetAudioData(FILES* file, UINT16 bytes)
     {   
         // Converts and writes read bytes to audio buffers.
         int i = 0;
-        UINT16 audioByte, unsign_audio;
+        UINT16 audioData, unsign_audio;
         for(i = 0; i < bytes; i+=4)
         {
             // Left Channel
-            audioByte = ((receiveBuffer[i+1] << 8) | (receiveBuffer[i]));
-            if (audioByte & 0x8000) {
-                unsign_audio = ~(audioByte - 1);
-                audioByte = AC_ZERO - unsign_audio;
+            audioData = ((receiveBuffer[i+1] << 8) | (receiveBuffer[i]));
+            if (audioData & 0x8000) {
+                unsign_audio = ~(audioData - 1);
+                audioData = AC_ZERO - unsign_audio;
             }
             else {
-                audioByte = AC_ZERO + audioByte;
+                audioData = AC_ZERO + audioData;
             }
-            LAUDIOSTACK[audioInPtr] = audioByte;
+            LAUDIOSTACK[audioInPtr] = audioData;
             
             if(file->audioInfo.numOfChannels == 2)
             {
-                audioByte = ((receiveBuffer[i+3] << 8) | (receiveBuffer[i+2]));
-                if (audioByte & 0x8000) {
-                    unsign_audio = ~(audioByte - 1);
-                    audioByte = AC_ZERO - unsign_audio;
+                audioData = ((receiveBuffer[i+3] << 8) | (receiveBuffer[i+2]));
+                if (audioData & 0x8000) {
+                    unsign_audio = ~(audioData - 1);
+                    audioData = AC_ZERO - unsign_audio;
                 }
                 else {
-                    audioByte = AC_ZERO + audioByte;
+                    audioData = AC_ZERO + audioData;
                 }             
             }
-            RAUDIOSTACK[audioInPtr++] = audioByte;
+            RAUDIOSTACK[audioInPtr++] = audioData;
             
             if(audioInPtr >= AUDIO_BUF_SIZE)
             {
@@ -410,6 +410,7 @@ BOOL AUDIO_ReadFile(UINT16 bytesToRead)
 
     return AUDIO_GetAudioData(&files[fileIndex], bytesToRead);
 }
+
 /**
  * @brief Gets buffer pointer.
  * @details Gets a pointer to the buffer that stores the bytes read from the SD 
