@@ -28,10 +28,7 @@ extern "C" {
 
 void IO_Init(void);
 void IO_Process(void);
-
-int IO_getCurrentFret(void);
-void IO_setCurrentFret(int fret);
-void IO_scanFrets(void);
+int IO_scanFrets(void);
 
 #ifdef	__cplusplus
 }
