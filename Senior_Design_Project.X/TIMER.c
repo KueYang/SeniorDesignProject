@@ -184,6 +184,7 @@ void TIMER3_Init(void)
     INTSetVectorPriority(INT_TIMER_3_VECTOR, INT_PRIORITY_LEVEL_2);
     INTSetVectorSubPriority(INT_TIMER_3_VECTOR, INT_SUB_PRIORITY_LEVEL_3);
 }
+
 /**
  * @brief Sets the Timer 3 period
  * @arg sampleRate The sample rate to set Timer 3 at.
@@ -216,12 +217,14 @@ void TIMER3_ON(BOOL ON)
 {
     if(ON == TRUE)
     {
+        TMR3 = 0;
         T3CONbits.ON = 1;
         Timer3_ON = TRUE;
         INTClearFlag(INT_T3);
     }
     else
     {
+        TMR3 = 0;
         T3CONbits.ON = 0;
         Timer3_ON = FALSE;
         INTClearFlag(INT_T3);
