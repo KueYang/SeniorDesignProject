@@ -21,10 +21,10 @@
 #define ADC_ARRAY_SIZE          5
 /** @def ADC_MIDRAIL 
  * Defines the ADC mid-rail. */
-#define ADC_MIDRAIL             479
+#define ADC_MIDRAIL             480
 /** @def ADC_MINMAG 
- * Defines the minimum magnitude ADC threashold. */
-#define ADC_MINMAG              140         
+ * Defines the minimum magnitude ADC threadshold. */
+#define ADC_MINMAG              150         
 
 /** @var isPositive 
  * Indicates if the sample is the positive or negative part of signal. */
@@ -145,14 +145,14 @@ void __ISR(_ADC_VECTOR, IPL2AUTO) ADCHandler(void)
             peakMax[1] = peakMax[0]; 
             peakMax[0] = adcSample;
         }
-        else if(!isPositive && (adcSample < peakMin[0]))
-        {
-            peakMin[4] = peakMin[3];
-            peakMin[3] = peakMin[2]; 
-            peakMin[2] = peakMin[1];
-            peakMin[1] = peakMin[0]; 
-            peakMin[0] = adcSample;
-        }
+//        else if(!isPositive && (adcSample < peakMin[0]))
+//        {
+//            peakMin[4] = peakMin[3];
+//            peakMin[3] = peakMin[2]; 
+//            peakMin[2] = peakMin[1];
+//            peakMin[1] = peakMin[0]; 
+//            peakMin[0] = adcSample;
+//        }
 
         // Checks if sample changes polarity
         if(!isPositive && (peakMax[0] > ADC_MIDRAIL))
@@ -168,52 +168,46 @@ void __ISR(_ADC_VECTOR, IPL2AUTO) ADCHandler(void)
             // Compares local maxs to determine if user has strum.
             if(localMax[0] > tempMax)
             {
-                IO_scanFrets();                                 // Scans for the fret press.
-                AUDIO_setNewTone(IO_getCurrentFret());          // Sets the file to be read.
-                if(!TIMER3_IsON())
-                {
-                    TIMER3_ON(TRUE);                            // Kick starts reading the audio file process.
-                }
+//                IO_scanFrets();                                 // Scans for the fret press.
+                AUDIO_setNewTone(1);                // Sets the file to be read.
+                TIMER3_ON(TRUE);                    // Kick starts reading the audio file process.
             }
             else if((localMax[0] - ADC_MIDRAIL) < ADC_MINMAG)
             {
-                if(TIMER3_IsON())
-                {
-                    TIMER3_ON(FALSE);                           // Stops the audio file process.
-                }
+                TIMER3_ON(FALSE);                   // Stops the audio file process.
             }
 
             ADC_ZeroBuffer();
         }
-        else if(isPositive && (peakMin[0] < ADC_MIDRAIL))
-        {
-            localMin[4] = localMin[3];
-            localMin[3] = localMin[2];
-            localMin[2] = localMin[1];
-            localMin[1] = localMin[0];
-            localMin[0] = (peakMin[4] + peakMin[3] + peakMin[2] + peakMin[1] + peakMin[0])/5;
-            UINT16 tempMin = (localMin[4] + localMin[3] + localMin[2] + localMin[1])/5;
-
-            // Compares local mins to determine if user has strum.
-            if(localMin[0] > tempMin)
-            {
-                IO_scanFrets();                                 // Scans for the fret press.
-                AUDIO_setNewTone(IO_getCurrentFret());          // Sets the file to be read.
-                if(!TIMER3_IsON())
-                {
-                    TIMER3_ON(TRUE);                            // Kick starts reading the audio file process.
-                }
-            }
-            else if((ADC_MIDRAIL - localMin[0]) < ADC_MINMAG)
-            {
-                if(TIMER3_IsON())
-                {
-                    TIMER3_ON(FALSE);                           // Stops the audio file process.
-                }
-            }
-
-            ADC_ZeroBuffer();                                   // Resets the mid-rails.
-        } 
+//        else if(isPositive && (peakMin[0] < ADC_MIDRAIL))
+//        {
+//            localMin[4] = localMin[3];
+//            localMin[3] = localMin[2];
+//            localMin[2] = localMin[1];
+//            localMin[1] = localMin[0];
+//            localMin[0] = (peakMin[4] + peakMin[3] + peakMin[2] + peakMin[1] + peakMin[0])/5;
+//            UINT16 tempMin = (localMin[4] + localMin[3] + localMin[2] + localMin[1])/5;
+//
+//            // Compares local mins to determine if user has strum.
+//            if(localMin[0] > tempMin)
+//            {
+////                IO_scanFrets();                                 // Scans for the fret press.
+//                AUDIO_setNewTone(1);          // Sets the file to be read.
+//                if(!TIMER3_IsON())
+//                {
+//                    TIMER3_ON(TRUE);                            // Kick starts reading the audio file process.
+//                }
+//            }
+//            else if((ADC_MIDRAIL - localMin[0]) < ADC_MINMAG)
+//            {
+//                if(TIMER3_IsON())
+//                {
+//                    TIMER3_ON(FALSE);                           // Stops the audio file process.
+//                }
+//            }
+//
+//            ADC_ZeroBuffer();                                   // Resets the mid-rails.
+//        } 
     }
     
     // Clear the interrupt flag
