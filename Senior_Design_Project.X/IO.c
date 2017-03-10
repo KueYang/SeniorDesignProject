@@ -83,7 +83,7 @@ int IO_scanFrets(void)
     int currentFret = 0;
     
     /* Scans through all the fret groups. */
-    for(groupIndex = 0; groupIndex < FRET_GROUP_COUNT; groupIndex+=5)
+    for(groupIndex = 1; groupIndex <= FRET_GROUP_COUNT; groupIndex++)
     {
         /* Selects the fret group. */
         IO_setGroupOutput(groupIndex);
@@ -98,7 +98,7 @@ int IO_scanFrets(void)
         /* Checks if any frets were pressed. */
         if(fretFound > 0)
         {
-            currentFret = groupIndex + fretFound;
+            currentFret = (groupIndex-1)*FRETS_PER_GROUP + fretFound;
             break;
         }
     }
@@ -115,25 +115,25 @@ void IO_setGroupOutput(int group)
 {
     switch(group)
     {
-        case 0:
+        case 1:
             GROUP1_OUT = 1;
             GROUP2_OUT = 0;
             GROUP3_OUT = 0;
             GROUP4_OUT = 0;
             break;
-        case 1:
+        case 2:
             GROUP1_OUT = 0;
             GROUP2_OUT = 1;
             GROUP3_OUT = 0;
             GROUP4_OUT = 0;
             break;
-        case 2:
+        case 3:
             GROUP1_OUT = 0;
             GROUP2_OUT = 0;
             GROUP3_OUT = 1;
             GROUP4_OUT = 0;
             break;
-        case 3:
+        case 4:
             GROUP1_OUT = 0;
             GROUP2_OUT = 0;
             GROUP3_OUT = 0;
