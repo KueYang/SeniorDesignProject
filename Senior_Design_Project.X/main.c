@@ -99,7 +99,7 @@ int main(void)
     
     while(1)
     {
-//        WDTCONbits.WDTCLR = 0x01;   // Clears the watchdog timer flag.
+        WDTCONbits.WDTCLR = 0x01;   // Clears the watchdog timer flag.
         AUDIO_Process();
     }
 

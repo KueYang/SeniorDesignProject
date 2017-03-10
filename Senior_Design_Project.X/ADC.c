@@ -127,7 +127,7 @@ void __ISR(_ADC_VECTOR, IPL2AUTO) ADCHandler(void)
     
     if(adcSample >= (ADC_MIDRAIL + ADC_MINMAG) || adcSample <= (ADC_MIDRAIL-ADC_MINMAG))
     {
-       if(adcSample >= ADC_MIDRAIL)
+        if(adcSample >= ADC_MIDRAIL)
         {
             isPositive = TRUE;
         }
@@ -170,11 +170,19 @@ void __ISR(_ADC_VECTOR, IPL2AUTO) ADCHandler(void)
             {
 //                IO_scanFrets();                                 // Scans for the fret press.
                 AUDIO_setNewTone(1);                // Sets the file to be read.
-                TIMER3_ON(TRUE);                    // Kick starts reading the audio file process.
+                if(!TIMER3_IsON())
+                {
+                    TIMER3_ON(TRUE);                            // Kick starts reading the audio file process.
+                    MON_SendString("ADC: Turning on timer.");
+                }
             }
             else if((localMax[0] - ADC_MIDRAIL) < ADC_MINMAG)
             {
-                TIMER3_ON(FALSE);                   // Stops the audio file process.
+                if(TIMER3_IsON())
+                {
+                    TIMER3_ON(FALSE);                           // Stops the audio file process.
+                    MON_SendString("ADC: Turning off timer.");
+                }
             }
 
             ADC_ZeroBuffer();

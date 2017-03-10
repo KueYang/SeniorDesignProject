@@ -190,7 +190,11 @@ BOOL AUDIO_setNewFile(const char* fileName)
 void AUDIO_setNewTone(int fret)
 {
     /* Disables the timer if it is on. */
-    TIMER3_ON(FALSE);
+    if(TIMER3_IsON())
+    {
+        TIMER3_ON(FALSE);
+        MON_SendString("Turning off timer");
+    }
     /* Sets the audio in pointer to zero. */
     audioInPtr = 0;
     /* Sets the audio out pointer to zero. */
@@ -204,7 +208,7 @@ void AUDIO_setNewTone(int fret)
     /* Sets the file index to the specified fret. */
     fileIndex = fret;
     /* Sets the Timer based on the new sample rate*/
-    TIMER3_SetSampleRate(files[fileIndex].audioInfo.sampleRate);
+//    TIMER3_SetSampleRate(files[fileIndex].audioInfo.sampleRate);
     /* Sets the DAC's output to zero. */
     DAC_ZeroOutput();
     
