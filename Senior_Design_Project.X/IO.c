@@ -44,10 +44,13 @@ void IO_Init(void)
     TRISBbits.TRISB3 = 0;   // U1TX
     
     // SPI IO, DAC
-    TRISAbits.TRISA4 = 0;   // SYNC
-    TRISBbits.TRISB2 = 1;   // SD_SDI2
-    TRISBbits.TRISB1 = 0;   // SD_SDO2
-    TRISBbits.TRISB15 = 0;  // SD_CLK2
+    TRISEbits.TRISE7 = 0;   // RESET
+    TRISCbits.TRISC3 = 0;   // CLEAR
+    TRISCbits.TRISC2 = 0;   // LADC
+    TRISGbits.TRISG7 = 0;   // SYNC
+    TRISEbits.TRISE5 = 1;   // SD_SDI2
+    TRISGbits.TRISG8 = 0;   // SD_SDO2
+    TRISGbits.TRISG6 = 0;   // SD_CLK2
     
     // SPI IO, SD Card
     TRISBbits.TRISB7 = 0;   // CS
@@ -57,8 +60,8 @@ void IO_Init(void)
     TRISBbits.TRISB14 = 0;  // SD_CLK1
     
     // ADC 
-    TRISBbits.TRISB0 = 1;   // set RB0 as an input
-    ANSELBbits.ANSB0 = 1;   // set RB0 (AN2) to analog
+    TRISGbits.TRISG15 = 1;   // set RG15 as an input
+    ANSELGbits.ANSG15 = 1;   // set RG15 (AN28) to analog
 }
 
 /**
