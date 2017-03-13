@@ -53,11 +53,11 @@ void IO_Init(void)
     TRISGbits.TRISG6 = 0;   // SD_CLK2
     
     // SPI IO, SD Card
-    TRISBbits.TRISB7 = 0;   // CS
+    TRISBbits.TRISB11 = 0;  // CS
     TRISBbits.TRISB8 = 1;   // CD
-    TRISBbits.TRISB11 = 1;  // SD_SDI1
-    TRISBbits.TRISB13 = 0;  // SD_SDO1
-    TRISBbits.TRISB14 = 0;  // SD_CLK1
+    TRISBbits.TRISB9 = 1;   // SD_SDI3
+    TRISBbits.TRISB10 = 0;  // SD_SDO3
+    TRISFbits.TRISF13 = 0;  // SD_CLK3
     
     // ADC 
     TRISGbits.TRISG15 = 1;   // set RG15 as an input
