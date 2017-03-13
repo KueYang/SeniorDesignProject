@@ -182,7 +182,7 @@ void TIMER3_Init(void)
     // Set up the timer interrupt with a priority of 2
     INTEnable(INT_T3, INT_ENABLED);
     INTSetVectorPriority(INT_TIMER_3_VECTOR, INT_PRIORITY_LEVEL_2);
-    INTSetVectorSubPriority(INT_TIMER_3_VECTOR, INT_SUB_PRIORITY_LEVEL_3);
+    INTSetVectorSubPriority(INT_TIMER_3_VECTOR, INT_SUB_PRIORITY_LEVEL_2);
 }
 
 /**
