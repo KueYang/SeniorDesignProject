@@ -40,8 +40,8 @@ void IO_Init(void)
     TRISBbits.TRISB8 = 0;   // Group 1, Output
     
     // UART IO
-    TRISAbits.TRISA2 = 1;   // U1RX
-    TRISBbits.TRISB3 = 0;   // U1TX
+    TRISCbits.TRISC1 = 1;   // U1RX
+    TRISCbits.TRISC4 = 0;   // U1TX
     
     // SPI IO, DAC
     TRISEbits.TRISE7 = 0;   // RESET
