@@ -116,8 +116,8 @@ void UART_Init(void)
     // Re-mapped pins RPB3R and RPA2 pins to U1RX and U1TX
     mSysUnlockOpLock({
         PPSUnLock;
-        PPSInput(3,U1RX,RPA2);     // Assign RPA2 as input pin for U1RX
-        PPSOutput(1,RPB3,U1TX);    // Set RPB3R pin as output for U1TX
+        PPSInput(1,U1RX,RPC1);     // Assign RPA2 as input pin for U1RX
+        PPSOutput(2,RPC4,U1TX);    // Set RPB3R pin as output for U1TX
         PPSLock;
     });
     
