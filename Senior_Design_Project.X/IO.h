@@ -14,16 +14,16 @@ extern "C" {
 /* Group Output Pins. */
 /** @def GROUP1_OUT 
  * Defines the output PORT for Group 1 */
-#define GROUP1_OUT  PORTBbits.RD4
+#define GROUP1_OUT  PORTDbits.RD4
 /** @def GROUP2_OUT 
  * Defines the output PORT for Group 2 */
-#define GROUP2_OUT  PORTBbits.RD5   
+#define GROUP2_OUT  PORTDbits.RD5   
 /** @def GROUP3_OUT 
  * Defines the output PORT for Group 3 */
-#define GROUP3_OUT  PORTBbits.RD6  
+#define GROUP3_OUT  PORTDbits.RD6  
 /** @def GROUP4_OUT 
  * Defines the output PORT for Group 4 */
-#define GROUP4_OUT  PORTBbits.RD7   
+#define GROUP4_OUT  PORTDbits.RD7   
     
 /* Fret Pins */
 /** @def FRET1 
