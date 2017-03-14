@@ -27,7 +27,10 @@
 #define ADC_NOISEMAG            150         
 /** @def ADC_MINDELTA 
  * Defines the minimum change in ADC sample for indicating strum. */
-#define ADC_MINDELTA            10         
+#define ADC_MINDELTA            10  
+/** @def ADC_MINSAMPLE 
+ * Defines the minimum sample count for strum detection. */
+#define ADC_MINSAMPLE           256
 
 /** @var isPositive 
  * Indicates if the sample is the positive or negative part of signal. */
@@ -38,8 +41,11 @@ UINT16 peakMax[ADC_ARRAY_SIZE];
 /** @var localMax 
  * Stores max values for different peaks. */
 UINT16 localMax[ADC_ARRAY_SIZE];
-
+/** @var sampleCount 
+ * Counts the number of adc samples since playing a tone. */
 UINT32 sampleCount;
+/** @var startStrumDetection 
+ * Boolean used to enable the strum detection. */
 BOOL startStrumDetection;
 
 void ADC_ZeroBuffer(void);
@@ -161,8 +167,7 @@ void __ISR(_ADC_VECTOR, IPL2AUTO) ADCHandler(void)
             // Compares local maxs to determine if user has strum.
             if((localMax[0] > (tempMax+ADC_MINDELTA)) && startStrumDetection)
             {
-//                IO_scanFrets();                                 // Scans for the fret press.
-                AUDIO_setNewTone(1);                // Sets the file to be read.
+                AUDIO_setNewTone(IO_scanFrets());                // Sets the file to be read.
                 if(!TIMER3_IsON())
                 {
                     TIMER3_ON(TRUE);                            // Kick starts reading the audio file process.
@@ -175,10 +180,16 @@ void __ISR(_ADC_VECTOR, IPL2AUTO) ADCHandler(void)
             ADC_ZeroBuffer();
         }
 
-        if(sampleCount >= 256)
+        if(sampleCount >= ADC_MINSAMPLE)
         {
             startStrumDetection = TRUE;
         }
+    }
+    
+    // Resets the sample counter if overflows
+    if(sampleCount >= INT32_MAX_NUM)
+    {
+        sampleCount = 0;
     }
     
     // Clear the interrupt flag
