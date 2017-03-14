@@ -31,13 +31,22 @@ void IO_setGroupOutput(int group);
 void IO_Init(void)
 {   
     // Digital IO
-    TRISBbits.TRISB5 = 0;   // LED
+    TRISEbits.TRISE2 = 0;   // LED, ON
+    TRISEbits.TRISE3 = 0;   // LED, ERROR
+    TRISEbits.TRISE4 = 0;   // LED, NO SD CARD DETECT
     
-    // Frets
-    TRISAbits.TRISA3 = 1;   // Fret 1, Group 1
-    TRISBbits.TRISB4 = 1;   // Fret 2, Group 1
-    TRISBbits.TRISB7 = 1;   // Fret 4, Group 1
-    TRISBbits.TRISB8 = 0;   // Group 1, Output
+    // Fret
+    TRISDbits.TRISD1 = 1;   // Fret 1
+    TRISDbits.TRISD2 = 1;   // Fret 2
+    TRISDbits.TRISD3 = 1;   // Fret 3
+    TRISDbits.TRISD12 = 1;  // Fret 4
+    TRISDbits.TRISD13 = 1;  // Fret 4
+    
+    // Frets Groups
+    TRISDbits.TRISD4 = 0;   // Group 1
+    TRISDbits.TRISD5 = 0;   // Group 2
+    TRISDbits.TRISD6 = 0;   // Group 3
+    TRISDbits.TRISD7 = 0;   // Group 4
     
     // UART IO
     TRISCbits.TRISC1 = 1;   // U1RX

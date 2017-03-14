@@ -97,10 +97,14 @@ int main(void)
     AUDIO_Init();       // Initializes the Audio module.
     DAC_Init();         // Initializes the DACs.
     
+    PORTEbits.RE2 = 1;  // ON LED
+    PORTEbits.RE3 = 1;  // ERROR LED
+    
     while(1)
     {
         WDTCONbits.WDTCLR = 0x01;   // Clears the watchdog timer flag.
         AUDIO_Process();
+        PORTEbits.RE3 = 0;          // Turn off ERROR LED 
     }
 
     return (0);
