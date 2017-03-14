@@ -16,15 +16,18 @@
 /**@def NUM_OF_ADCCHANNELS 
  * Defines the number of ADC channels used. */
 #define NUM_OF_ADCCHANNELS      1
-/** @def ADC_ARRAY_SIZE 
- * Defines the ADC array size. */
+/** @def ADC_LOCAL_ARRAY_SIZE 
+ * Defines the ADC local array size. */
 #define ADC_ARRAY_SIZE          5
 /** @def ADC_MIDRAIL 
  * Defines the ADC mid-rail. */
 #define ADC_MIDRAIL             480
-/** @def ADC_MINMAG 
- * Defines the minimum magnitude ADC threadshold. */
-#define ADC_MINMAG              150         
+/** @def ADC_NOISEMAG 
+ * Defines the minimum noise magnitude ADC thread hold. */
+#define ADC_NOISEMAG            150         
+/** @def ADC_MINDELTA 
+ * Defines the minimum change in ADC sample for indicating strum. */
+#define ADC_MINDELTA            10         
 
 /** @var isPositive 
  * Indicates if the sample is the positive or negative part of signal. */
@@ -32,15 +35,12 @@ BOOL isPositive;
 /** @var peakMax 
  * Stores max values for a single peak. */
 UINT16 peakMax[ADC_ARRAY_SIZE];
-/** @var peakMin 
- * Stores min values for a single peak. */
-UINT16 peakMin[ADC_ARRAY_SIZE];
 /** @var localMax 
  * Stores max values for different peaks. */
 UINT16 localMax[ADC_ARRAY_SIZE];
-/** @var localMin 
- * Stores min values for different peaks. */
-UINT16 localMin[ADC_ARRAY_SIZE];
+
+UINT32 sampleCount;
+BOOL startStrumDetection;
 
 void ADC_ZeroBuffer(void);
 
@@ -65,10 +65,10 @@ void ADC_Init(void)
     AD1CON2bits.BUFM = 0;           // Buffer  is configured as one 16-Word buffer
     AD1CON2bits.ALTS = 0;           // Always use sample A input multiplexer settings
     
-    /* AD3CON configurations. Samples every 256 us.*/
+    /* AD3CON configurations. Samples every 51.2 us.*/
     AD1CON3bits.ADRC = 0;           // ADC conversion clock is PBCLK, TPB = 1/PCLK = 25 ns
     AD1CON3bits.ADCS = 0xFF;        // ADC conversion clock, TAD = 512*TPB = 12.8 us
-    AD1CON3bits.SAMC = 0b10100;     // Sample Time period, 20 TADs
+    AD1CON3bits.SAMC = 0b00100;     // Sample Time period, 4 TADs
     
     /* AD1CH configurations */
     AD1CHSbits.CH0NA = 0;           // Channel 0 negative input is VREFL
@@ -83,11 +83,13 @@ void ADC_Init(void)
     // Set up the ADC interrupt with a priority of 2
     INTEnable(INT_AD1, INT_ENABLED);
     INTSetVectorPriority(INT_ADC_VECTOR, INT_PRIORITY_LEVEL_2);
-    INTSetVectorSubPriority(INT_ADC_VECTOR, INT_SUB_PRIORITY_LEVEL_1);
+    INTSetVectorSubPriority(INT_ADC_VECTOR, INT_SUB_PRIORITY_LEVEL_3);
     
     // Initializes strumming variables
     ADC_ZeroBuffer();
     isPositive = FALSE;
+    sampleCount = 0;
+    startStrumDetection = TRUE;
 }
 
 /**
@@ -109,9 +111,7 @@ void ADC_ZeroBuffer(void)
     for(i = 0; i < ADC_ARRAY_SIZE; i++)
     {
         peakMax[i] = ADC_MIDRAIL;
-        peakMin[i] = ADC_MIDRAIL;
         localMax[i] = ADC_MIDRAIL;
-        localMin[i] = ADC_MIDRAIL;
     }
 }
 
@@ -124,8 +124,9 @@ void __ISR(_ADC_VECTOR, IPL2AUTO) ADCHandler(void)
 {
     // Reads the ADC buffer
     UINT16 adcSample = (UINT16)ADC1BUF0;
+    sampleCount++;
     
-    if(adcSample >= (ADC_MIDRAIL + ADC_MINMAG) || adcSample <= (ADC_MIDRAIL-ADC_MINMAG))
+    if(adcSample >= (ADC_MIDRAIL+ADC_NOISEMAG) || adcSample <= (ADC_MIDRAIL-ADC_NOISEMAG))
     {
         if(adcSample >= ADC_MIDRAIL)
         {
@@ -145,14 +146,6 @@ void __ISR(_ADC_VECTOR, IPL2AUTO) ADCHandler(void)
             peakMax[1] = peakMax[0]; 
             peakMax[0] = adcSample;
         }
-//        else if(!isPositive && (adcSample < peakMin[0]))
-//        {
-//            peakMin[4] = peakMin[3];
-//            peakMin[3] = peakMin[2]; 
-//            peakMin[2] = peakMin[1];
-//            peakMin[1] = peakMin[0]; 
-//            peakMin[0] = adcSample;
-//        }
 
         // Checks if sample changes polarity
         if(!isPositive && (peakMax[0] > ADC_MIDRAIL))
@@ -162,11 +155,11 @@ void __ISR(_ADC_VECTOR, IPL2AUTO) ADCHandler(void)
             localMax[3] = localMax[2];
             localMax[2] = localMax[1];
             localMax[1] = localMax[0];
-            localMax[0] = (peakMax[4] + peakMax[3] + peakMax[2] + peakMax[1] + peakMax[0])/5;
+            localMax[0] = 2*(peakMax[4] + peakMax[3] + peakMax[2] + peakMax[1] + peakMax[0])/10;
             UINT16 tempMax = (localMax[4] + localMax[3] + localMax[2] + localMax[1])/4;
 
             // Compares local maxs to determine if user has strum.
-            if(localMax[0] > tempMax)
+            if((localMax[0] > (tempMax+ADC_MINDELTA)) && startStrumDetection)
             {
 //                IO_scanFrets();                                 // Scans for the fret press.
                 AUDIO_setNewTone(1);                // Sets the file to be read.
@@ -175,47 +168,17 @@ void __ISR(_ADC_VECTOR, IPL2AUTO) ADCHandler(void)
                     TIMER3_ON(TRUE);                            // Kick starts reading the audio file process.
                     MON_SendString("ADC: Turning on timer.");
                 }
-            }
-            else if((localMax[0] - ADC_MIDRAIL) < ADC_MINMAG)
-            {
-                if(TIMER3_IsON())
-                {
-                    TIMER3_ON(FALSE);                           // Stops the audio file process.
-                    MON_SendString("ADC: Turning off timer.");
-                }
+                sampleCount = 0;
+                startStrumDetection = FALSE;
             }
 
             ADC_ZeroBuffer();
         }
-//        else if(isPositive && (peakMin[0] < ADC_MIDRAIL))
-//        {
-//            localMin[4] = localMin[3];
-//            localMin[3] = localMin[2];
-//            localMin[2] = localMin[1];
-//            localMin[1] = localMin[0];
-//            localMin[0] = (peakMin[4] + peakMin[3] + peakMin[2] + peakMin[1] + peakMin[0])/5;
-//            UINT16 tempMin = (localMin[4] + localMin[3] + localMin[2] + localMin[1])/5;
-//
-//            // Compares local mins to determine if user has strum.
-//            if(localMin[0] > tempMin)
-//            {
-////                IO_scanFrets();                                 // Scans for the fret press.
-//                AUDIO_setNewTone(1);          // Sets the file to be read.
-//                if(!TIMER3_IsON())
-//                {
-//                    TIMER3_ON(TRUE);                            // Kick starts reading the audio file process.
-//                }
-//            }
-//            else if((ADC_MIDRAIL - localMin[0]) < ADC_MINMAG)
-//            {
-//                if(TIMER3_IsON())
-//                {
-//                    TIMER3_ON(FALSE);                           // Stops the audio file process.
-//                }
-//            }
-//
-//            ADC_ZeroBuffer();                                   // Resets the mid-rails.
-//        } 
+
+        if(sampleCount >= 256)
+        {
+            startStrumDetection = TRUE;
+        }
     }
     
     // Clear the interrupt flag
