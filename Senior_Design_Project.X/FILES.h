@@ -1,8 +1,7 @@
-/* 
- * File:   FILES.h
- * Author: Belinda Yang
- *
- * Created on January 28, 2017, 10:38 AM
+/**
+ * @file FILES.h
+ * @author Kue Yang
+ * @date 11/22/2016
  */
 
 #ifndef FILES_H

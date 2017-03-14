@@ -1,8 +1,7 @@
-/* 
- * File:   WAVDEF.h
- * Author: Belinda Yang
- *
- * Created on January 28, 2017, 12:13 PM
+/**
+ * @file WAVDEF.h
+ * @author Kue Yang
+ * @date 11/22/2016
  */
 
 #ifndef WAVDEF_H

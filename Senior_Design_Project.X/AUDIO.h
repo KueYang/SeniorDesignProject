@@ -1,8 +1,7 @@
-/* 
- * File:   AudioNew.h
- * Author: Belinda Yang
- *
- * Created on January 28, 2017, 11:45 AM
+/**
+ * @file AUDIO.h
+ * @author Kue Yang
+ * @date 11/22/2016
  */
 
 #ifndef AUDIO_H
