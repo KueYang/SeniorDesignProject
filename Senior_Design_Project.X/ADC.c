@@ -16,7 +16,7 @@
 /**@def NUM_OF_ADCCHANNELS 
  * Defines the number of ADC channels used. */
 #define NUM_OF_ADCCHANNELS      1
-/** @def ADC_LOCAL_ARRAY_SIZE 
+/** @def ADC_ARRAY_SIZE 
  * Defines the ADC local array size. */
 #define ADC_ARRAY_SIZE          5
 /** @def ADC_MIDRAIL 

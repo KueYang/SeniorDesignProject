@@ -53,7 +53,6 @@ void MON_Test(void);
 
 /* File related commands*/
 void MON_GetFileList(void);
-void MON_Get_File(void);
 void MON_Set_File(void);
 void MON_Reset_File(void);
 void MON_Read_File(void);

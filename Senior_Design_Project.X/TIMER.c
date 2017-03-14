@@ -18,7 +18,7 @@
  * @privatesection
  * @{
  */
-/** @def PERIOD 
+/** @def ONE_MS_PERIOD 
  * Timer 1 Period for one ms. */
 #define ONE_MS_PERIOD           40000
 

@@ -57,7 +57,7 @@ FILES files[MAX_NUM_OF_FILES];
 /** @var receiveBuffer
  * A buffer used to store data read from the audio file. */
 BYTE receiveBuffer[REC_BUF_SIZE];
-/** @var LAUDIOSTACK.buffer 
+/** @var LAUDIOSTACK 
  * A buffer used to store left channel audio data. */
 UINT16 LAUDIOSTACK[AUDIO_BUF_SIZE];
 /** @var RAUDIOSTACK

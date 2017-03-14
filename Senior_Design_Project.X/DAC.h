@@ -16,13 +16,13 @@ extern "C" {
 #define AC_ZERO                         0x7777
 
 
-/** @def SYNC 
+/** @def RESET 
  * Defines the IO port used to write data to DAC. */
 #define RESET                           PORTEbits.RE7
-/** @def SYNC 
+/** @def LDAC 
  * Defines the IO port used to write data to DAC. */
 #define LDAC                            PORTCbits.RC2
-/** @def SYNC 
+/** @def CLEAR 
  * Defines the IO port used to write data to DAC. */
 #define CLEAR                           PORTCbits.RC3
 /** @def SYNC 
