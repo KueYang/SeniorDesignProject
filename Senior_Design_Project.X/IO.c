@@ -40,7 +40,7 @@ void IO_Init(void)
     TRISDbits.TRISD2 = 1;   // Fret 2
     TRISDbits.TRISD3 = 1;   // Fret 3
     TRISDbits.TRISD12 = 1;  // Fret 4
-    TRISDbits.TRISD13 = 1;  // Fret 4
+    TRISDbits.TRISD13 = 1;  // Fret 5
     
     // Frets Groups
     TRISDbits.TRISD4 = 0;   // Group 1
@@ -50,16 +50,13 @@ void IO_Init(void)
     
     // UART IO
     TRISCbits.TRISC1 = 1;   // U1RX
-    TRISCbits.TRISC4 = 0;   // U1TX
+    TRISEbits.TRISE5 = 0;   // U1TX
     
     // SPI IO, DAC
-    TRISEbits.TRISE7 = 0;   // RESET
-    TRISCbits.TRISC3 = 0;   // CLEAR
-    TRISCbits.TRISC2 = 0;   // LADC
-    TRISGbits.TRISG7 = 0;   // SYNC
-    TRISEbits.TRISE5 = 1;   // SD_SDI2
-    TRISGbits.TRISG8 = 0;   // SD_SDO2
-    TRISGbits.TRISG6 = 0;   // SD_CLK2
+    TRISCbits.TRISC4 = 0;   // SYNC
+    TRISGbits.TRISG7 = 1;   // DAC_SDI2
+    TRISGbits.TRISG8 = 0;   // DAC_SDO2
+    TRISGbits.TRISG6 = 0;   // DAC_CLK2
     
     // SPI IO, SD Card
     TRISBbits.TRISB11 = 0;  // CS
