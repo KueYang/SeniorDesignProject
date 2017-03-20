@@ -10,6 +10,7 @@
 
 #include <p32xxxx.h>
 #include <plib.h>
+#include <proc/p32mx270f512l.h>
 #include "HardwareProfile.h"
 #include "STDDEF.h"
 #include "IO.h"
@@ -49,7 +50,7 @@ void IO_Init(void)
     TRISDbits.TRISD7 = 0;   // Group 4
     
     // UART IO
-    TRISCbits.TRISC1 = 1;   // U1RX
+//    TRISCbits.TRISC1 = 1;   // U1RX
     TRISEbits.TRISE5 = 0;   // U1TX
     
     // SPI IO, DAC

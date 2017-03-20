@@ -107,16 +107,22 @@ COMMANDS MON_COMMANDS[] = {
  * @brief Initialize the UART module.
  * @return Void
  */
+
+//#define PPSUnLock() {SYSKEY=0x0;SYSKEY=0xAA996655;SYSKEY=0x556699AA;CFGCONbits.IOLOCK=0;} 
+//#define PPSLock() {SYSKEY=0x0;SYSKEY=0xAA996655;SYSKEY=0x556699AA;CFGCONbits.IOLOCK=1;}
+
 void UART_Init(void)
 { 
     cmdReady = FALSE;
     numOfCmds = sizeof(MON_COMMANDS)/sizeof(MON_COMMANDS[0]);
     
+    ANSELCCLR = 0xFFFF;   // Set all PORTC to digital
+    
     // Re-mapped pins RPB3R and RPA2 pins to U1RX and U1TX
     mSysUnlockOpLock({
         PPSUnLock;
-        PPSInput(1,U1RX,RPC1);     // Assign RPA2 as input pin for U1RX
-        PPSOutput(2,RPE5,U1TX);    // Set RPB3R pin as output for U1TX
+        PPSInput(1,U1RX,RPC1);     // Assign RPC1 as input pin for U1RX
+        PPSOutput(2,RPE5,U1TX);    // Set RPE5 pin as output for U1TX
         PPSLock;
     });
     
@@ -126,13 +132,40 @@ void UART_Init(void)
     UARTSetLineControl(UART_MODULE_ID, UART_DATA_SIZE_8_BITS | UART_PARITY_NONE | UART_STOP_BITS_1);
     actualBaudRate = UARTSetDataRate(UART_MODULE_ID, GetPeripheralClock(), DESIRED_BAUDRATE);
     UARTEnable(UART_MODULE_ID, UART_ENABLE_FLAGS(UART_PERIPHERAL | UART_RX | UART_TX));
-
+    
+//    U1MODEbits.ON = 0;          // Disables the UART module
+//    U1MODEbits.SIDL = 0;        // Disables sleep on idle
+//    U1MODEbits.IREN = 0;        // IrDA is disabled
+//    U1MODEbits.RTSMD = 0;       // U1RTS pin is in Flow control Mode
+//    U1MODEbits.UEN = 0b00;      // UTX and URX enabled, CTS controlled by PORT register
+//    U1MODEbits.WAKE = 0;        // Wake-up disabled
+//    U1MODEbits.LPBACK = 0;      // Loop back disabled
+//    U1MODEbits.ABAUD = 0;       // Auto Baud rate disabled
+//    U1MODEbits.RXINV = 1;       // URX idle high
+//    U1MODEbits.PDSEL = 0b00;    // 8-bit data, no parity
+//    U1MODEbits.STSEL = 0;       // 1 Stop Bit
+//    U1MODEbits.BRGH = 0;        // Standard Speed mode, 16x baud clock enabled
+//    
+//    U1BRG = UART_GetBaudRate(DESIRED_BAUDRATE);
+//    
+//    U1STAbits.ADM_EN = 0;       // Auto Address Detect disabled
+//    U1STAbits.ADDEN = 0;        // Address Detect disabled
+//    U1STAbits.UTXEN = 1;        // UTX enabled
+//    U1STAbits.UTXINV = 1;       // UTX idle high
+//    U1STAbits.UTXISEL = 0b00;   // Interrupt when TX buffer empty
+//    U1STAbits.UTXBRK = 0;       // Break transmission disabled
+//    U1STAbits.URXEN = 1;        // URX enabled
+//    U1STAbits.URXISEL = 0b00;   // Interrupt when receive buffer isn't empty
+//    
+//    U1MODEbits.ON = 1;          // Enables the UART module
+    
     // Configure UART RX1 and TX1 Interrupt
     INTEnable(INT_SOURCE_UART_RX(UART_MODULE_ID), INT_ENABLED);
     INTEnable(INT_SOURCE_UART_TX(UART_MODULE_ID), INT_DISABLED);
     INTSetVectorPriority(INT_VECTOR_UART(UART_MODULE_ID), INT_PRIORITY_LEVEL_1);
     INTSetVectorSubPriority(INT_VECTOR_UART(UART_MODULE_ID), INT_SUB_PRIORITY_LEVEL_1);
     
+    MON_GetHelp();
     MON_SendString(">");  // Sends a prompt.
 }
 
@@ -152,7 +185,13 @@ int UART_GetBaudRate(int desireBaud)
  */
 void UART_Process(void)
 {
-    UART_processCommand();
+//    UART_processCommand();
+//    MON_SendString(">");  // Sends a prompt.
+    U1RXREG = '>';
+    if(!U1STAbits.RIDLE)
+    {
+        int x = 0;
+    }
 } 
 
 /**
@@ -419,9 +458,9 @@ COMMANDS MON_getCommand(const char* cmdName)
  * command is ready flag is set. 
  * @return Void.
  */
-void __ISR(_UART1_VECTOR, IPL4AUTO) IntUart1Handler(void)
+void __ISR(_UART1_VECTOR, IPL2AUTO) IntUart1Handler(void)
 {
-	if(INTGetFlag(INT_SOURCE_UART_RX(UART_MODULE_ID)))
+	if(IFS1bits.U1RXIF)
 	{   
         /* Checks if bus collision has occurred and clears collision flag.*/
         if(IFS1bits.U1EIF)
@@ -429,19 +468,19 @@ void __ISR(_UART1_VECTOR, IPL4AUTO) IntUart1Handler(void)
            U1STAbits.OERR = 0;
            IFS1bits.U1EIF=0;
         }
-        else if(IFS1bits.U1RXIF)
+        else
         {
             /* Checks if there is data ready to read from the receive buffer. */
-            if(UART_DATA_READY)
+            if(U1STAbits.URXDA == 1)
             {
                 // Reads BYTEs from receive buffer.
-                BYTE data = U1RXREG;
+                BYTE rxData = U1RXREG;
 
                 // Writes data to receive buffer.
-                UART_putNextChar(&rxBuffer, data);
+                UART_putNextChar(&rxBuffer, rxData);
                 
                 // Sets a flag for end of receiving a command.
-                if(data == '\r')
+                if(rxData == '\r')
                 {
                     cmdReady = TRUE;
                     UART_processCommand();
@@ -450,10 +489,10 @@ void __ISR(_UART1_VECTOR, IPL4AUTO) IntUart1Handler(void)
         }
         
         // Clear the RX interrupt Flag.
-	    INTClearFlag(INT_SOURCE_UART_RX(UART_MODULE_ID));
+        IFS1bits.U1RXIF = 0;
 	}
     
-    if(INTGetFlag(INT_SOURCE_UART_TX(UART_MODULE_ID)))
+    if(IFS1bits.U1TXIF)
 	{   
         /* Checks if bus collision has occurred and clears collision flag.*/
         if(IFS1bits.U1EIF)
@@ -461,12 +500,13 @@ void __ISR(_UART1_VECTOR, IPL4AUTO) IntUart1Handler(void)
            U1STAbits.OERR = 0;
            IFS1bits.U1EIF=0;
         }
-        else if(IFS1bits.U1TXIF)
+        else
         {
             /* Checks if there is data ready to read from the receive buffer. */
             if(UART_TRANSMITTER_NOT_FULL && !UART_isBufferEmpty(&txBuffer))
             {
-                U1TXREG = UART_getNextChar(&txBuffer);    
+                BYTE txData = UART_getNextChar(&txBuffer);
+                U1TXREG = txData;
             }
             /* Checks if the transmit buffer is empty. If so, disable the TX interrupt. */
             if(UART_isBufferEmpty(&txBuffer))
@@ -475,8 +515,8 @@ void __ISR(_UART1_VECTOR, IPL4AUTO) IntUart1Handler(void)
             }
         }
         
-        // Clear the RX interrupt Flag.
-	    INTClearFlag(INT_SOURCE_UART_TX(UART_MODULE_ID));
+        // Clear the TX interrupt Flag.
+        IFS1bits.U1TXIF = 0;
 	}
 }
 
