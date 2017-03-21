@@ -66,22 +66,22 @@ void TIMER_Process(void)
  */
 void TIMER1_Init(void)
 {
-    T1CONbits.ON = 0;
-    T1CONbits.SIDL = 0;
-    T1CONbits.TGATE = 0;
-    T1CONbits.TCKPS = 0b000;    //PS = 1
+    T1CONbits.ON = 0;           // Disable Timer 1
+    T1CONbits.SIDL = 0;         // Disables sleep on idle
+    T1CONbits.TGATE = 0;        // Gated time accumulation is disabled
+    T1CONbits.TCKPS = 0b000;    // Timer 1 Pre-Scalar = 1
     T1CONbits.TCS = 0;
     
-    PR1 = ONE_MS_PERIOD;
-    TMR1 = 0;
+    PR1 = ONE_MS_PERIOD;        // Sets Timer 1 Period to 1 ms
+    TMR1 = 0;                   // Clears Timer 1 counter
     
-    T1CONbits.ON = 1;
+    T1CONbits.ON = 1;           // Enable Timer 1
     
-    // Set up the timer interrupt with a priority of 2
-    IFS0bits.T1IF = 0;
-    IEC0bits.T1IE = 1;
-    IPC1bits.T1IP = 2;
-    IPC1bits.T1IS = 0;
+    /* Sets up the Timer 1 interrupts. */
+    IFS0bits.T1IF = 0;          // Clears Timer 1 Interrupt Flag
+    IEC0bits.T1IE = 1;          // Enables Timer 1 Interrupt
+    IPC1bits.T1IP = 2;          // Sets Timer 1 Interrupt Priority 1
+    IPC1bits.T1IS = 0;          // Sets Timer 1 Interrupt Sub-Priority 0
 }
 
 /**
@@ -165,22 +165,24 @@ void __ISR(_TIMER_1_VECTOR, IPL2AUTO) Timer1Handler(void)
  */
 void TIMER3_Init(void)
 {
-    T3CONbits.ON = 0;
-    T3CONbits.SIDL = 0;
-    T3CONbits.TGATE = 0;
-    T3CONbits.TCKPS = 0b000;    //PS = 1
+    T3CONbits.ON = 0;           // Disable Timer 3
+    T3CONbits.SIDL = 0;         // Disables sleep on idle
+    T3CONbits.TGATE = 0;        // Gated time accumulation is disabled
+    T3CONbits.TCKPS = 0b000;    // Timer 3 Pre-Scalar = 1
     T3CONbits.TCS = 0;
     
-    PR3 = ONE_MS_PERIOD;
-    TMR3 = 0;
+    PR3 = ONE_MS_PERIOD;        // Sets Timer 3 Period to 1 ms
+    TMR3 = 0;                   // Clears Timer 3 counter
+    
+    T3CONbits.ON = 1;           // Enable Timer 3
+    
+    /* Sets up the Timer 1 interrupts. */
+    IFS0bits.T3IF = 0;          // Clears Timer 3 interrupt flag
+    IEC0bits.T3IE = 1;          // Enables Timer 3 interrupt
+    IPC3bits.T3IP = 2;          // Sets Timer 3 priority to 2
+    IPC3bits.T3IS = 2;          // Sets Timer 3 sub-priority to 2
     
     Timer3_ON = FALSE;
-    
-    // Set up the timer interrupt with a priority of 2
-    IFS0bits.T3IF = 0;      // Clears Timer 3 interrupt flag
-    IEC0bits.T3IE = 1;      // Enables Timer 3 interrupt
-    IPC3bits.T3IP = 2;      // Sets Timer 3 priority to 2
-    IPC3bits.T3IS = 2;      // Sets Timer 3 sub-priority to 2
 }
 
 /**

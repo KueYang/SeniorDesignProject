@@ -18,4 +18,8 @@
  * Calculates and returns the Instruction Clock Speed. */
 #define	GetInstructionClock()	(SYS_FREQ)
 
+
+#define PPSUnLock() {SYSKEY=0x0;SYSKEY=0xAA996655;SYSKEY=0x556699AA;CFGCONbits.IOLOCK=0;} 
+#define PPSLock() {SYSKEY=0x0;SYSKEY=0xAA996655;SYSKEY=0x556699AA;CFGCONbits.IOLOCK=1;}
+
 #endif

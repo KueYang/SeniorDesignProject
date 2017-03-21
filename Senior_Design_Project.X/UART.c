@@ -20,9 +20,6 @@
 #include "TESTS.h"
 #include "UART.h"
 
-///** @def UART_MODULE_ID 
-// * The UART module ID. */
-//#define UART_MODULE_ID          UART1
 /** @def DESIRED_BAUDRATE 
  * The desired UART baud rate. */
 #define DESIRED_BAUDRATE        (19200)     //The desired BaudRate
@@ -109,29 +106,16 @@ COMMANDS MON_COMMANDS[] = {
  * @brief Initialize the UART module.
  * @return Void
  */
-
-//#define PPSUnLock() {SYSKEY=0x0;SYSKEY=0xAA996655;SYSKEY=0x556699AA;CFGCONbits.IOLOCK=0;} 
-//#define PPSLock() {SYSKEY=0x0;SYSKEY=0xAA996655;SYSKEY=0x556699AA;CFGCONbits.IOLOCK=1;}
-
 void UART_Init(void)
 { 
     cmdReady = FALSE;
     numOfCmds = sizeof(MON_COMMANDS)/sizeof(MON_COMMANDS[0]);
     
     // Re-mapped pins RPB3R and RPA2 pins to U1RX and U1TX
-//    mSysUnlockOpLock({
-//        PPSUnLock;
-//        PPSInput(1,U1RX,RPC1);     // Assign RPC1 as input pin for U1RX
-//        PPSOutput(2,RPE5,U1TX);    // Set RPE5 pin as output for U1TX
-//        PPSLock;
-//    });
-    
-    // Configure UART1 module
-//    UARTConfigure(UART_MODULE_ID, UART_ENABLE_PINS_TX_RX_ONLY | UART_INVERT_RECEIVE_POLARITY | UART_INVERT_TRANSMIT_POLARITY);
-//    UARTSetFifoMode(UART_MODULE_ID, UART_INTERRUPT_ON_TX_BUFFER_EMPTY | UART_INTERRUPT_ON_RX_NOT_EMPTY);
-//    UARTSetLineControl(UART_MODULE_ID, UART_DATA_SIZE_8_BITS | UART_PARITY_NONE | UART_STOP_BITS_1);
-//    actualBaudRate = UARTSetDataRate(UART_MODULE_ID, GetPeripheralClock(), DESIRED_BAUDRATE);
-//    UARTEnable(UART_MODULE_ID, UART_ENABLE_FLAGS(UART_PERIPHERAL | UART_RX | UART_TX));
+    PPSUnLock();
+    U1RXRbits.U1RXR = 0x0A;     // Assign RPC1 as input pin for U1RX
+    RPE5Rbits.RPE5R = 0x03;     // Set RPE5 pin as output for U1TX
+    PPSLock();
     
     U1MODEbits.ON = 0;          // Disables the UART module
     U1MODEbits.SIDL = 0;        // Disables sleep on idle
@@ -141,7 +125,7 @@ void UART_Init(void)
     U1MODEbits.WAKE = 0;        // Wake-up disabled
     U1MODEbits.LPBACK = 0;      // Loop back disabled
     U1MODEbits.ABAUD = 0;       // Auto Baud rate disabled
-    U1MODEbits.RXINV = 1;       // URX idle high
+    U1MODEbits.RXINV = 1;       // URX idle low
     U1MODEbits.PDSEL = 0b00;    // 8-bit data, no parity
     U1MODEbits.STSEL = 0;       // 1 Stop Bit
     U1MODEbits.BRGH = 0;        // Standard Speed mode, 16x baud clock enabled
@@ -151,7 +135,7 @@ void UART_Init(void)
     U1STAbits.ADM_EN = 0;       // Auto Address Detect disabled
     U1STAbits.ADDEN = 0;        // Address Detect disabled
     U1STAbits.UTXEN = 1;        // UTX enabled
-    U1STAbits.UTXINV = 1;       // UTX idle high
+    U1STAbits.UTXINV = 1;       // UTX idle low
     U1STAbits.UTXISEL = 0b00;   // Interrupt when TX buffer empty
     U1STAbits.UTXBRK = 0;       // Break transmission disabled
     U1STAbits.URXEN = 1;        // URX enabled
@@ -160,12 +144,12 @@ void UART_Init(void)
     U1MODEbits.ON = 1;          // Enables the UART module
     
     // Configure UART RX1 and TX1 Interrupt
-    IFS1bits.U1RXIF = 0;
-    IEC1bits.U2RXIE = 0;
-    IFS1bits.U2TXIF = 0;
-    IEC1bits.U1TXIE = 1;
-    IPC7bits.U1IP = 3;
-    IPC7bits.U1IS = 2;
+    IFS1bits.U1RXIF = 0;        // Clears Receive Interrupt Flag
+    IEC1bits.U2RXIE = 0;        // Enables U1RX Interrupt Enable
+    IFS1bits.U2TXIF = 0;        // Clears Transmit Interrupt Flag 
+    IEC1bits.U1TXIE = 1;        // Enables U1TX Interrupt Enable
+    IPC7bits.U1IP = 3;          // Sets UART Interrupt Priority 3
+    IPC7bits.U1IS = 2;          // Sets UART Interrupt Sub-Priority 2
     
     MON_GetHelp();
     MON_SendString(">");  // Sends a prompt.
@@ -188,12 +172,6 @@ int UART_GetBaudRate(int desireBaud)
 void UART_Process(void)
 {
 //    UART_processCommand();
-//    MON_SendString(">");  // Sends a prompt.
-    U1RXREG = '>';
-    if(!U1STAbits.RIDLE)
-    {
-        int x = 0;
-    }
 } 
 
 /**
