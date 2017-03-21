@@ -7,7 +7,6 @@
  */
 
 #include <p32xxxx.h>
-#include <plib.h>
 #include "HardwareProfile.h"
 #include "STDDEF.h"
 #include "SPI.h"
@@ -36,12 +35,12 @@ void SPI_Init(void)
 void SPI2_Init(void)
 {
     // Re-mapped pins RPG7 and RPG8 pins to SDI2 and SDO2
-    mSysUnlockOpLock({
-        PPSUnLock;
-        PPSInput(2,SDI2,RPG7);     // Assign RPG7 as input pin for SDI
-        PPSOutput(1,RPG8,SDO2);    // Set RPG8 pin as output for SDO
-        PPSLock;
-    });
+//    mSysUnlockOpLock({
+//        PPSUnLock;
+//        PPSInput(2,SDI2,RPG7);     // Assign RPG7 as input pin for SDI
+//        PPSOutput(1,RPG8,SDO2);    // Set RPG8 pin as output for SDO
+//        PPSLock;
+//    });
     
     SPI2CONbits.ON = 0;         // Disables the SPI Module
     
@@ -108,12 +107,12 @@ BYTE SPI2_ReadWrite(BYTE ch)
 void SPI3_Init(int clk)
 {
     // Re-mapped pins RPB11 and RPB13 pins to SDI1 and SDO1
-    mSysUnlockOpLock({
-        PPSUnLock;
-        PPSInput(1,SDI3,RPB9);      // Assign RPB9 as input pin for SDI
-        PPSOutput(1,RPB10,SDO3);    // Set RPB10 pin as output for SDO
-        PPSLock;
-    });
+//    mSysUnlockOpLock({
+//        PPSUnLock;
+//        PPSInput(1,SDI3,RPB9);      // Assign RPB9 as input pin for SDI
+//        PPSOutput(1,RPB10,SDO3);    // Set RPB10 pin as output for SDO
+//        PPSLock;
+//    });
     
     SPI1CONbits.ON = 0;         // Disable SPI Module
     SPI1CONbits.MSSEN = 0;      // Slave select SPI support disabled

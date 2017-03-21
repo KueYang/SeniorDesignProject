@@ -7,7 +7,7 @@
  */
 
 #include <p32xxxx.h>
-#include <plib.h>
+#include <sys/attribs.h>
 #include "STDDEF.h"
 #include "IO.h"
 #include "TIMER.h"
@@ -87,9 +87,10 @@ void ADC_Init(void)
     AD1CON1bits.ASAM = 1;           // Sampling begins immediately
     
     // Set up the ADC interrupt with a priority of 2
-    INTEnable(INT_AD1, INT_ENABLED);
-    INTSetVectorPriority(INT_ADC_VECTOR, INT_PRIORITY_LEVEL_2);
-    INTSetVectorSubPriority(INT_ADC_VECTOR, INT_SUB_PRIORITY_LEVEL_3);
+    IFS0bits.AD1IF = 0;
+    IEC0bits.AD1IE = 1;
+    IPC5bits.AD1IP = 2;
+    IPC5bits.AD1IS = 3;
     
     // Initializes strumming variables
     ADC_ZeroBuffer();
@@ -193,5 +194,5 @@ void __ISR(_ADC_VECTOR, IPL2AUTO) ADCHandler(void)
     }
     
     // Clear the interrupt flag
-    INTClearFlag(INT_AD1);
+    IFS0bits.AD1IF = 0;
 }

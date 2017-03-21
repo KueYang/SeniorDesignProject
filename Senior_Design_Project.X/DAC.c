@@ -8,7 +8,6 @@
  */
 
 #include <p32xxxx.h>
-#include <plib.h>
 #include "STDDEF.h"
 #include "SPI.h"
 #include "DAC.h"

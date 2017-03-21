@@ -8,7 +8,9 @@
  */
 
 #include <p32xxxx.h>
-#include <plib.h>
+#include <sys/attribs.h>
+#include <stdio.h>
+#include <string.h>
 #include "HardwareProfile.h"
 #include "STDDEF.h"
 #include "Timer.h"
@@ -18,9 +20,9 @@
 #include "TESTS.h"
 #include "UART.h"
 
-/** @def UART_MODULE_ID 
- * The UART module ID. */
-#define UART_MODULE_ID          UART1
+///** @def UART_MODULE_ID 
+// * The UART module ID. */
+//#define UART_MODULE_ID          UART1
 /** @def DESIRED_BAUDRATE 
  * The desired UART baud rate. */
 #define DESIRED_BAUDRATE        (19200)     //The desired BaudRate
@@ -116,54 +118,54 @@ void UART_Init(void)
     cmdReady = FALSE;
     numOfCmds = sizeof(MON_COMMANDS)/sizeof(MON_COMMANDS[0]);
     
-    ANSELCCLR = 0xFFFF;   // Set all PORTC to digital
-    
     // Re-mapped pins RPB3R and RPA2 pins to U1RX and U1TX
-    mSysUnlockOpLock({
-        PPSUnLock;
-        PPSInput(1,U1RX,RPC1);     // Assign RPC1 as input pin for U1RX
-        PPSOutput(2,RPE5,U1TX);    // Set RPE5 pin as output for U1TX
-        PPSLock;
-    });
+//    mSysUnlockOpLock({
+//        PPSUnLock;
+//        PPSInput(1,U1RX,RPC1);     // Assign RPC1 as input pin for U1RX
+//        PPSOutput(2,RPE5,U1TX);    // Set RPE5 pin as output for U1TX
+//        PPSLock;
+//    });
     
     // Configure UART1 module
-    UARTConfigure(UART_MODULE_ID, UART_ENABLE_PINS_TX_RX_ONLY | UART_INVERT_RECEIVE_POLARITY | UART_INVERT_TRANSMIT_POLARITY);
-    UARTSetFifoMode(UART_MODULE_ID, UART_INTERRUPT_ON_TX_BUFFER_EMPTY | UART_INTERRUPT_ON_RX_NOT_EMPTY);
-    UARTSetLineControl(UART_MODULE_ID, UART_DATA_SIZE_8_BITS | UART_PARITY_NONE | UART_STOP_BITS_1);
-    actualBaudRate = UARTSetDataRate(UART_MODULE_ID, GetPeripheralClock(), DESIRED_BAUDRATE);
-    UARTEnable(UART_MODULE_ID, UART_ENABLE_FLAGS(UART_PERIPHERAL | UART_RX | UART_TX));
+//    UARTConfigure(UART_MODULE_ID, UART_ENABLE_PINS_TX_RX_ONLY | UART_INVERT_RECEIVE_POLARITY | UART_INVERT_TRANSMIT_POLARITY);
+//    UARTSetFifoMode(UART_MODULE_ID, UART_INTERRUPT_ON_TX_BUFFER_EMPTY | UART_INTERRUPT_ON_RX_NOT_EMPTY);
+//    UARTSetLineControl(UART_MODULE_ID, UART_DATA_SIZE_8_BITS | UART_PARITY_NONE | UART_STOP_BITS_1);
+//    actualBaudRate = UARTSetDataRate(UART_MODULE_ID, GetPeripheralClock(), DESIRED_BAUDRATE);
+//    UARTEnable(UART_MODULE_ID, UART_ENABLE_FLAGS(UART_PERIPHERAL | UART_RX | UART_TX));
     
-//    U1MODEbits.ON = 0;          // Disables the UART module
-//    U1MODEbits.SIDL = 0;        // Disables sleep on idle
-//    U1MODEbits.IREN = 0;        // IrDA is disabled
-//    U1MODEbits.RTSMD = 0;       // U1RTS pin is in Flow control Mode
-//    U1MODEbits.UEN = 0b00;      // UTX and URX enabled, CTS controlled by PORT register
-//    U1MODEbits.WAKE = 0;        // Wake-up disabled
-//    U1MODEbits.LPBACK = 0;      // Loop back disabled
-//    U1MODEbits.ABAUD = 0;       // Auto Baud rate disabled
-//    U1MODEbits.RXINV = 1;       // URX idle high
-//    U1MODEbits.PDSEL = 0b00;    // 8-bit data, no parity
-//    U1MODEbits.STSEL = 0;       // 1 Stop Bit
-//    U1MODEbits.BRGH = 0;        // Standard Speed mode, 16x baud clock enabled
-//    
-//    U1BRG = UART_GetBaudRate(DESIRED_BAUDRATE);
-//    
-//    U1STAbits.ADM_EN = 0;       // Auto Address Detect disabled
-//    U1STAbits.ADDEN = 0;        // Address Detect disabled
-//    U1STAbits.UTXEN = 1;        // UTX enabled
-//    U1STAbits.UTXINV = 1;       // UTX idle high
-//    U1STAbits.UTXISEL = 0b00;   // Interrupt when TX buffer empty
-//    U1STAbits.UTXBRK = 0;       // Break transmission disabled
-//    U1STAbits.URXEN = 1;        // URX enabled
-//    U1STAbits.URXISEL = 0b00;   // Interrupt when receive buffer isn't empty
-//    
-//    U1MODEbits.ON = 1;          // Enables the UART module
+    U1MODEbits.ON = 0;          // Disables the UART module
+    U1MODEbits.SIDL = 0;        // Disables sleep on idle
+    U1MODEbits.IREN = 0;        // IrDA is disabled
+    U1MODEbits.RTSMD = 0;       // U1RTS pin is in Flow control Mode
+    U1MODEbits.UEN = 0b00;      // UTX and URX enabled, CTS controlled by PORT register
+    U1MODEbits.WAKE = 0;        // Wake-up disabled
+    U1MODEbits.LPBACK = 0;      // Loop back disabled
+    U1MODEbits.ABAUD = 0;       // Auto Baud rate disabled
+    U1MODEbits.RXINV = 1;       // URX idle high
+    U1MODEbits.PDSEL = 0b00;    // 8-bit data, no parity
+    U1MODEbits.STSEL = 0;       // 1 Stop Bit
+    U1MODEbits.BRGH = 0;        // Standard Speed mode, 16x baud clock enabled
+    
+    U1BRG = UART_GetBaudRate(DESIRED_BAUDRATE);
+    
+    U1STAbits.ADM_EN = 0;       // Auto Address Detect disabled
+    U1STAbits.ADDEN = 0;        // Address Detect disabled
+    U1STAbits.UTXEN = 1;        // UTX enabled
+    U1STAbits.UTXINV = 1;       // UTX idle high
+    U1STAbits.UTXISEL = 0b00;   // Interrupt when TX buffer empty
+    U1STAbits.UTXBRK = 0;       // Break transmission disabled
+    U1STAbits.URXEN = 1;        // URX enabled
+    U1STAbits.URXISEL = 0b00;   // Interrupt when receive buffer isn't empty
+    
+    U1MODEbits.ON = 1;          // Enables the UART module
     
     // Configure UART RX1 and TX1 Interrupt
-    INTEnable(INT_SOURCE_UART_RX(UART_MODULE_ID), INT_ENABLED);
-    INTEnable(INT_SOURCE_UART_TX(UART_MODULE_ID), INT_DISABLED);
-    INTSetVectorPriority(INT_VECTOR_UART(UART_MODULE_ID), INT_PRIORITY_LEVEL_1);
-    INTSetVectorSubPriority(INT_VECTOR_UART(UART_MODULE_ID), INT_SUB_PRIORITY_LEVEL_1);
+    IFS1bits.U1RXIF = 0;
+    IEC1bits.U2RXIE = 0;
+    IFS1bits.U2TXIF = 0;
+    IEC1bits.U1TXIE = 1;
+    IPC7bits.U1IP = 3;
+    IPC7bits.U1IS = 2;
     
     MON_GetHelp();
     MON_SendString(">");  // Sends a prompt.
@@ -203,7 +205,7 @@ void UART_processCommand(void)
     if(!UART_isBufferEmpty(&rxBuffer) && cmdReady == TRUE)
     {
         int numOfArgs = 0;
-        
+
         /* Parses command from receive buffer. */
         numOfArgs = MON_parseCommand(&cmdStr, &rxBuffer);
         
@@ -301,7 +303,7 @@ int MON_parseCommand(COMMANDSTR* cmd, MON_FIFO* buffer)
 void MON_SendChar(const char* character)
 {
     UART_putNextChar(&txBuffer, *character);
-    INTEnable(INT_SOURCE_UART_TX(UART_MODULE_ID), INT_ENABLED);
+//    INTEnable(INT_SOURCE_UART_TX(UART_MODULE_ID), INT_ENABLED);
 }
 
 /**
@@ -328,7 +330,7 @@ void MON_SendString(const char* str)
         UART_putNextChar(&txBuffer, '\r');
     }
     
-    INTEnable(INT_SOURCE_UART_TX(UART_MODULE_ID), INT_ENABLED);
+//    INTEnable(INT_SOURCE_UART_TX(UART_MODULE_ID), INT_ENABLED);
 }
 
 /**
@@ -352,7 +354,7 @@ void MON_SendStringNR(const char* str)
         }
     }
     
-    INTEnable(INT_SOURCE_UART_TX(UART_MODULE_ID), INT_ENABLED);
+//    INTEnable(INT_SOURCE_UART_TX(UART_MODULE_ID), INT_ENABLED);
 }
 
 /**
@@ -503,15 +505,15 @@ void __ISR(_UART1_VECTOR, IPL2AUTO) IntUart1Handler(void)
         else
         {
             /* Checks if there is data ready to read from the receive buffer. */
-            if(UART_TRANSMITTER_NOT_FULL && !UART_isBufferEmpty(&txBuffer))
-            {
-                BYTE txData = UART_getNextChar(&txBuffer);
-                U1TXREG = txData;
-            }
+//            if(UART_TRANSMITTER_NOT_FULL && !UART_isBufferEmpty(&txBuffer))
+//            {
+//                BYTE txData = UART_getNextChar(&txBuffer);
+//                U1TXREG = txData;
+//            }
             /* Checks if the transmit buffer is empty. If so, disable the TX interrupt. */
             if(UART_isBufferEmpty(&txBuffer))
             {
-                INTEnable(INT_SOURCE_UART_TX(UART_MODULE_ID), INT_DISABLED);
+//                INTEnable(INT_SOURCE_UART_TX(UART_MODULE_ID), INT_DISABLED);
             }
         }
         

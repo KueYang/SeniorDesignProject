@@ -10,7 +10,8 @@
  */
 
 #include <p32xxxx.h>
-#include <plib.h>
+#include <stdio.h>
+#include <string.h>
 #include "STDDEF.h"
 #include "IO.h"
 #include "DAC.h"

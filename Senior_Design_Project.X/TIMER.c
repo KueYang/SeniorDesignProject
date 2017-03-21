@@ -7,7 +7,7 @@
  */
 
 #include <p32xxxx.h>
-#include <plib.h>
+#include <sys/attribs.h>
 #include "HardwareProfile.h"
 #include "STDDEF.h"
 #include "./fatfs/diskio.h"
@@ -78,9 +78,10 @@ void TIMER1_Init(void)
     T1CONbits.ON = 1;
     
     // Set up the timer interrupt with a priority of 2
-    INTEnable(INT_T1, INT_ENABLED);
-    INTSetVectorPriority(INT_TIMER_1_VECTOR, INT_PRIORITY_LEVEL_2);
-    INTSetVectorSubPriority(INT_TIMER_1_VECTOR, INT_SUB_PRIORITY_LEVEL_0);
+    IFS0bits.T1IF = 0;
+    IEC0bits.T1IE = 1;
+    IPC1bits.T1IP = 2;
+    IPC1bits.T1IS = 0;
 }
 
 /**
@@ -105,13 +106,13 @@ void TIMER1_ON(BOOL ON)
     {
         T1CONbits.ON = 1;
         Timer1_ON = TRUE;
-        INTClearFlag(INT_T1);
+        IFS0bits.T1IF = 0;
     }
     else
     {
         T1CONbits.ON = 0;
         Timer1_ON = FALSE;
-        INTClearFlag(INT_T1);
+        IFS0bits.T1IF = 0;
     }
 }
 
@@ -155,7 +156,7 @@ void __ISR(_TIMER_1_VECTOR, IPL2AUTO) Timer1Handler(void)
 	disk_timerproc();	/* Drive timer procedure of low level disk I/O module */
     
     // Clear the interrupt flag
-    INTClearFlag(INT_T1);
+    IFS0bits.T1IF = 0;
 }
 
 /**
@@ -176,9 +177,10 @@ void TIMER3_Init(void)
     Timer3_ON = FALSE;
     
     // Set up the timer interrupt with a priority of 2
-    INTEnable(INT_T3, INT_ENABLED);
-    INTSetVectorPriority(INT_TIMER_3_VECTOR, INT_PRIORITY_LEVEL_2);
-    INTSetVectorSubPriority(INT_TIMER_3_VECTOR, INT_SUB_PRIORITY_LEVEL_2);
+    IFS0bits.T3IF = 0;      // Clears Timer 3 interrupt flag
+    IEC0bits.T3IE = 1;      // Enables Timer 3 interrupt
+    IPC3bits.T3IP = 2;      // Sets Timer 3 priority to 2
+    IPC3bits.T3IS = 2;      // Sets Timer 3 sub-priority to 2
 }
 
 /**
@@ -216,14 +218,14 @@ void TIMER3_ON(BOOL ON)
         TMR3 = 0;
         T3CONbits.ON = 1;
         Timer3_ON = TRUE;
-        INTClearFlag(INT_T3);
+        IFS0bits.T3IF = 0;
     }
     else
     {
         TMR3 = 0;
         T3CONbits.ON = 0;
         Timer3_ON = FALSE;
-        INTClearFlag(INT_T3);
+        IFS0bits.T3IF = 0;
     }
 }
 
@@ -243,5 +245,5 @@ void __ISR(_TIMER_3_VECTOR, IPL2AUTO) Timer3Handler(void)
     AUDIO_WriteDataToDAC();
     
     // Clear the interrupt flag
-    INTClearFlag(INT_T3);
+    IFS0bits.T3IF = 0;
 }

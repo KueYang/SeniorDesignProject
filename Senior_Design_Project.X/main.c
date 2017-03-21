@@ -6,7 +6,6 @@
  */
 
 #include <p32xxxx.h>
-#include <plib.h>
 #include "HardwareProfile.h"
 #include "STDDEF.h"
 #include "IO.h"
@@ -85,15 +84,15 @@
 int main(void) 
 {    
     /* Enable multi-vector interrupts */
-    INTConfigureSystem(INT_SYSTEM_CONFIG_MULT_VECTOR);
-    INTEnableInterrupts();
+    INTCONbits.MVEC = TRUE; // Enable global multi-vector interrupt
+    asm("ei");              // Enables interrupts
     
     /* Peripheral Initializations */
     IO_Init();          // Initializes all digital IO.
     TIMER_Init();       // Initializes all timer modules.
 //    ADC_Init();         // Initializes all ADC modules.
 //    SPI_Init();         // Initializes all SPI modules.
-    UART_Init();        // Initializes all UART modules
+//    UART_Init();        // Initializes all UART modules
 //    AUDIO_Init();       // Initializes the Audio module.
 //    DAC_Init();         // Initializes the DACs.
     
@@ -105,7 +104,7 @@ int main(void)
 //        WDTCONbits.WDTCLR = 0x01;   // Clears the watchdog timer flag.
 //        AUDIO_Process();
 //        PORTEbits.RE3 = 0;          // Turn off ERROR LED
-        UART_Process();
+//        UART_Process();
     }
 
     return (0);

@@ -6,7 +6,7 @@
  * and writing to the DAC.
  */
 #include <p32xxxx.h>
-#include <plib.h>
+#include <stdio.h>
 #include "TIMER.h"
 #include "UART.h"
 #include "DAC.h"

@@ -12,7 +12,6 @@
 /-------------------------------------------------------------------------*/
 
 #include <p32xxxx.h>
-#include <plib.h>
 #include "diskio.h"
 #include "../SPI.h"
 

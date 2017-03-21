@@ -8,7 +8,7 @@
  */
 
 #include <p32xxxx.h>
-#include <plib.h>
+#include <stdio.h>
 #include "STDDEF.h"
 #include "./fatfs/diskio.h"
 #include "./fatfs/ffconf.h"

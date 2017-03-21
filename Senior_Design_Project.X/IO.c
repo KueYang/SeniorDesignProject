@@ -9,7 +9,6 @@
  */
 
 #include <p32xxxx.h>
-#include <plib.h>
 #include <proc/p32mx270f512l.h>
 #include "HardwareProfile.h"
 #include "STDDEF.h"
