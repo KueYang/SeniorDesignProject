@@ -7,7 +7,7 @@
  */
 
 #include <p32xxxx.h>
-#include <sys/attribs.h>
+#include "plib/plib.h"
 #include "STDDEF.h"
 #include "IO.h"
 #include "TIMER.h"

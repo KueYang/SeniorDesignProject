@@ -7,7 +7,7 @@
  */
 
 #include <p32xxxx.h>
-#include <sys/attribs.h>
+#include "plib/plib.h"
 #include "HardwareProfile.h"
 #include "STDDEF.h"
 #include "./fatfs/diskio.h"
@@ -54,10 +54,10 @@ void TIMER_Init(void)
  */
 void TIMER_Process(void)
 {
-    PORTEbits.RE2 = 1;
-    TIMER_MSecondDelay(3000);
-    PORTEbits.RE2 = 0;
-    TIMER_MSecondDelay(3000);
+    PORTEbits.RE3 = 1;
+    TIMER_MSecondDelay(5000);
+    PORTEbits.RE3 = 0;
+    TIMER_MSecondDelay(5000);
 }
 
 /**
@@ -80,7 +80,7 @@ void TIMER1_Init(void)
     /* Sets up the Timer 1 interrupts. */
     IFS0bits.T1IF = 0;          // Clears Timer 1 Interrupt Flag
     IEC0bits.T1IE = 1;          // Enables Timer 1 Interrupt
-    IPC1bits.T1IP = 2;          // Sets Timer 1 Interrupt Priority 1
+    IPC1bits.T1IP = 2;          // Sets Timer 1 Interrupt Priority 2
     IPC1bits.T1IS = 0;          // Sets Timer 1 Interrupt Sub-Priority 0
 }
 
@@ -174,7 +174,7 @@ void TIMER3_Init(void)
     PR3 = ONE_MS_PERIOD;        // Sets Timer 3 Period to 1 ms
     TMR3 = 0;                   // Clears Timer 3 counter
     
-    T3CONbits.ON = 1;           // Enable Timer 3
+    T3CONbits.ON = 0;           // Disable Timer 3
     
     /* Sets up the Timer 1 interrupts. */
     IFS0bits.T3IF = 0;          // Clears Timer 3 interrupt flag

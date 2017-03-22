@@ -8,7 +8,7 @@
  */
 
 #include <p32xxxx.h>
-#include <sys/attribs.h>
+#include "plib/plib.h"
 #include <stdio.h>
 #include <string.h>
 #include "HardwareProfile.h"
@@ -111,11 +111,13 @@ void UART_Init(void)
     cmdReady = FALSE;
     numOfCmds = sizeof(MON_COMMANDS)/sizeof(MON_COMMANDS[0]);
     
-    // Re-mapped pins RPB3R and RPA2 pins to U1RX and U1TX
-    PPSUnLock();
-    U1RXRbits.U1RXR = 0x0A;     // Assign RPC1 as input pin for U1RX
-    RPE5Rbits.RPE5R = 0x03;     // Set RPE5 pin as output for U1TX
-    PPSLock();
+    // Re-mapped pins RPC1 and RPE5 pins to U1RX and U1TX
+    mSysUnlockOpLock({
+        PPSUnLock;
+        PPSInput(1,U1RX,RPC1);     // Assign RPC1 as input pin for U1RX
+        PPSOutput(2,RPE5,U1TX);    // Set RPE5 pin as output for U1TX
+        PPSLock;
+    });
     
     U1MODEbits.ON = 0;          // Disables the UART module
     U1MODEbits.SIDL = 0;        // Disables sleep on idle
@@ -136,7 +138,7 @@ void UART_Init(void)
     U1STAbits.ADDEN = 0;        // Address Detect disabled
     U1STAbits.UTXEN = 1;        // UTX enabled
     U1STAbits.UTXINV = 1;       // UTX idle low
-    U1STAbits.UTXISEL = 0b00;   // Interrupt when TX buffer empty
+    U1STAbits.UTXISEL = 0b10;   // Interrupt when TX buffer empty
     U1STAbits.UTXBRK = 0;       // Break transmission disabled
     U1STAbits.URXEN = 1;        // URX enabled
     U1STAbits.URXISEL = 0b00;   // Interrupt when receive buffer isn't empty
@@ -145,11 +147,11 @@ void UART_Init(void)
     
     // Configure UART RX1 and TX1 Interrupt
     IFS1bits.U1RXIF = 0;        // Clears Receive Interrupt Flag
-    IEC1bits.U2RXIE = 0;        // Enables U1RX Interrupt Enable
-    IFS1bits.U2TXIF = 0;        // Clears Transmit Interrupt Flag 
-    IEC1bits.U1TXIE = 1;        // Enables U1TX Interrupt Enable
-    IPC7bits.U1IP = 3;          // Sets UART Interrupt Priority 3
-    IPC7bits.U1IS = 2;          // Sets UART Interrupt Sub-Priority 2
+    IEC1bits.U1RXIE = 1;        // Enables U1RX Interrupt Enable
+    IFS1bits.U1TXIF = 0;        // Clears Transmit Interrupt Flag 
+    IEC1bits.U1TXIE = 0;        // Disables U1TX Interrupt Enable
+    IPC7bits.U1IP = 2;          // Sets UART Interrupt Priority 2
+    IPC7bits.U1IS = 1;          // Sets UART Interrupt Sub-Priority 2
     
     MON_GetHelp();
     MON_SendString(">");  // Sends a prompt.
@@ -162,7 +164,7 @@ void UART_Init(void)
  */
 int UART_GetBaudRate(int desireBaud)
 {
-    return ((GetPeripheralClock()/desireBaud)) - 1;
+    return ((GetPeripheralClock()/(16*desireBaud))) - 1;
 }
 
 /**
@@ -281,7 +283,9 @@ int MON_parseCommand(COMMANDSTR* cmd, MON_FIFO* buffer)
 void MON_SendChar(const char* character)
 {
     UART_putNextChar(&txBuffer, *character);
-//    INTEnable(INT_SOURCE_UART_TX(UART_MODULE_ID), INT_ENABLED);
+    
+    IFS1bits.U1TXIF = 0;        // Clears Transmit Interrupt Flag 
+    IEC1bits.U1TXIE = 1;        // Enables U1TX Interrupt Enable
 }
 
 /**
@@ -308,7 +312,8 @@ void MON_SendString(const char* str)
         UART_putNextChar(&txBuffer, '\r');
     }
     
-//    INTEnable(INT_SOURCE_UART_TX(UART_MODULE_ID), INT_ENABLED);
+    IFS1bits.U1TXIF = 0;        // Clears Transmit Interrupt Flag 
+    IEC1bits.U1TXIE = 1;        // Enables U1TX Interrupt Enable
 }
 
 /**
@@ -332,7 +337,8 @@ void MON_SendStringNR(const char* str)
         }
     }
     
-//    INTEnable(INT_SOURCE_UART_TX(UART_MODULE_ID), INT_ENABLED);
+    IFS1bits.U1TXIF = 0;        // Clears Transmit Interrupt Flag 
+    IEC1bits.U1TXIE = 1;        // Enables U1TX Interrupt Enable
 }
 
 /**
@@ -478,20 +484,23 @@ void __ISR(_UART1_VECTOR, IPL2AUTO) IntUart1Handler(void)
         if(IFS1bits.U1EIF)
         {
            U1STAbits.OERR = 0;
-           IFS1bits.U1EIF=0;
+           
+            IFS1bits.U1TXIF = 0;        // Clears Transmit Interrupt Flag 
+            IEC1bits.U1TXIE = 1;        // Enables U1TX Interrupt Enable
         }
         else
         {
             /* Checks if there is data ready to read from the receive buffer. */
-//            if(UART_TRANSMITTER_NOT_FULL && !UART_isBufferEmpty(&txBuffer))
-//            {
-//                BYTE txData = UART_getNextChar(&txBuffer);
-//                U1TXREG = txData;
-//            }
-            /* Checks if the transmit buffer is empty. If so, disable the TX interrupt. */
-            if(UART_isBufferEmpty(&txBuffer))
+            if(!U1STAbits.UTXBF && !UART_isBufferEmpty(&txBuffer))
             {
-//                INTEnable(INT_SOURCE_UART_TX(UART_MODULE_ID), INT_DISABLED);
+                BYTE txData = UART_getNextChar(&txBuffer);
+                U1TXREG = txData;
+            }
+            /* Checks if the transmit buffer is empty. If so, disable the TX interrupt. */
+            if(UART_isBufferEmpty(&txBuffer) && U1STAbits.TRMT)
+            {
+                IFS1bits.U1TXIF = 0;        // Clears Transmit Interrupt Flag 
+                IEC1bits.U1TXIE = 0;        // Disables U1TX Interrupt Enable
             }
         }
         

@@ -6,6 +6,7 @@
  */
 
 #include <p32xxxx.h>
+#include "plib/plib.h"
 #include "HardwareProfile.h"
 #include "STDDEF.h"
 #include "IO.h"
@@ -77,6 +78,8 @@
 #pragma config WDTPS = PS16         // Watchdog Timer Post-scaler, 32 ms timeout
 /**@}*/
 
+void Enable_Multi_Vector_Interrupts(void);
+
 /**
  * @brief The main entry point of the application.
  * @return An integer 0 upon exit success.
@@ -84,12 +87,12 @@
 int main(void) 
 {    
     /* Enable multi-vector interrupts */
-    INTCONbits.MVEC = TRUE; // Enable global multi-vector interrupt
-    asm("ei");              // Enables interrupts
+    INTConfigureSystem(INT_SYSTEM_CONFIG_MULT_VECTOR);
+    INTEnableInterrupts();
     
     /* Peripheral Initializations */
     IO_Init();          // Initializes all digital IO.
-//    TIMER_Init();       // Initializes all timer modules.
+    TIMER_Init();       // Initializes all timer modules.
 //    ADC_Init();         // Initializes all ADC modules.
 //    SPI_Init();         // Initializes all SPI modules.
     UART_Init();        // Initializes all UART modules
@@ -104,8 +107,27 @@ int main(void)
 //        WDTCONbits.WDTCLR = 0x01;   // Clears the watchdog timer flag.
 //        AUDIO_Process();
 //        PORTEbits.RE3 = 0;          // Turn off ERROR LED
-//        UART_Process();
+//        TIMER_Process();
     }
 
     return (0);
+}
+
+void Enable_Multi_Vector_Interrupts(void)
+{
+    unsigned int temp_CP0;              // Temporary register for CP0 reg storing 
+    asm volatile("di");                 // Disable all interrupts 
+    temp_CP0 = _CP0_GET_STATUS();       // Get Status 
+    temp_CP0 |= 0x00400000;             // Set the BEV bit 
+    _CP0_SET_STATUS(temp_CP0);          // Update Status 
+    _CP0_SET_EBASE(0xBD000000);         // Set an EBase value of 0xBD000000 
+    _CP0_SET_INTCTL(0x00000020);        // Set the Vector Spacing of 32 bytes 
+    temp_CP0 = _CP0_GET_CAUSE();        // Get Cause 
+    temp_CP0 |= 0x00800000;             // Set IV 
+    _CP0_SET_CAUSE(temp_CP0);           // Update Cause 
+    temp_CP0 = _CP0_GET_STATUS();       // Get Status 
+    temp_CP0 &= 0xFFBFFFFD;             // Clear BEV and EXL 
+    _CP0_SET_STATUS(temp_CP0);          // Update Status 
+    INTCONbits.MVEC = 1;                // Set the MVEC bit 
+    asm volatile("ei");                 // Enable all interrupts
 }
