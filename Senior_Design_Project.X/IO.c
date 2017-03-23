@@ -9,7 +9,7 @@
  */
 
 #include <p32xxxx.h>
-#include <proc/p32mx270f512l.h>
+#include <stdio.h>
 #include "HardwareProfile.h"
 #include "STDDEF.h"
 #include "IO.h"
@@ -30,6 +30,11 @@ void IO_setGroupOutput(int group);
  */
 void IO_Init(void)
 {   
+    // Disables all analog pins
+    ANSELA = 0x0000; ANSELB = 0x0000; ANSELC = 0x0000;
+    ANSELD = 0x0000; ANSELE = 0x0000; ANSELF = 0x0000;
+    ANSELG = 0x0000;
+    
     // Digital IO
     TRISEbits.TRISE2 = 0;   // LED, ON
     TRISEbits.TRISE3 = 0;   // LED, ERROR
@@ -49,7 +54,7 @@ void IO_Init(void)
     TRISDbits.TRISD7 = 0;   // Group 4
     
     // UART IO
-//    TRISCbits.TRISC1 = 1;   // U1RX
+    TRISCbits.TRISC1 = 1;   // U1RX
     TRISEbits.TRISE5 = 0;   // U1TX
     
     // SPI IO, DAC
@@ -68,6 +73,11 @@ void IO_Init(void)
     // ADC 
     TRISGbits.TRISG15 = 1;   // set RG15 as an input
     ANSELGbits.ANSG15 = 1;   // set RG15 (AN28) to analog
+    
+    // Clears All Digital IO
+    PORTA = 0x0000; PORTB = 0x0000; PORTC = 0x0000;
+    PORTD = 0x0000; PORTE = 0x0000; PORTF = 0x0000; 
+    PORTG = 0x0000;
 }
 
 /**
@@ -98,16 +108,21 @@ int IO_scanFrets(void)
         IO_setGroupOutput(groupIndex);
         
         /* Scans through the five fret inputs. */
-        if(FRET1 == 1) {fretFound = 1;}
-        if(FRET2 == 1) {fretFound = 2;}
-        if(FRET3 == 1) {fretFound = 3;}
-        if(FRET4 == 1) {fretFound = 4;}
-        if(FRET5 == 1) {fretFound = 5;}
+        if(FRET1 == 0) {fretFound = 1;}
+        if(FRET2 == 0) {fretFound = 2;}
+        if(FRET3 == 0) {fretFound = 3;}
+        if(FRET4 == 0) {fretFound = 4;}
+        if(FRET5 == 0) {fretFound = 5;}
         
         /* Checks if any frets were pressed. */
         if(fretFound > 0)
         {
             currentFret = (groupIndex-1)*FRETS_PER_GROUP + fretFound;
+            
+            char buf[32];
+            snprintf(&buf[0] ,32 ,"Fret Selected: %d", currentFret);
+            MON_SendString(&buf[0]);
+            
             break;
         }
     }
