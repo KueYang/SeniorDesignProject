@@ -14,33 +14,33 @@ extern "C" {
 /* Group Output Pins. */
 /** @def GROUP1_OUT 
  * Defines the output PORT for Group 1 */
-#define GROUP1_OUT  PORTDbits.RD4
+#define GROUP1_OUT  PORTEbits.RE1
 /** @def GROUP2_OUT 
  * Defines the output PORT for Group 2 */
-#define GROUP2_OUT  PORTDbits.RD5   
+#define GROUP2_OUT  PORTGbits.RG14   
 /** @def GROUP3_OUT 
  * Defines the output PORT for Group 3 */
-#define GROUP3_OUT  PORTDbits.RD6  
+#define GROUP3_OUT  PORTGbits.RG12  
 /** @def GROUP4_OUT 
  * Defines the output PORT for Group 4 */
-#define GROUP4_OUT  PORTDbits.RD7   
+#define GROUP4_OUT  PORTGbits.RG13   
     
 /* Fret Pins */
 /** @def FRET1 
  * Defines the input PORT for Fret 1 */
-#define FRET1       PORTDbits.RD1
+#define FRET1       PORTGbits.RG1
 /** @def FRET2 
  * Defines the input PORT for Fret 2 */
-#define FRET2       PORTDbits.RD2
+#define FRET2       PORTGbits.RG0
 /** @def FRET3 
  * Defines the input PORT for Fret 3 */
-#define FRET3       PORTDbits.RD3
+#define FRET3       PORTAbits.RA6
 /** @def FRET4 
  * Defines the input PORT for Fret 4 */
-#define FRET4       PORTDbits.RD12
+#define FRET4       PORTAbits.RA7
 /** @def FRET5 
  * Defines the input PORT for Fret 5 */
-#define FRET5       PORTDbits.RD13
+#define FRET5       PORTEbits.RE0
 
 void IO_Init(void);
 void IO_Process(void);
