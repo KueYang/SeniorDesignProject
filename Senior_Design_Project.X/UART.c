@@ -153,7 +153,7 @@ void UART_Init(void)
     IPC7bits.U1IP = 2;          // Sets UART Interrupt Priority 2
     IPC7bits.U1IS = 1;          // Sets UART Interrupt Sub-Priority 2
     
-    MON_GetHelp();
+//    MON_GetHelp();
     MON_SendString(">");  // Sends a prompt.
 }
 
@@ -416,6 +416,11 @@ UINT16 MON_getStringLength(const char* string)
         length++;
     }
     return length;
+}
+
+void MON_getString(char* str, WORD args)
+{
+//    snprintf(&buf[0], 256, str, args);
 }
 
 /**
@@ -821,12 +826,13 @@ void MON_SinDAC(void)
     {
         for(i = 0; i < 1024; i++)
         {
-            audioByte = ((testBytes[i+1] << 4) | (testBytes[i]));
-            if (audioByte & 0x0800) {
+            audioByte = ((testBytes[i+1] << 8) | (testBytes[i]));
+            if (audioByte & 0x8000) {
                 unsign_audio = ~(audioByte - 1);
                 audioByte = AC_ZERO - unsign_audio;
             }
-            else {
+            else 
+            {
                 audioByte = AC_ZERO + audioByte;
             }
             DAC_WriteToDAC(WRITE_UPDATE_CHN_A_B, audioByte);

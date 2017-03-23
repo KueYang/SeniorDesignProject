@@ -105,7 +105,7 @@ int main(void)
 //        WDTCONbits.WDTCLR = 0x01;   // Clears the watchdog timer flag.
 //        AUDIO_Process();
 //        PORTEbits.RE3 = 0;          // Turn off ERROR LED
-//        TIMER_Process();
+        IO_scanFrets();
     }
 
     return (0);
