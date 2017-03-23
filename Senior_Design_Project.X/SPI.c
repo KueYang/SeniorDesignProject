@@ -77,7 +77,7 @@ void SPI2_Init(void)
     SPI2CON2bits.SPITUREN = 0;              // Transmit underrun doesn't trigger error event.
     SPI2CON2bits.SPISGNEXT = 0;             // RX Data is not signed-extended
     
-    SPI2BRG = SPI_GetBaudRate(8000000);    // SPI clock speed at 8 MHz
+    SPI2BRG = SPI_GetBaudRate(8000000);     // SPI clock speed at 8 MHz
     SPI2STATbits.SPIROV = 0;                // Clears Receive overflow flag
     
     SPI2CONbits.ON = 1;                     // Enable SPI Module
@@ -107,7 +107,7 @@ BYTE SPI2_ReadWrite(BYTE ch)
  */
 void SPI3_Init(int clk)
 {
-    // Re-mapped pins RPB9 and RPB10 pins to SDI1 and SDO1
+    // Re-mapped pins RPB9 and RPB10 pins to SDI3 and SDO3
     mSysUnlockOpLock({
         PPSUnLock;
         PPSInput(1,SDI3,RPB9);      // Assign RPB9 as input pin for SDI
@@ -115,24 +115,24 @@ void SPI3_Init(int clk)
         PPSLock;
     });
     
-    SPI1CONbits.ON = 0;         // Disable SPI Module
-    SPI1CONbits.MSSEN = 0;      // Slave select SPI support disabled
-    SPI1CONbits.MCLKSEL = 0;    // PBCLK is used by baud rate generator
-    SPI1CONbits.ENHBUF = 0;     // Enhanced Buffer mode disabled
-    SPI1CONbits.SIDL = 0;       // Continue module in idle mode
-    SPI1CONbits.DISSDO = 0;     // SDO1 controlled by module
-    SPI1CONbits.MODE16 = 0b00;  // 8-bit communication
-    SPI1CONbits.SMP = 1;        // Input data sampled at end of data output
-    SPI1CONbits.CKE = 1;        // Serial output data changes from active to idle clk
-    SPI1CONbits.SSEN = 0;       // Slave select disable
-    SPI1CONbits.CKP = 0;        // Clk is idle low, active high
-    SPI1CONbits.MSTEN = 1;      // Master mode enabled
-    SPI1CONbits.DISSDI = 0;     // SDI1 controlled by module
+    SPI3CONbits.ON = 0;         // Disable SPI Module
+    SPI3CONbits.MSSEN = 0;      // Slave select SPI support disabled
+    SPI3CONbits.MCLKSEL = 0;    // PBCLK is used by baud rate generator
+    SPI3CONbits.ENHBUF = 0;     // Enhanced Buffer mode disabled
+    SPI3CONbits.SIDL = 0;       // Continue module in idle mode
+    SPI3CONbits.DISSDO = 0;     // SDO3 controlled by module
+    SPI3CONbits.MODE16 = 0b00;  // 8-bit communication
+    SPI3CONbits.SMP = 1;        // Input data sampled at end of data output
+    SPI3CONbits.CKE = 1;        // Serial output data changes from active to idle clk
+    SPI3CONbits.SSEN = 0;       // Slave select disable
+    SPI3CONbits.CKP = 0;        // Clk is idle low, active high
+    SPI3CONbits.MSTEN = 1;      // Master mode enabled
+    SPI3CONbits.DISSDI = 0;     // SDI3 controlled by module
     
-    SPI1BRG = SPI_GetBaudRate(clk); // SPI clock config
-    SPI1STATbits.SPIROV = 0;        // Clears Receive overflow flag
+    SPI3BRG = SPI_GetBaudRate(clk); // SPI clock config
+    SPI3STATbits.SPIROV = 0;        // Clears Receive overflow flag
     
-    SPI1CONbits.ON = 1;             // Enable SPI Module
+    SPI3CONbits.ON = 1;             // Enable SPI Module
 }
 
 /**
