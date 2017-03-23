@@ -21,11 +21,8 @@
 void DAC_Init(void)
 {
     SYNC = 1;   // Sets the latch high.#ifdef DAC12B
-#ifdef DAC12B
-    DAC_WriteToDAC(POWER_ON_OFF_CHN_A_B , 0x000F & DAC_B_A);
-#else    
     DAC_WriteToDAC(POWER_ON_OFF_CHN_A_B , POWER_ON_DAC_B_A);
-#endif
+    DAC_ZeroOutput();
 }
 
 /**
@@ -43,16 +40,13 @@ BOOL DAC_WriteToDAC(BYTE cmd_addr, WORD data)
 {
     SYNC = 0;    // Shifts the latch low to initiate write
    
-    SPI2_ReadWrite(cmd_addr);
+    SPI2_ReadWrite(cmd_addr);               // Sends the address BYTES
     SPI2_ReadWrite((data & 0xFF00)>>8);     // Sends the first 2 MSB
-#ifdef DAC12B
-    SPI2_ReadWrite((data & 0x00F0));         // Sends the LSB
-#else
     SPI2_ReadWrite(data & 0x00FF);          // Sends the last 2 LSB
-#endif
    
-   SYNC = 1;    // Shifts the latch high to end write
+    SYNC = 1;    // Shifts the latch high to end write
 }
+
 /**
  * @brief Sets the DAC output to mid-scale.
  * @remark Requires SPI and the DAC to be initialized. 
