@@ -153,7 +153,9 @@ void __ISR(_TIMER_1_VECTOR, IPL2AUTO) Timer1Handler(void)
         ms_TICK = 0;
     }
     
+    WDTCONbits.WDTCLR = 0x01;       // Clears the watchdog timer flag.
 	disk_timerproc();	/* Drive timer procedure of low level disk I/O module */
+    WDTCONbits.WDTCLR = 0x01;       // Clears the watchdog timer flag.
     
     // Clear the interrupt flag
     IFS0bits.T1IF = 0;
