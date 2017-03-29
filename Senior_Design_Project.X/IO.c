@@ -59,9 +59,9 @@ void IO_Init(void)
     
     // SPI IO, DAC
     TRISCbits.TRISC4 = 0;   // SYNC
+    TRISGbits.TRISG6 = 0;   // DAC_CLK2
     TRISGbits.TRISG7 = 1;   // DAC_SDI2
     TRISGbits.TRISG8 = 0;   // DAC_SDO2
-    TRISGbits.TRISG6 = 0;   // DAC_CLK2
     
     // SPI IO, SD Card
     TRISBbits.TRISB11 = 0;  // CS

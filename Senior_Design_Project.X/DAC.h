@@ -15,19 +15,9 @@ extern "C" {
  * Defines the mid-scale value for the 16-bit DAC. */
 #define AC_ZERO                         0x7777
 
-
-/** @def RESET 
- * Defines the IO port used to write data to DAC. */
-#define RESET                           PORTEbits.RE7
-/** @def LDAC 
- * Defines the IO port used to write data to DAC. */
-#define LDAC                            PORTCbits.RC2
-/** @def CLEAR 
- * Defines the IO port used to write data to DAC. */
-#define CLEAR                           PORTCbits.RC3
 /** @def SYNC 
- * Defines the IO port used to write data to DAC. */
-#define SYNC                            PORTGbits.RG7
+ * Defines the Enable pin used to write data to DAC. */
+#define SYNC                            PORTCbits.RC4
 
 /** @def DAC_A 
  * Defines the selection bit for channel A on the DAC. */
