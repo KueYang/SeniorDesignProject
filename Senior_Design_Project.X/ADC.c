@@ -78,7 +78,7 @@ void ADC_Init(void)
     
     /* AD1CH configurations */
     AD1CHSbits.CH0NA = 0;           // Channel 0 negative input is VREFL
-    AD1CHSbits.CH0SA = 0x0002;      // Channel 0 positive input for Sample A is AN2
+    AD1CHSbits.CH0SA = 0x001C;      // Channel 0 positive input for Sample A is AN28
     
     /* AD1CSSL configurations */
     AD1CSSLbits.CSSL = 0x0002;      // Selects AN2 for input scan, all others are skipped
