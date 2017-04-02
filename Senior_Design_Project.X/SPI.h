@@ -12,6 +12,7 @@ extern "C" {
 #endif
     
 void SPI_Init(void);
+BYTE SPI1_ReadWrite(BYTE);
 BYTE SPI2_ReadWrite(BYTE);
 void SPI3_Init(int clk);
 BYTE SPI3_ReadWrite(BYTE ch);

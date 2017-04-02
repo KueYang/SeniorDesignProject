@@ -63,6 +63,11 @@ void IO_Init(void)
     TRISGbits.TRISG7 = 1;   // DAC_SDI2
     TRISGbits.TRISG8 = 0;   // DAC_SDO2
     
+//    TRISCbits.TRISC12 = 0;   // SYNC
+//    TRISDbits.TRISD10 = 0;   // DAC_CLK1
+//    TRISDbits.TRISD11 = 1;   // DAC_SDI1
+//    TRISCbits.TRISC13 = 0;   // DAC_SDO1
+    
     // SPI IO, SD Card
     TRISBbits.TRISB11 = 0;  // CS
     TRISBbits.TRISB8 = 1;   // CD

@@ -17,6 +17,7 @@
  * @{
  */
 UINT16 SPI_GetBaudRate(int clk);
+void SPI1_Init(void);
 void SPI2_Init(void);
 /** @}*/
 
@@ -26,7 +27,75 @@ void SPI2_Init(void);
  */
 void SPI_Init(void)
 {
+//    SPI1_Init();
     SPI2_Init();
+}
+
+void SPI1_Init(void)
+{
+    // Re-mapped pins RPG7 and RPG8 pins to SDI2 and SDO2
+    mSysUnlockOpLock({
+        PPSUnLock;
+        PPSInput(2,SDI1,RPD11);     // Assign RPG7 as input pin for SDI
+        PPSOutput(2,RPC13,SDO1);    // Set RPG8 pin as output for SDO
+        PPSLock;
+    });
+    
+    SPI1CONbits.ON = 0;         // Disables the SPI Module
+    
+    SPI1CONbits.FRMEN = 0;      // Framed SPI support disabled
+    SPI1CONbits.FRMSYNC = 0;    // Frame sync pulse output (Master Mode) 
+    SPI1CONbits.FRMPOL = 0;     // Frame Pulse active-low
+    SPI1CONbits.FRMSYPW = 0;    // Frame sync pulse is one clock wide
+    SPI1CONbits.FRMCNT = 0b000; // Generate frame sync pulse on every data character
+    SPI1CONbits.SPIFE = 0;      // Frame sync pulse precedes the first bit clock
+    
+    SPI1CONbits.MSSEN = 0;      // Slave select SPI support disabled
+    SPI1CONbits.MCLKSEL = 0;    // PBCLK is used by baud rate generator
+    SPI1CONbits.ENHBUF = 0;     // Enhanced Buffer mode disabled
+    SPI1CONbits.SIDL = 0;       // Continue module in idle mode
+    SPI1CONbits.DISSDO = 0;     // SDO2 controlled by module
+    SPI1CONbits.MODE16 = 0b00;  // 16-bit communication
+    SPI1CONbits.SMP = 1;        // Input data sampled at end of data output
+    SPI1CONbits.CKE = 0;        // Serial output data changes from idle to active clk
+    SPI1CONbits.SSEN = 0;       // Slave select disable
+    SPI1CONbits.CKP = 1;        // Clk is active low
+    SPI1CONbits.MSTEN = 1;      // Master mode enabled
+    SPI1CONbits.DISSDI = 0;     // SDI2 controlled by module
+    SPI1CONbits.STXISEL = 0b00; // Transmit interrupts on last transfer
+    SPI1CONbits.SRXISEL = 0b00; // Receive interrupts on last received
+    
+    SPI1CON2bits.AUDEN = 0;                 // Audio CODEC support disabled
+    SPI1CON2bits.AUDMOD = 0b00;             // I2S mode
+    SPI1CON2bits.AUDMONO = 0;               // Audio Data is stereo
+    SPI1CON2bits.FRMERREN = 0;              // Interrupt Events via FRMERR disabled
+    SPI1CON2bits.IGNROV = 0;                // Receive overflow is critical, stops SPI
+    SPI1CON2bits.IGNTUR = 0;                // Transmit underrun is critical, stops SPI
+    SPI1CON2bits.SPIROVEN = 0;              // Receive overflow doesn't trigger error event.
+    SPI1CON2bits.SPITUREN = 0;              // Transmit underrun doesn't trigger error event.
+    SPI1CON2bits.SPISGNEXT = 0;             // RX Data is not signed-extended
+    
+    SPI1BRG = SPI_GetBaudRate(8000000);     // SPI clock speed at 8 MHz
+    SPI1STATbits.SPIROV = 0;                // Clears Receive overflow flag
+    
+    SPI1CONbits.ON = 1;                     // Enable SPI Module
+}
+
+/**
+ * @brief Reads and write data to SPI buffer.
+ * @arg ch The data to be written to SPI buffer.
+ * @return Returns the data read from the SPI buffer.
+ */
+BYTE SPI1_ReadWrite(BYTE ch)
+{
+    BYTE dummy = 0;
+
+    dummy = SPI1BUF;                //Clears flag to read/write to buffer
+    SPI1BUF = ch;                   //Write BYTE to the buffer
+    while (!SPI1STATbits.SPIRBF);   //Waits for transfer to be completed
+    dummy = SPI1BUF;                //Read a dummy byte from buffer
+
+    return dummy;
 }
 
 /**
