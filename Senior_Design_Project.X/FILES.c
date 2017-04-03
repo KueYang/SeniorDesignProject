@@ -8,7 +8,7 @@
  */
 
 #include <p32xxxx.h>
-#include <plib.h>
+#include "plib/plib.h"
 #include "STDDEF.h"
 #include "./fatfs/diskio.h"
 #include "./fatfs/ffconf.h"
@@ -84,7 +84,7 @@ BOOL FILES_ListFiles(const char* selectedName)
     DIR dir;            /* Stores information on the directory. */
     FILINFO Finfo;      /* Stores file information. */
     
-    MON_SendString("Showing all WAV files in root directory:");
+//    MON_SendString("Showing all WAV files in root directory:");
     
     // Searches for the first file in the directory.
     res = f_findfirst(&dir, &Finfo, "", "*.wav");
@@ -93,16 +93,16 @@ BOOL FILES_ListFiles(const char* selectedName)
         while (res == FR_OK && Finfo.fname[0]) 
         {
             // Prints out the file name and file size.
-            if(MON_stringsMatch(selectedName, &Finfo.fname[0]))
-            {
-                // Indicates the file is selected.
-                snprintf(&buf[0], 128, "%s\t%u KB ***", Finfo.fname, Finfo.fsize/1000);
-            }
-            else
-            {
-                snprintf(&buf[0], 128, "%s\t%u KB", Finfo.fname, Finfo.fsize/1000);
-            }
-            MON_SendString(&buf[0]);
+//            if(MON_stringsMatch(selectedName, &Finfo.fname[0]))
+//            {
+//                // Indicates the file is selected.
+////                snprintf(&buf[0], 128, "%s\t%u KB ***", Finfo.fname, Finfo.fsize/1000);
+//            }
+//            else
+//            {
+////                snprintf(&buf[0], 128, "%s\t%u KB", Finfo.fname, Finfo.fsize/1000);
+//            }
+//            MON_SendString(&buf[0]);
             
             // Searches for the next file in the directory.
             res = f_findnext(&dir, &Finfo);

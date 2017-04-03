@@ -10,7 +10,7 @@
  */
 
 #include <p32xxxx.h>
-#include <plib.h>
+#include "plib/plib.h"
 #include "STDDEF.h"
 #include "IO.h"
 #include "DAC.h"
@@ -111,7 +111,7 @@ void AUDIO_Init(void)
         // Opens the given file and sets a pointer to the file.
         FILES_OpenFile(&files[i].File, fileNames[i],FA_READ);
         // Copies the files name.
-        strncpy(&files[i].audioInfo.fileName[0], fileNames[i], sizeof(files[i].audioInfo.fileName));
+//        strncpy(&files[i].audioInfo.fileName[0], fileNames[i], sizeof(files[i].audioInfo.fileName));
         // Reads the file header.
         AUDIO_GetHeader(i);
         // Sets the file start pointer.
@@ -171,11 +171,11 @@ BOOL AUDIO_setNewFile(const char* fileName)
     int i = 0;
     for(i = 0; i < MAX_NUM_OF_FILES; i++)
     {
-        if(MON_stringsMatch(&files[i].audioInfo.fileName[0], fileName))
-        {
-            AUDIO_setNewTone(i);
-            return TRUE;
-        }
+//        if(MON_stringsMatch(&files[i].audioInfo.fileName[0], fileName))
+//        {
+//            AUDIO_setNewTone(i);
+//            return TRUE;
+//        }
     }
     return FALSE;
 }
@@ -193,7 +193,7 @@ void AUDIO_setNewTone(int fret)
     if(TIMER3_IsON())
     {
         TIMER3_ON(FALSE);
-        MON_SendString("Turning off timer");
+//        MON_SendString("Turning off timer");
     }
     /* Sets the audio in pointer to zero. */
     audioInPtr = 0;
@@ -212,7 +212,7 @@ void AUDIO_setNewTone(int fret)
     /* Sets the DAC's output to zero. */
     DAC_ZeroOutput();
     
-    MON_SendString("Setting new a tone.");
+//    MON_SendString("Setting new a tone.");
 }
 
 /**

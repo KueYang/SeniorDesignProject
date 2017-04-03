@@ -6,17 +6,17 @@
  */
 
 #include <p32xxxx.h>
-#include <plib.h>
+#include "plib/plib.h"
 #include "HardwareProfile.h"
 #include "STDDEF.h"
 #include "IO.h"
 #include "TIMER.h"
-#include "ADC.h"
+//#include "ADC.h"
 #include "SPI.h"
 #include "UART.h"
 #include "DAC.h"
-#include "AUDIO.h"
-#include "TESTS.h"
+//#include "AUDIO.h"
+//#include "TESTS.h"
 
 /**
  * @defgroup usbConfig USB configurations
@@ -90,17 +90,19 @@ int main(void)
     
     /* Peripheral Initializations */
     IO_Init();          // Initializes all digital IO.
-    TIMER_Init();       // Initializes all timer modules.
-    ADC_Init();         // Initializes all ADC modules.
+//    TIMER_Init();       // Initializes all timer modules.
+//    ADC_Init();         // Initializes all ADC modules.
     SPI_Init();         // Initializes all SPI modules.
-    UART_Init();        // Initializes all UART modules
-    AUDIO_Init();       // Initializes the Audio module.
+//    UART_Init();        // Initializes all UART modules
+//    AUDIO_Init();       // Initializes the Audio module.
     DAC_Init();         // Initializes the DACs.
     
     while(1)
     {
-        WDTCONbits.WDTCLR = 0x01;   // Clears the watchdog timer flag.
-        AUDIO_Process();
+//        WDTCONbits.WDTCLR = 0x01;   // Clears the watchdog timer flag.
+//        AUDIO_Process();
+//        TIMER_Process();
+        MON_SinDAC();
     }
 
     return (0);

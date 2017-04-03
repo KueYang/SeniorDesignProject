@@ -6,7 +6,8 @@
  */
 
 #include <p32xxxx.h>
-#include <plib.h>
+#include "plib/plib.h"
+#include "STDDEF.h"
 #include "TIMER.h"
 #include "UART.h"
 #include "DAC.h"
@@ -66,9 +67,9 @@ void Test1_TimeReadWrite(void)
     endTime = TIMER_GetMSecond();
     timeToRead = endTime - startTime;
     
-    MON_SendString("Test 1 - Read and Write Test");
-    snprintf(&buf[0] ,128 ,"startTime: %d, endTime: %d, timeToRead: %d", startTime, endTime, timeToRead);
-    MON_SendString(&buf[0]);
+//    MON_SendString("Test 1 - Read and Write Test");
+//    snprintf(&buf[0] ,128 ,"startTime: %d, endTime: %d, timeToRead: %d", startTime, endTime, timeToRead);
+//    MON_SendString(&buf[0]);
     AUDIO_resetFilePtr();
 }
 
@@ -83,14 +84,14 @@ void Test2_TimeRead(void)
         endTime = TIMER_GetMSecond();
         timeToRead = endTime - startTime;
 
-        MON_SendString("Test 2 - Read Test");
-        snprintf(&buf[0] ,128 ,"startTime: %d, endTime: %d, timeToRead: %d", startTime, endTime, timeToRead);
-        MON_SendString(&buf[0]);
+//        MON_SendString("Test 2 - Read Test");
+//        snprintf(&buf[0] ,128 ,"startTime: %d, endTime: %d, timeToRead: %d", startTime, endTime, timeToRead);
+//        MON_SendString(&buf[0]);
         AUDIO_resetFilePtr();
     }
     else
     {
-        MON_SendString("Test 2 - Failed to read file.");
+//        MON_SendString("Test 2 - Failed to read file.");
     }
 }
 
@@ -109,9 +110,9 @@ void Test3_TimeWrite(void)
     endTime = TIMER_GetMSecond();
     timeToRead = endTime - startTime;
     
-    MON_SendString("Test 3 - Write Test");
-    snprintf(&buf[0] ,128 ,"startTime: %d, endTime: %d, timeToRead: %d", startTime, endTime, timeToRead);
-    MON_SendString(&buf[0]);
+//    MON_SendString("Test 3 - Write Test");
+//    snprintf(&buf[0] ,128 ,"startTime: %d, endTime: %d, timeToRead: %d", startTime, endTime, timeToRead);
+//    MON_SendString(&buf[0]);
     AUDIO_resetFilePtr();
 }
 

@@ -7,7 +7,7 @@
  */
 
 #include <p32xxxx.h>
-#include <plib.h>
+#include "plib/plib.h"
 #include "STDDEF.h"
 #include "IO.h"
 #include "TIMER.h"
@@ -81,10 +81,10 @@ void ADC_Init(void)
     AD1CON1bits.ASAM = 1;           // Sampling begins immediately
     
     // Set up the ADC interrupt with a priority of 2
-    INTEnable(INT_AD1, INT_ENABLED);
-    INTSetVectorPriority(INT_ADC_VECTOR, INT_PRIORITY_LEVEL_2);
-    INTSetVectorSubPriority(INT_ADC_VECTOR, INT_SUB_PRIORITY_LEVEL_3);
-    
+//    INTEnable(INT_AD1, INT_ENABLED);
+//    INTSetVectorPriority(INT_ADC_VECTOR, INT_PRIORITY_LEVEL_2);
+//    INTSetVectorSubPriority(INT_ADC_VECTOR, INT_SUB_PRIORITY_LEVEL_3);
+//    
     // Initializes strumming variables
     ADC_ZeroBuffer();
     isPositive = FALSE;
@@ -166,7 +166,7 @@ void __ISR(_ADC_VECTOR, IPL2AUTO) ADCHandler(void)
                 if(!TIMER3_IsON())
                 {
                     TIMER3_ON(TRUE);                            // Kick starts reading the audio file process.
-                    MON_SendString("ADC: Turning on timer.");
+//                    MON_SendString("ADC: Turning on timer.");
                 }
                 sampleCount = 0;
                 startStrumDetection = FALSE;
@@ -182,5 +182,5 @@ void __ISR(_ADC_VECTOR, IPL2AUTO) ADCHandler(void)
     }
     
     // Clear the interrupt flag
-    INTClearFlag(INT_AD1);
+//    INTClearFlag(INT_AD1);
 }
