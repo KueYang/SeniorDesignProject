@@ -153,7 +153,7 @@ void UART_Init(void)
     IPC7bits.U1IP = 2;          // Sets UART Interrupt Priority 2
     IPC7bits.U1IS = 1;          // Sets UART Interrupt Sub-Priority 2
     
-//    MON_GetHelp();
+    MON_GetHelp();
     MON_SendString(">");  // Sends a prompt.
 }
 
