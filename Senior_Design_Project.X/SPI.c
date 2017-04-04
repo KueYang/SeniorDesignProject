@@ -146,8 +146,8 @@ void SPI2_Init(void)
     SPI2CON2bits.SPITUREN = 0;              // Transmit underrun doesn't trigger error event.
     SPI2CON2bits.SPISGNEXT = 0;             // RX Data is not signed-extended
     
-    SPI2BRG = SPI_GetBaudRate(8000000);     // SPI clock speed at 8 MHz
     SPI2STATbits.SPIROV = 0;                // Clears Receive overflow flag
+    SPI2BRG = SPI_GetBaudRate(10000000);    // SPI clock speed at 8 MHz
     
     SPI2CONbits.ON = 1;                     // Enable SPI Module
 }
@@ -211,7 +211,7 @@ void SPI3_Init(int clk)
  */
 UINT16 SPI_GetBaudRate(int clk)
 {
-    return (GetPeripheralClock()-1)/(2*clk);
+    return GetPeripheralClock()/(2*clk) - 1;
 }
 
 /**
