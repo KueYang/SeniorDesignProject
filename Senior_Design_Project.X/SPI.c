@@ -211,7 +211,7 @@ void SPI3_Init(int clk)
  */
 UINT16 SPI_GetBaudRate(int clk)
 {
-    return GetPeripheralClock()/(2*clk) - 1;
+    return (GetPeripheralClock()-1)/(2*clk);
 }
 
 /**
