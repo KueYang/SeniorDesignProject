@@ -64,7 +64,7 @@
  */
 #pragma config IESO = OFF           // Internal/External Switch Over, disabled
 #pragma config JTAGEN = OFF         // JTAG Disabled
-#pragma config ICESEL = ICS_PGx3    // ICE3/ICD3 Comm Channel Select
+#pragma config ICESEL = ICS_PGx1    // ICE3/ICD3 Comm Channel Select
 #pragma config PWP = OFF            // Program Flash Write Protect
 #pragma config CP = OFF             // Code Protection Disabled
 /**@}*/
@@ -95,7 +95,7 @@ int main(void)
 //    TIMER_Init();                   // Initializes all timer modules.
 //    ADC_Init();                     // Initializes all ADC modules.
     SPI_Init();                     // Initializes all SPI modules.
-    UART_Init();                    // Initializes all UART modules
+//    UART_Init();                    // Initializes all UART modules
 //    AUDIO_Init();                   // Initializes the Audio module.
     DAC_Init();                     // Initializes the DACs.
 

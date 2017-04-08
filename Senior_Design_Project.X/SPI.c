@@ -147,7 +147,7 @@ void SPI2_Init(void)
     SPI2CON2bits.SPISGNEXT = 0;             // RX Data is not signed-extended
     
     SPI2STATbits.SPIROV = 0;                // Clears Receive overflow flag
-    SPI2BRG = SPI_GetBaudRate(10000000);    // SPI clock speed at 8 MHz
+    SPI2BRG = SPI_GetBaudRate(8000000);    // SPI clock speed at 8 MHz
     
     SPI2CONbits.ON = 1;                     // Enable SPI Module
 }

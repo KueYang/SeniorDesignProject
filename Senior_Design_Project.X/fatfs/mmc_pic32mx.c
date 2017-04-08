@@ -19,7 +19,7 @@
 /* Socket controls  (Platform dependent) */
 #define CS_LOW()  _LATB7 = 0       /* MMC CS = L */
 #define CS_HIGH() _LATB7 = 1       /* MMC CS = H */
-#define CD	(!_RB8)                /* Card detected   (yes:true, no:false, default:true) */
+#define CD	1//(!_RB8)                /* Card detected   (yes:true, no:false, default:true) */
 #define WP	(_RB10)                 /* Write protected (yes:true, no:false, default:false) */
 
 
