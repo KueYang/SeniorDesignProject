@@ -42,17 +42,17 @@ void DAC_Init(void)
  */
 BOOL DAC_WriteToDAC(BYTE cmd_addr, WORD data)
 {
+    DWORD readback = 0;
+    
     SYNC = 0;    // Shifts the latch low to initiate write
    
-    SPI2_ReadWrite(cmd_addr);
-    SPI2_ReadWrite((data & 0xFF00)>>8);     // Sends the first 2 MSB
-#ifdef DAC12B
-    SPI2_ReadWrite((data & 0x00F0));         // Sends the LSB
-#else
-    SPI2_ReadWrite(data & 0x00FF);          // Sends the last 2 LSB
-#endif
+    readback |= SPI2_ReadWrite(cmd_addr);
+    readback |= SPI2_ReadWrite((data & 0xFF00)>>8);      // Sends the first 2 MSB
+    readback |= SPI2_ReadWrite(data & 0x00FF);                      // Sends the last 2 LSB
    
-   SYNC = 1;    // Shifts the latch high to end write
+    SYNC = 1;    // Shifts the latch high to end write
+   
+    return readback;
 }
 /**
  * @brief Sets the DAC output to mid-scale.

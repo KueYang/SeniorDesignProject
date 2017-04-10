@@ -95,14 +95,15 @@ int main(void)
     SPI_Init();         // Initializes all SPI modules.
 //    UART_Init();        // Initializes all UART modules
 //    AUDIO_Init();       // Initializes the Audio module.
-    DAC_Init();         // Initializes the DACs.
+//    DAC_Init();         // Initializes the DACs.
     
     while(1)
     {
 //        WDTCONbits.WDTCLR = 0x01;   // Clears the watchdog timer flag.
 //        AUDIO_Process();
 //        TIMER_Process();
-        MON_SinDAC();
+//        MON_SinDAC();
+//        DAC_WriteToDAC(0x38, 0x5A3C);
     }
 
     return (0);
