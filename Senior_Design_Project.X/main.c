@@ -95,7 +95,7 @@ int main(void)
     SPI_Init();         // Initializes all SPI modules.
 //    UART_Init();        // Initializes all UART modules
 //    AUDIO_Init();       // Initializes the Audio module.
-//    DAC_Init();         // Initializes the DACs.
+    DAC_Init();         // Initializes the DACs.
     
     while(1)
     {
