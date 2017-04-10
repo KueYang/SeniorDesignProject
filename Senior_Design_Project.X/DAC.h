@@ -70,6 +70,9 @@ extern "C" {
 /** @def WRITE_UPDATE_CHN_A 
  * Defines the command to write and update channel A. */
 #define WRITE_UPDATE_CHN_A              (CMD_WRITE_UPDATE_DAC << 4) | DAC_A
+/** @def READ_CHN_A 
+ * Defines the command to read channel A. */
+#define READ_CHN_A                      (CMD_READ_CHN_REG << 4) | DAC_A
 
 /** @def WRITE_INPUT_CHN_B 
  * Defines the command to write to channel B. */
@@ -80,6 +83,9 @@ extern "C" {
 /** @def WRITE_UPDATE_CHN_B 
  * Defines the command to write and update channel B. */
 #define WRITE_UPDATE_CHN_B              (CMD_WRITE_UPDATE_DAC << 4) | DAC_B
+/** @def READ_CHN_B 
+ * Defines the command to read channel B. */
+#define READ_CHN_B                      (CMD_READ_CHN_REG << 4) | DAC_B
 
 /** @def POWER_ON_OFF_CHN_A_B 
  * Defines the command to turn on DAC and both channel A and channel B. */
@@ -97,7 +103,7 @@ extern "C" {
 void DAC_Init(void);
 void DAC_Zero(void);
 void DAC_ZeroOutput(void);
-BOOL DAC_WriteToDAC(BYTE cmd_addr, WORD data);
+DWORD DAC_WriteToDAC(BYTE cmd_addr, WORD data);
 
 #ifdef	__cplusplus
 }

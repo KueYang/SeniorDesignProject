@@ -36,15 +36,19 @@ void DAC_Init(void)
  * @retval TRUE If the file was read successfully
  * @retval FALSE If the file was read unsuccessfully
  */
-BOOL DAC_WriteToDAC(BYTE cmd_addr, WORD data)
+DWORD DAC_WriteToDAC(BYTE cmd_addr, WORD data)
 {
+    DWORD readBack = 0;
+    
     SYNC = 0;    // Shifts the latch low to initiate write
    
-    SPI2_ReadWrite(cmd_addr);               // Sends the address BYTES
-    SPI2_ReadWrite((data & 0xFF00)>>8);     // Sends the first 2 MSB
-    SPI2_ReadWrite(data & 0x00FF);          // Sends the last 2 LSB
+    readBack |= SPI2_ReadWrite(cmd_addr) << 16;              // Sends the address BYTES
+    readBack |= SPI2_ReadWrite((data & 0xFF00)>>8) << 8;     // Sends the first 2 MSB
+    readBack |= SPI2_ReadWrite(data & 0x00FF);               // Sends the last 2 LSB
    
     SYNC = 1;    // Shifts the latch high to end write
+    
+    return readBack;
 }
 
 /**
@@ -67,4 +71,22 @@ void DAC_ZeroOutput(void)
 {
     DAC_WriteToDAC(WRITE_UPDATE_CHN_A, 0);
     DAC_WriteToDAC(WRITE_UPDATE_CHN_B, 0);
+}
+
+/**
+ * @brief Reads the DAC registers.
+ * @arg channelA The channel to read back data.
+ * @return The DAC register value.
+ */
+DWORD DAC_ReadBack(BOOL channelA)
+{
+    if(channelA)
+    { 
+        DAC_WriteToDAC(READ_CHN_A, 0x0000);
+    }
+    else
+    {
+        DAC_WriteToDAC(READ_CHN_B, 0x0000);
+    }
+    return DAC_WriteToDAC(0x00, 0x0000);
 }
