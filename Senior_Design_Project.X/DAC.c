@@ -72,4 +72,20 @@ void DAC_ZeroOutput(void)
     DAC_WriteToDAC(WRITE_UPDATE_CHN_B, 0);
 }
 
-
+/**
+ * @brief Reads the DAC registers.
+ * @arg channelA The channel to read back data.
+ * @return The DAC register value.
+ */
+DWORD DAC_ReadBack(BOOL channelA)
+{
+//    if(channelA)
+//    { 
+        DAC_WriteToDAC(0x90, 0x0000);
+//    }
+//    else
+//    {
+//        DAC_WriteToDAC(READ_CHN_B, 0x0000);
+//    }
+    return DAC_WriteToDAC(0x00, 0x0000);
+}
