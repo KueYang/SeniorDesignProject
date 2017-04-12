@@ -165,7 +165,7 @@ void UART_Init(void)
  */
 int UART_GetBaudRate(int desireBaud)
 {
-    return ((GetPeripheralClock()/desireBaud)) - 1;
+    return ((GetPeripheralClock()/(16*desireBaud))) - 1;
 }
 
 /**
@@ -284,7 +284,7 @@ int MON_parseCommand(COMMANDSTR* cmd, MON_FIFO* buffer)
 void MON_SendChar(const char* character)
 {
     UART_putNextChar(&txBuffer, *character);
-//    INTEnable(INT_SOURCE_UART_TX(UART_MODULE_ID), INT_ENABLED);
+    IEC1bits.U1TXIE = 1;        // Enables U1TX Interrupt Enable
 }
 
 /**
@@ -311,7 +311,7 @@ void MON_SendString(const char* str)
         UART_putNextChar(&txBuffer, '\r');
     }
     
-//    INTEnable(INT_SOURCE_UART_TX(UART_MODULE_ID), INT_ENABLED);
+    IEC1bits.U1TXIE = 1;        // Enables U1TX Interrupt Enable
 }
 
 /**
@@ -335,7 +335,7 @@ void MON_SendStringNR(const char* str)
         }
     }
     
-//    INTEnable(INT_SOURCE_UART_TX(UART_MODULE_ID), INT_ENABLED);
+    IEC1bits.U1TXIE = 1;        // Enables U1TX Interrupt Enable
 }
 
 /**
