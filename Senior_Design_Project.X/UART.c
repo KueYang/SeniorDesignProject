@@ -443,7 +443,7 @@ COMMANDS MON_getCommand(const char* cmdName)
  */
 void __ISR(_UART1_VECTOR, IPL4AUTO) IntUart1Handler(void)
 {
-	if(INTGetFlag(INT_SOURCE_UART_RX(UART_MODULE_ID)))
+	if(IFS1bits.U1RXIF)
 	{   
         /* Checks if bus collision has occurred and clears collision flag.*/
         if(IFS1bits.U1EIF)
@@ -451,19 +451,19 @@ void __ISR(_UART1_VECTOR, IPL4AUTO) IntUart1Handler(void)
            U1STAbits.OERR = 0;
            IFS1bits.U1EIF=0;
         }
-        else if(IFS1bits.U1RXIF)
+        else
         {
             /* Checks if there is data ready to read from the receive buffer. */
-            if(UART_DATA_READY)
+            if(U1STAbits.URXDA == 1)
             {
                 // Reads BYTEs from receive buffer.
-                BYTE data = U1RXREG;
+                BYTE rxData = U1RXREG;
 
                 // Writes data to receive buffer.
-                UART_putNextChar(&rxBuffer, data);
+                UART_putNextChar(&rxBuffer, rxData);
                 
                 // Sets a flag for end of receiving a command.
-                if(data == '\r')
+                if(rxData == '\r')
                 {
                     cmdReady = TRUE;
                     UART_processCommand();
@@ -472,33 +472,37 @@ void __ISR(_UART1_VECTOR, IPL4AUTO) IntUart1Handler(void)
         }
         
         // Clear the RX interrupt Flag.
-	    INTClearFlag(INT_SOURCE_UART_RX(UART_MODULE_ID));
+        IFS1bits.U1RXIF = 0;
 	}
     
-    if(INTGetFlag(INT_SOURCE_UART_TX(UART_MODULE_ID)))
+    if(IFS1bits.U1TXIF)
 	{   
         /* Checks if bus collision has occurred and clears collision flag.*/
         if(IFS1bits.U1EIF)
         {
            U1STAbits.OERR = 0;
-           IFS1bits.U1EIF=0;
+           
+            IFS1bits.U1TXIF = 0;        // Clears Transmit Interrupt Flag 
+            IEC1bits.U1TXIE = 1;        // Enables U1TX Interrupt Enable
         }
-        else if(IFS1bits.U1TXIF)
+        else
         {
             /* Checks if there is data ready to read from the receive buffer. */
-            if(UART_TRANSMITTER_NOT_FULL && !UART_isBufferEmpty(&txBuffer))
+            if(!U1STAbits.UTXBF && !UART_isBufferEmpty(&txBuffer))
             {
-                U1TXREG = UART_getNextChar(&txBuffer);    
+                BYTE txData = UART_getNextChar(&txBuffer);
+                U1TXREG = txData;
             }
             /* Checks if the transmit buffer is empty. If so, disable the TX interrupt. */
-            if(UART_isBufferEmpty(&txBuffer))
+            if(UART_isBufferEmpty(&txBuffer) && U1STAbits.TRMT)
             {
-                INTEnable(INT_SOURCE_UART_TX(UART_MODULE_ID), INT_DISABLED);
+                IFS1bits.U1TXIF = 0;        // Clears Transmit Interrupt Flag 
+                IEC1bits.U1TXIE = 0;        // Disables U1TX Interrupt Enable
             }
         }
         
-        // Clear the RX interrupt Flag.
-	    INTClearFlag(INT_SOURCE_UART_TX(UART_MODULE_ID));
+        // Clear the TX interrupt Flag.
+        IFS1bits.U1TXIF = 0;
 	}
 }
 
