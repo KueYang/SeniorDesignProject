@@ -95,12 +95,12 @@ int main(void)
 //    TIMER_Init();                   // Initializes all timer modules.
 //    ADC_Init();                     // Initializes all ADC modules.
     SPI_Init();                     // Initializes all SPI modules.
-//    UART_Init();                    // Initializes all UART modules
+    UART_Init();                    // Initializes all UART modules
 //    AUDIO_Init();                   // Initializes the Audio module.
     DAC_Init();                     // Initializes the DACs.
 
 //    PORTEbits.RE2 = 1;              // ON LED
-//    PORTEbits.RE3 = 1;              // ERROR LED
+    PORTEbits.RE3 = 1;              // ERROR LED
 //    
 //    DEVCFG1bits.WDTPS = 0b00100;    // PostScalar 1:16, 16ms
 //    WDTCONbits.WDTCLR = 0x01;       // Clears the watchdog timer flag.
@@ -112,7 +112,7 @@ int main(void)
 //        AUDIO_Process();
 //        TIMER_Process();
 //        PORTEbits.RE3 = 0;              // Turn off ERROR LED
-        MON_SinDAC();
+//        MON_SinDAC();
     }
 
     return (0);
