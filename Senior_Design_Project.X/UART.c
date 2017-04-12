@@ -18,634 +18,634 @@
 #include "TESTS.h"
 #include "UART.h"
 
-///** @def DESIRED_BAUDRATE 
-// * The desired UART baud rate. */
-//#define DESIRED_BAUDRATE        (19200)     //The desired BaudRate
-///** @def WRITE_BUFFER_SIZE 
-// * The buffer size for writing. */
-//#define WRITE_BUFFER_SIZE       128
-///** @def CMD_SIZE 
-// * The size of the command name string. */
-//#define CMD_SIZE                16
-///** @def DESCRIPTION_SIZE 
-// * The size of command description string. */
-//#define DESCRIPTION_SIZE        (WRITE_BUFFER_SIZE-CMD_SIZE)
-//
-///** UART Helper Functions. */
-//int UART_GetBaudRate(int desireBaud);
-//
-///** FIFO helper functions. */
-//BOOL UART_isBufferEmpty(MON_FIFO* buffer);
-//char UART_getNextChar(MON_FIFO* buffer);
-//void UART_putNextChar(MON_FIFO* buffer, char ch);
-//
-///** Command Helper Functions. */
-//void UART_processCommand(void);
-//int MON_parseCommand(COMMANDSTR* cmd, MON_FIFO* buffer);
-//COMMANDS MON_getCommand(const char* cmdName);
-//
-///** Commands Handlers. */
-//void MON_GetHelp(void);
-//void MON_Test(void);
-//
-///* File related commands*/
-//void MON_GetFileList(void);
-//void MON_Get_File(void);
-//void MON_Set_File(void);
-//void MON_Reset_File(void);
-//void MON_Read_File(void);
-//
-///* DAC related commands. */
-//void MON_TestDAC(void);
-//void MON_ZeroDAC(void);
+/** @def DESIRED_BAUDRATE 
+ * The desired UART baud rate. */
+#define DESIRED_BAUDRATE        (19200)     //The desired BaudRate
+/** @def WRITE_BUFFER_SIZE 
+ * The buffer size for writing. */
+#define WRITE_BUFFER_SIZE       128
+/** @def CMD_SIZE 
+ * The size of the command name string. */
+#define CMD_SIZE                16
+/** @def DESCRIPTION_SIZE 
+ * The size of command description string. */
+#define DESCRIPTION_SIZE        (WRITE_BUFFER_SIZE-CMD_SIZE)
+
+/** UART Helper Functions. */
+int UART_GetBaudRate(int desireBaud);
+
+/** FIFO helper functions. */
+BOOL UART_isBufferEmpty(MON_FIFO* buffer);
+char UART_getNextChar(MON_FIFO* buffer);
+void UART_putNextChar(MON_FIFO* buffer, char ch);
+
+/** Command Helper Functions. */
+void UART_processCommand(void);
+int MON_parseCommand(COMMANDSTR* cmd, MON_FIFO* buffer);
+COMMANDS MON_getCommand(const char* cmdName);
+
+/** Commands Handlers. */
+void MON_GetHelp(void);
+void MON_Test(void);
+
+/* File related commands*/
+void MON_GetFileList(void);
+void MON_Get_File(void);
+void MON_Set_File(void);
+void MON_Reset_File(void);
+void MON_Read_File(void);
+
+/* DAC related commands. */
+void MON_TestDAC(void);
+void MON_ZeroDAC(void);
 void MON_SinDAC(void);
-//
-///* Timer related commands. */
-//void MON_Timer_ON_OFF(void);
-//void MON_Timer_Get_PS(void);
-//void MON_Timer_Set_PS(void);
-//
-///** @var cmdStr 
-// * The command string. */
-//COMMANDSTR cmdStr;
-///** @var rxBuffer 
-// * The UART receive buffer. */
-//MON_FIFO rxBuffer;
-///** @var txBuffer 
-// * The UART transmit buffer. */
-//MON_FIFO txBuffer;
-///** @var cmdReady 
-// * The UART command receive flag. */
-//BOOL cmdReady;
-///** @var actualBaudRate 
-// * The configured UART baud rate. */
-//UINT16 actualBaudRate;
-///** @var numOfCmds 
-// * The number of commands. */
-//UINT16 numOfCmds;
-///** @var MON_COMMANDS 
-// * The list of commands. */
-//COMMANDS MON_COMMANDS[] = {
-//    {"HELP", " Display the list of commands avaliable. ", MON_GetHelp},
-//    {"TEST", " Unit Test, 0-read/write, 1-read, 2-write. FORMAT: TEST value. ", MON_Test},
-//    {"LIST", " Lists all WAV files. ", MON_GetFileList},
-//    {"SET", " Sets the file to read. FORMAT: SET fileName.", MON_Set_File},
-//    {"RESET", " Resets the file pointer to beginning of file.", MON_Reset_File},
-//    {"READ", " Reads numOfBytes from current file. Read from beginning of the file if reset is set to 1. FORMAT: READ reset numOfBytes.", MON_Read_File},
-//    {"DAC", " Sets an output value on the DAC. MIN: 0, MAX: 65535. FORMAT: DAC value. ", MON_TestDAC},
-//    {"ZERO", " Sets all DAC outputs to zero. ", MON_ZeroDAC},
-//    {"SIN", " Tests the DAC using a sin wave. ", MON_SinDAC},
-//    {"TONE", " Toggles on/off the Audio Timer. ", MON_Timer_ON_OFF},
-//    {"PDG", " Get the current period set on timer 3. FORMAT: PDG.", MON_Timer_Get_PS},
-//    {"PDS", " Configures the timer period. FORMAT: PDS period .", MON_Timer_Set_PS},
-//    {"", "", NULL}
-//};
-//
-///**
-// * @brief Initialize the UART module.
-// * @return Void
-// */
-//void UART_Init(void)
-//{ 
-//    cmdReady = FALSE;
-//    numOfCmds = sizeof(MON_COMMANDS)/sizeof(MON_COMMANDS[0]);
-//    
-//    // Re-mapped pins RPB3R and RPA2 pins to U1RX and U1TX
-//    mSysUnlockOpLock({
-//        PPSUnLock;
-//        PPSInput(3,U1RX,RPA2);     // Assign RPA2 as input pin for U1RX
-//        PPSOutput(1,RPB3,U1TX);    // Set RPB3R pin as output for U1TX
-//        PPSLock;
-//    });
-//    
-//    // Configure UART1 module
-////    UARTConfigure(UART_MODULE_ID, UART_ENABLE_PINS_TX_RX_ONLY | UART_INVERT_RECEIVE_POLARITY | UART_INVERT_TRANSMIT_POLARITY);
-////    UARTSetFifoMode(UART_MODULE_ID, UART_INTERRUPT_ON_TX_BUFFER_EMPTY | UART_INTERRUPT_ON_RX_NOT_EMPTY);
-////    UARTSetLineControl(UART_MODULE_ID, UART_DATA_SIZE_8_BITS | UART_PARITY_NONE | UART_STOP_BITS_1);
-////    actualBaudRate = UARTSetDataRate(UART_MODULE_ID, GetPeripheralClock(), DESIRED_BAUDRATE);
-////    UARTEnable(UART_MODULE_ID, UART_ENABLE_FLAGS(UART_PERIPHERAL | UART_RX | UART_TX));
-//
-//    // Configure UART RX1 and TX1 Interrupt
-////    INTEnable(INT_SOURCE_UART_RX(UART_MODULE_ID), INT_ENABLED);
-////    INTEnable(INT_SOURCE_UART_TX(UART_MODULE_ID), INT_DISABLED);
-////    INTSetVectorPriority(INT_VECTOR_UART(UART_MODULE_ID), INT_PRIORITY_LEVEL_1);
-////    INTSetVectorSubPriority(INT_VECTOR_UART(UART_MODULE_ID), INT_SUB_PRIORITY_LEVEL_1);
-//    
-//    MON_SendString(">");  // Sends a prompt.
-//}
-//
-///**
-// * @brief Calculates the baud rate configuration.
-// * @arg desireBaud The desired baud rate.
-// * @return Returns the baud rate for the given peripheral clock.
-// */
-//int UART_GetBaudRate(int desireBaud)
-//{
-//    return ((GetPeripheralClock()/desireBaud)) - 1;
-//}
-//
-///**
-// * @brief Processes all UART related tasks.
-// * @return Void.
-// */
-//void UART_Process(void)
-//{
-//    UART_processCommand();
-//} 
-//
-///**
-// * @brief Processes commands received by the UART module.
-// * @return Void.
-// */
-//void UART_processCommand(void)
-//{
-//    if(!UART_isBufferEmpty(&rxBuffer) && cmdReady == TRUE)
-//    {
-//        int numOfArgs = 0;
-//        
-//        /* Parses command from receive buffer. */
-//        numOfArgs = MON_parseCommand(&cmdStr, &rxBuffer);
-//        
-//        if(numOfArgs != -1)
-//        {
-//            /* Calls the command handler if the returned command isn't empty. */
-//            COMMANDS command = MON_getCommand(cmdStr.name);
-//            if(command.handler != NULL)
-//            {
-//                command.handler();
-//            }
-//            else
-//            {
-//                MON_SendString("Command doesn't exist.");
-//            }
-//
-//            /* Clears command variable. */
-//            memset(&cmdStr.name[0], 0, sizeof(cmdStr.name));
-//            memset(&cmdStr.arg1[0], 0, sizeof(cmdStr.arg1));
-//            memset(&cmdStr.arg2[0], 0, sizeof(cmdStr.arg2));
-//        }
-//        
-//        /* Prepares for the next command. */
-//        MON_SendString(">");
-//        
-//        /* Resets the ready flag. */
-//        cmdReady = FALSE;
-//    }
-//}
-//
-///**
-// * @brief Parses the received commands.
-// * @arg cmd The command data structure used to store the command.
-// * @arg buffer The receive buffer.
-// * @return Returns the number of command arguments.
-// */
-//int MON_parseCommand(COMMANDSTR* cmd, MON_FIFO* buffer)
-//{   
-//    int i = 0, numOfArgs = 0;
-//    int argIndexes[3] = {0,0,0};
-//    char str[64] = "";
-//    
-//    /* Pops off the first character in the receive buffer. */
-//    char ch = UART_getNextChar(buffer);
-//    /* Checks for a return character and empty space. */
-//    if(ch == '\r' || ch == ' ')
-//    {
-//        return -1;
-//    }
-//    
-//    int count = 0;
-//    int numOfBytes[3] = {0,0,0};
-//    
-//    /* Grabs the first command from the fifo buffer. */
-//    while(ch != '\r' && i < 64)
-//    {
-//        str[i++] = (char)MON_lowerToUpper(&ch);
-//        count++;
-//        ch = UART_getNextChar(buffer);
-//        
-//        if(ch == ' ' || ch == '\r')
-//        {
-//            numOfBytes[numOfArgs] = count;
-//            argIndexes[numOfArgs++] = i-count+1;
-//            count = 0;
-//        }
-//    }
-//    
-//    switch(numOfArgs)
-//    {
-//        case 1:
-//            strncpy(&cmd->name[0], &str[0], numOfBytes[0]);
-//        case 2:
-//            strncpy(&cmd->name[0], &str[0], numOfBytes[0]);
-//            strncpy(&cmd->arg1[0], &str[argIndexes[1]], numOfBytes[1]);
-//            break;
-//        case 3:
-//            strncpy(&cmd->name[0], &str[0], numOfBytes[0]);
-//            strncpy(&cmd->arg1[0], &str[argIndexes[1]], numOfBytes[1]);
-//            strncpy(&cmd->arg2[0], &str[argIndexes[2]], numOfBytes[2]);
-//            break;
-//        default:
-//            break;
-//    }
-//    
-//    return numOfArgs;
-//}
-//
-///**
-// * @brief Transmit a character.
-// * @details Add character to transmit fifo buffer.
-// * @arg character The character to transmit.
-// * @return Void.
-// */
-//void MON_SendChar(const char* character)
-//{
-//    UART_putNextChar(&txBuffer, *character);
-////    INTEnable(INT_SOURCE_UART_TX(UART_MODULE_ID), INT_ENABLED);
-//}
-//
-///**
-// * @brief Transmit a string.
-// * @details Adds string to transmit fifo buffer.
-// * @arg str The string to transmit.
-// * @return Void.
-// */
-//void MON_SendString(const char* str)
-//{
-//    if(*str == '>')
-//    {
-//        UART_putNextChar(&txBuffer, *str);
-//    }
-//    else
-//    {
-//        while(*str != '\0')
-//        {
-//            UART_putNextChar(&txBuffer, *str);
-//            str++;
-//        }
-//
-//        UART_putNextChar(&txBuffer, '\n');
-//        UART_putNextChar(&txBuffer, '\r');
-//    }
-//    
-////    INTEnable(INT_SOURCE_UART_TX(UART_MODULE_ID), INT_ENABLED);
-//}
-//
-///**
-// * @brief Transmit a string.
-// * @details Transmit a string without a newline or return character.
-// * @arg str The string to transmit.
-// * @return Void.
-// */
-//void MON_SendStringNR(const char* str)
-//{
-//    if(*str == '>')
-//    {
-//        UART_putNextChar(&txBuffer, *str);
-//    }
-//    else
-//    {
-//        while(*str != '\0')
-//        {
-//            UART_putNextChar(&txBuffer, *str);
-//            str++;
-//        }
-//    }
-//    
-////    INTEnable(INT_SOURCE_UART_TX(UART_MODULE_ID), INT_ENABLED);
-//}
-//
-///**
-// * @brief Changes character to undercase.
-// * @details Changes character to undercase.
-// * @arg ch The character to undercase.
-// * @return The undercase character
-// */
-//char MON_lowerToUpper(const char* ch)
-//{
-//    char uChar = (*ch);
-//    if (uChar >= 'a' && uChar <= 'z') 
-//    {
-//         uChar = uChar - 32;
-//    }
-//    return uChar;
-//}
-//
-///**
-// * @brief Checks if two strings matches.
-// * @arg str1 The first string to compare.
-// * @arg str2 The second string to compare.
-// * @return Returns a boolean indicating if the strings matches.
-// * @retval TRUE if both strings matches.
-// * @retval FALSE if the strings does not match.
-// */
-//BOOL MON_stringsMatch(const char* str1, const char* str2)
-//{
-//    /* Loops through both strings until reaching a null terminator or if neither strings matches. */
-//    while (*str1 == *str2) 
-//    {
-//        if (*str1 == '\0' || *str2 == '\0')
-//        {
-//            break;
-//        }
-//        str1++;
-//        str2++;
-//    }
-//
-//    if (*str1 == '\0' && *str2 == '\0')
-//    {
-//       return TRUE;
-//    }
-//    return FALSE; 
-//}
-//
-///**
-// * @brief Removes white spaces from a string.
-// * @arg string The string that is being modified.
-// * @return Void.
-// */
-//void MON_removeWhiteSpace(const char* string)
-//{
-//    while(*string != '\0')
-//    {
-//        if(*string == ' ')
-//        {
-//            string = string++;
-//        }
-//        string++;
-//    }
-//}
-//
-///**
-// * @brief Gets the length of a string.
-// * @arg string The string that is being modified.
-// * @return Returns the string length.
-// */
-//UINT16 MON_getStringLength(const char* string)
-//{
-//    UINT16 length = 0;
-//    while(*string != '\0')
-//    {
-//        string++;
-//        length++;
-//    }
-//    return length;
-//}
-//
-///**
-// * @brief Gets the handler for the specified command.
-// * @arg cmdName The name of the command.
-// * @return Returns the command handler.
-// */
-//COMMANDS MON_getCommand(const char* cmdName)
-//{
-//    int i = 0;
-//    for(i = 0; i < numOfCmds; i++)
-//    {
-//        if(MON_stringsMatch(cmdName, MON_COMMANDS[i].name))
-//        {
-//            return MON_COMMANDS[i];
-//        }
-//    }
-//    return MON_COMMANDS[numOfCmds]; // returns an empty null command
-//}
-//
-///**
-// * @brief The UART1 Interrupt Service Routine.
-// * @details The UART1 interrupt service routine will handle receiving data. If
-// * data is received, the data is pushed into a FIFO queue for later processing. 
-// * If data is received is a return key, the received data has ended and the 
-// * command is ready flag is set. 
-// * @return Void.
-// */
-//void __ISR(_UART1_VECTOR, IPL4AUTO) IntUart1Handler(void)
-//{
-//	if(INTGetFlag(INT_SOURCE_UART_RX(UART_MODULE_ID)))
-//	{   
-//        /* Checks if bus collision has occurred and clears collision flag.*/
-//        if(IFS1bits.U1EIF)
-//        {
-//           U1STAbits.OERR = 0;
-//           IFS1bits.U1EIF=0;
-//        }
-//        else if(IFS1bits.U1RXIF)
-//        {
-//            /* Checks if there is data ready to read from the receive buffer. */
-//            if(UART_DATA_READY)
-//            {
-//                // Reads BYTEs from receive buffer.
-//                BYTE data = U1RXREG;
-//
-//                // Writes data to receive buffer.
-//                UART_putNextChar(&rxBuffer, data);
-//                
-//                // Sets a flag for end of receiving a command.
-//                if(data == '\r')
-//                {
-//                    cmdReady = TRUE;
-//                    UART_processCommand();
-//                }
-//            }
-//        }
-//        
-//        // Clear the RX interrupt Flag.
-//	    INTClearFlag(INT_SOURCE_UART_RX(UART_MODULE_ID));
-//	}
-//    
-//    if(INTGetFlag(INT_SOURCE_UART_TX(UART_MODULE_ID)))
-//	{   
-//        /* Checks if bus collision has occurred and clears collision flag.*/
-//        if(IFS1bits.U1EIF)
-//        {
-//           U1STAbits.OERR = 0;
-//           IFS1bits.U1EIF=0;
-//        }
-//        else if(IFS1bits.U1TXIF)
-//        {
-//            /* Checks if there is data ready to read from the receive buffer. */
-//            if(UART_TRANSMITTER_NOT_FULL && !UART_isBufferEmpty(&txBuffer))
-//            {
-//                U1TXREG = UART_getNextChar(&txBuffer);    
-//            }
-//            /* Checks if the transmit buffer is empty. If so, disable the TX interrupt. */
-//            if(UART_isBufferEmpty(&txBuffer))
-//            {
-//                INTEnable(INT_SOURCE_UART_TX(UART_MODULE_ID), INT_DISABLED);
-//            }
-//        }
-//        
-//        // Clear the RX interrupt Flag.
-//	    INTClearFlag(INT_SOURCE_UART_TX(UART_MODULE_ID));
-//	}
-//}
-//
-///**
-// * @brief Pushes the specified character into the buffer.
-// * @arg buffer The buffer used to store the character.
-// * @arg ch The character to push into buffer.
-// * @return Void.
-// */
-//void UART_putNextChar(MON_FIFO* buffer, char ch)
-//{
-//    FIFO_MonPush(buffer, ch);
-//}
-//
-///**
-// * @brief Pops a character from the buffer.
-// * @arg buffer The buffer to pop the character from.
-// * @return Returns the character that is popped off from the buffer.
-// */
-//char UART_getNextChar(MON_FIFO* buffer)
-//{
-//    return FIFO_MonPop(buffer);
-//}
-//
-///**
-// * @brief Checks if the specified buffer is empty.
-// * @arg buffer The buffer that is being checked.
-// * @return Returns a boolean indicating if the buffer is empty.
-// * @retval TRUE if the buffer is empty.
-// * @retval FALSE if the buffer is not empty.
-// */
-//BOOL UART_isBufferEmpty(MON_FIFO* buffer)
-//{
-//    if(buffer->bufferSize > 0)
-//    {
-//        return FALSE;
-//    }
-//    return TRUE;
-//}
-//
-///**
-// * @brief Displays the list of available commands.
-// * @return Void.
-// */
-//void MON_GetHelp(void)
-//{
-//    int i = 0;
-//    UINT16 strLength = 0;
-//    char buf[128] = "";
-//    for(i = 0; i < numOfCmds; i++)
-//    {
-//        memset(&buf[0], 0, sizeof(buf)); // Clears the buffer for each command.
-//        strLength = MON_getStringLength(MON_COMMANDS[i].name);
-//        strncpy(&buf[0], MON_COMMANDS[i].name, strLength);
-//        strncat(&buf[strLength], MON_COMMANDS[i].description, (128-strLength));
-//        MON_SendString(&buf[0]);
-//    }
-//}
-//
-///**
-// * @brief Command used to test parsing commands. 
-// * @return Void.
-// */
-//void MON_Test(void)
-//{
-//    Test_SelectTest((UINT16)atoi(cmdStr.arg1));
-//}
-//
-///**
-// * @brief Command used to display a list of files.
-// * @return Void.
-// */
-//void MON_GetFileList(void)
-//{
-//    AUDIO_ListFiles();
-//}
-//
-///**
-// * @brief Command used to select a specific file.
-// * @return Void.
-// */
-//void MON_Set_File(void)
-//{
-//    if(AUDIO_setNewFile(cmdStr.arg1))
-//    {
-//        MON_SendString("The new file has been set.");
-//    }
-//    else
-//    {
-//        MON_SendString("Failed to open the file. Make sure the file exists.");
-//    }
-//}
-//
-///**
-// * @brief Command used to reset the selected file pointer
-// * @return Void.
-// */
-//void MON_Reset_File(void)
-//{
-//    AUDIO_resetFilePtr();
-//    MON_SendString("The file pointer has been reset.");
-//}
-//
-///**
-// * @brief Command used to read the selected file.
-// * @return Void.
-// */
-//void MON_Read_File(void)
-//{
-//    UINT16 reset = atoi(cmdStr.arg1);
-//    UINT16 bytesToRead = atoi(cmdStr.arg2);
-//    BYTE* bufPtr;
-//    char buf[16];
-//    int i = 0;
-//    
-//    if(reset)
-//    {
-//        AUDIO_resetFilePtr();
-//    }
-//    
-//    AUDIO_ReadFile(bytesToRead);
-//    bufPtr = (BYTE*)AUDIO_GetRecieveBuffer();
-//
-//    // Prints out the columns
-//    MON_SendString("       0x00 0x01 0x02 0x03 0x04 0x05 0x06 0x07 0x08 0x09 0x0A 0x0B"); 
-//    MON_SendString("     ---------------------------------------------------------------");
-//    // Prints out the rows
-//    MON_SendStringNR("0x00 | ");
-//    
-//    for(i = 1; i <= bytesToRead; i++)
-//    {
-//        snprintf(&buf[0], 16, "0x%02x ", bufPtr[i-1]);
-//        MON_SendStringNR(&buf[0]);
-//        if(i%12 == 0)
-//        {
-//            MON_SendString("");   // Adds a new line and returns
-//            snprintf(&buf[0], 16, "0x%02x | ", i-1);
-//            MON_SendStringNR(&buf[0]);
-//        }
-//    }
-//    MON_SendString("");   // Adds a new line and returns
-//}
-//
-///**
-// * @brief Command used to write data to the DAC.
-// * @return Void.
-// */
-//void MON_TestDAC(void)
-//{
-//    UINT32 value = atoi(cmdStr.arg1);
-//    
-//    //Verifies that the value received is within range.
-//    if(value >= 65535)
-//    {
-//        value = 65535;
-//    }
-//    else if(value <= 0)
-//    {
-//        value = 0;
-//    }
-//    DAC_WriteToDAC(WRITE_UPDATE_CHN_A, value);
-//}
-//
-///**
-// * @brief Command used to zero the DAC's output.
-// * @return Void.
-// */
-//void MON_ZeroDAC(void)
-//{
-//    DAC_ZeroOutput();
-//}
+
+/* Timer related commands. */
+void MON_Timer_ON_OFF(void);
+void MON_Timer_Get_PS(void);
+void MON_Timer_Set_PS(void);
+
+/** @var cmdStr 
+ * The command string. */
+COMMANDSTR cmdStr;
+/** @var rxBuffer 
+ * The UART receive buffer. */
+MON_FIFO rxBuffer;
+/** @var txBuffer 
+ * The UART transmit buffer. */
+MON_FIFO txBuffer;
+/** @var cmdReady 
+ * The UART command receive flag. */
+BOOL cmdReady;
+/** @var actualBaudRate 
+ * The configured UART baud rate. */
+UINT16 actualBaudRate;
+/** @var numOfCmds 
+ * The number of commands. */
+UINT16 numOfCmds;
+/** @var MON_COMMANDS 
+ * The list of commands. */
+COMMANDS MON_COMMANDS[] = {
+    {"HELP", " Display the list of commands avaliable. ", MON_GetHelp},
+    {"TEST", " Unit Test, 0-read/write, 1-read, 2-write. FORMAT: TEST value. ", MON_Test},
+    {"LIST", " Lists all WAV files. ", MON_GetFileList},
+    {"SET", " Sets the file to read. FORMAT: SET fileName.", MON_Set_File},
+    {"RESET", " Resets the file pointer to beginning of file.", MON_Reset_File},
+    {"READ", " Reads numOfBytes from current file. Read from beginning of the file if reset is set to 1. FORMAT: READ reset numOfBytes.", MON_Read_File},
+    {"DAC", " Sets an output value on the DAC. MIN: 0, MAX: 65535. FORMAT: DAC value. ", MON_TestDAC},
+    {"ZERO", " Sets all DAC outputs to zero. ", MON_ZeroDAC},
+    {"SIN", " Tests the DAC using a sin wave. ", MON_SinDAC},
+    {"TONE", " Toggles on/off the Audio Timer. ", MON_Timer_ON_OFF},
+    {"PDG", " Get the current period set on timer 3. FORMAT: PDG.", MON_Timer_Get_PS},
+    {"PDS", " Configures the timer period. FORMAT: PDS period .", MON_Timer_Set_PS},
+    {"", "", NULL}
+};
+
+/**
+ * @brief Initialize the UART module.
+ * @return Void
+ */
+void UART_Init(void)
+{ 
+    cmdReady = FALSE;
+    numOfCmds = sizeof(MON_COMMANDS)/sizeof(MON_COMMANDS[0]);
+    
+    // Re-mapped pins RPB3R and RPA2 pins to U1RX and U1TX
+    mSysUnlockOpLock({
+        PPSUnLock;
+        PPSInput(3,U1RX,RPA2);     // Assign RPA2 as input pin for U1RX
+        PPSOutput(1,RPB3,U1TX);    // Set RPB3R pin as output for U1TX
+        PPSLock;
+    });
+    
+    // Configure UART1 module
+//    UARTConfigure(UART_MODULE_ID, UART_ENABLE_PINS_TX_RX_ONLY | UART_INVERT_RECEIVE_POLARITY | UART_INVERT_TRANSMIT_POLARITY);
+//    UARTSetFifoMode(UART_MODULE_ID, UART_INTERRUPT_ON_TX_BUFFER_EMPTY | UART_INTERRUPT_ON_RX_NOT_EMPTY);
+//    UARTSetLineControl(UART_MODULE_ID, UART_DATA_SIZE_8_BITS | UART_PARITY_NONE | UART_STOP_BITS_1);
+//    actualBaudRate = UARTSetDataRate(UART_MODULE_ID, GetPeripheralClock(), DESIRED_BAUDRATE);
+//    UARTEnable(UART_MODULE_ID, UART_ENABLE_FLAGS(UART_PERIPHERAL | UART_RX | UART_TX));
+
+    // Configure UART RX1 and TX1 Interrupt
+//    INTEnable(INT_SOURCE_UART_RX(UART_MODULE_ID), INT_ENABLED);
+//    INTEnable(INT_SOURCE_UART_TX(UART_MODULE_ID), INT_DISABLED);
+//    INTSetVectorPriority(INT_VECTOR_UART(UART_MODULE_ID), INT_PRIORITY_LEVEL_1);
+//    INTSetVectorSubPriority(INT_VECTOR_UART(UART_MODULE_ID), INT_SUB_PRIORITY_LEVEL_1);
+    
+    MON_SendString(">");  // Sends a prompt.
+}
+
+/**
+ * @brief Calculates the baud rate configuration.
+ * @arg desireBaud The desired baud rate.
+ * @return Returns the baud rate for the given peripheral clock.
+ */
+int UART_GetBaudRate(int desireBaud)
+{
+    return ((GetPeripheralClock()/desireBaud)) - 1;
+}
+
+/**
+ * @brief Processes all UART related tasks.
+ * @return Void.
+ */
+void UART_Process(void)
+{
+    UART_processCommand();
+} 
+
+/**
+ * @brief Processes commands received by the UART module.
+ * @return Void.
+ */
+void UART_processCommand(void)
+{
+    if(!UART_isBufferEmpty(&rxBuffer) && cmdReady == TRUE)
+    {
+        int numOfArgs = 0;
+        
+        /* Parses command from receive buffer. */
+        numOfArgs = MON_parseCommand(&cmdStr, &rxBuffer);
+        
+        if(numOfArgs != -1)
+        {
+            /* Calls the command handler if the returned command isn't empty. */
+            COMMANDS command = MON_getCommand(cmdStr.name);
+            if(command.handler != NULL)
+            {
+                command.handler();
+            }
+            else
+            {
+                MON_SendString("Command doesn't exist.");
+            }
+
+            /* Clears command variable. */
+            memset(&cmdStr.name[0], 0, sizeof(cmdStr.name));
+            memset(&cmdStr.arg1[0], 0, sizeof(cmdStr.arg1));
+            memset(&cmdStr.arg2[0], 0, sizeof(cmdStr.arg2));
+        }
+        
+        /* Prepares for the next command. */
+        MON_SendString(">");
+        
+        /* Resets the ready flag. */
+        cmdReady = FALSE;
+    }
+}
+
+/**
+ * @brief Parses the received commands.
+ * @arg cmd The command data structure used to store the command.
+ * @arg buffer The receive buffer.
+ * @return Returns the number of command arguments.
+ */
+int MON_parseCommand(COMMANDSTR* cmd, MON_FIFO* buffer)
+{   
+    int i = 0, numOfArgs = 0;
+    int argIndexes[3] = {0,0,0};
+    char str[64] = "";
+    
+    /* Pops off the first character in the receive buffer. */
+    char ch = UART_getNextChar(buffer);
+    /* Checks for a return character and empty space. */
+    if(ch == '\r' || ch == ' ')
+    {
+        return -1;
+    }
+    
+    int count = 0;
+    int numOfBytes[3] = {0,0,0};
+    
+    /* Grabs the first command from the fifo buffer. */
+    while(ch != '\r' && i < 64)
+    {
+        str[i++] = (char)MON_lowerToUpper(&ch);
+        count++;
+        ch = UART_getNextChar(buffer);
+        
+        if(ch == ' ' || ch == '\r')
+        {
+            numOfBytes[numOfArgs] = count;
+            argIndexes[numOfArgs++] = i-count+1;
+            count = 0;
+        }
+    }
+    
+    switch(numOfArgs)
+    {
+        case 1:
+            strncpy(&cmd->name[0], &str[0], numOfBytes[0]);
+        case 2:
+            strncpy(&cmd->name[0], &str[0], numOfBytes[0]);
+            strncpy(&cmd->arg1[0], &str[argIndexes[1]], numOfBytes[1]);
+            break;
+        case 3:
+            strncpy(&cmd->name[0], &str[0], numOfBytes[0]);
+            strncpy(&cmd->arg1[0], &str[argIndexes[1]], numOfBytes[1]);
+            strncpy(&cmd->arg2[0], &str[argIndexes[2]], numOfBytes[2]);
+            break;
+        default:
+            break;
+    }
+    
+    return numOfArgs;
+}
+
+/**
+ * @brief Transmit a character.
+ * @details Add character to transmit fifo buffer.
+ * @arg character The character to transmit.
+ * @return Void.
+ */
+void MON_SendChar(const char* character)
+{
+    UART_putNextChar(&txBuffer, *character);
+//    INTEnable(INT_SOURCE_UART_TX(UART_MODULE_ID), INT_ENABLED);
+}
+
+/**
+ * @brief Transmit a string.
+ * @details Adds string to transmit fifo buffer.
+ * @arg str The string to transmit.
+ * @return Void.
+ */
+void MON_SendString(const char* str)
+{
+    if(*str == '>')
+    {
+        UART_putNextChar(&txBuffer, *str);
+    }
+    else
+    {
+        while(*str != '\0')
+        {
+            UART_putNextChar(&txBuffer, *str);
+            str++;
+        }
+
+        UART_putNextChar(&txBuffer, '\n');
+        UART_putNextChar(&txBuffer, '\r');
+    }
+    
+//    INTEnable(INT_SOURCE_UART_TX(UART_MODULE_ID), INT_ENABLED);
+}
+
+/**
+ * @brief Transmit a string.
+ * @details Transmit a string without a newline or return character.
+ * @arg str The string to transmit.
+ * @return Void.
+ */
+void MON_SendStringNR(const char* str)
+{
+    if(*str == '>')
+    {
+        UART_putNextChar(&txBuffer, *str);
+    }
+    else
+    {
+        while(*str != '\0')
+        {
+            UART_putNextChar(&txBuffer, *str);
+            str++;
+        }
+    }
+    
+//    INTEnable(INT_SOURCE_UART_TX(UART_MODULE_ID), INT_ENABLED);
+}
+
+/**
+ * @brief Changes character to undercase.
+ * @details Changes character to undercase.
+ * @arg ch The character to undercase.
+ * @return The undercase character
+ */
+char MON_lowerToUpper(const char* ch)
+{
+    char uChar = (*ch);
+    if (uChar >= 'a' && uChar <= 'z') 
+    {
+         uChar = uChar - 32;
+    }
+    return uChar;
+}
+
+/**
+ * @brief Checks if two strings matches.
+ * @arg str1 The first string to compare.
+ * @arg str2 The second string to compare.
+ * @return Returns a boolean indicating if the strings matches.
+ * @retval TRUE if both strings matches.
+ * @retval FALSE if the strings does not match.
+ */
+BOOL MON_stringsMatch(const char* str1, const char* str2)
+{
+    /* Loops through both strings until reaching a null terminator or if neither strings matches. */
+    while (*str1 == *str2) 
+    {
+        if (*str1 == '\0' || *str2 == '\0')
+        {
+            break;
+        }
+        str1++;
+        str2++;
+    }
+
+    if (*str1 == '\0' && *str2 == '\0')
+    {
+       return TRUE;
+    }
+    return FALSE; 
+}
+
+/**
+ * @brief Removes white spaces from a string.
+ * @arg string The string that is being modified.
+ * @return Void.
+ */
+void MON_removeWhiteSpace(const char* string)
+{
+    while(*string != '\0')
+    {
+        if(*string == ' ')
+        {
+            string = string++;
+        }
+        string++;
+    }
+}
+
+/**
+ * @brief Gets the length of a string.
+ * @arg string The string that is being modified.
+ * @return Returns the string length.
+ */
+UINT16 MON_getStringLength(const char* string)
+{
+    UINT16 length = 0;
+    while(*string != '\0')
+    {
+        string++;
+        length++;
+    }
+    return length;
+}
+
+/**
+ * @brief Gets the handler for the specified command.
+ * @arg cmdName The name of the command.
+ * @return Returns the command handler.
+ */
+COMMANDS MON_getCommand(const char* cmdName)
+{
+    int i = 0;
+    for(i = 0; i < numOfCmds; i++)
+    {
+        if(MON_stringsMatch(cmdName, MON_COMMANDS[i].name))
+        {
+            return MON_COMMANDS[i];
+        }
+    }
+    return MON_COMMANDS[numOfCmds]; // returns an empty null command
+}
+
+/**
+ * @brief The UART1 Interrupt Service Routine.
+ * @details The UART1 interrupt service routine will handle receiving data. If
+ * data is received, the data is pushed into a FIFO queue for later processing. 
+ * If data is received is a return key, the received data has ended and the 
+ * command is ready flag is set. 
+ * @return Void.
+ */
+void __ISR(_UART1_VECTOR, IPL4AUTO) IntUart1Handler(void)
+{
+	if(INTGetFlag(INT_SOURCE_UART_RX(UART_MODULE_ID)))
+	{   
+        /* Checks if bus collision has occurred and clears collision flag.*/
+        if(IFS1bits.U1EIF)
+        {
+           U1STAbits.OERR = 0;
+           IFS1bits.U1EIF=0;
+        }
+        else if(IFS1bits.U1RXIF)
+        {
+            /* Checks if there is data ready to read from the receive buffer. */
+            if(UART_DATA_READY)
+            {
+                // Reads BYTEs from receive buffer.
+                BYTE data = U1RXREG;
+
+                // Writes data to receive buffer.
+                UART_putNextChar(&rxBuffer, data);
+                
+                // Sets a flag for end of receiving a command.
+                if(data == '\r')
+                {
+                    cmdReady = TRUE;
+                    UART_processCommand();
+                }
+            }
+        }
+        
+        // Clear the RX interrupt Flag.
+	    INTClearFlag(INT_SOURCE_UART_RX(UART_MODULE_ID));
+	}
+    
+    if(INTGetFlag(INT_SOURCE_UART_TX(UART_MODULE_ID)))
+	{   
+        /* Checks if bus collision has occurred and clears collision flag.*/
+        if(IFS1bits.U1EIF)
+        {
+           U1STAbits.OERR = 0;
+           IFS1bits.U1EIF=0;
+        }
+        else if(IFS1bits.U1TXIF)
+        {
+            /* Checks if there is data ready to read from the receive buffer. */
+            if(UART_TRANSMITTER_NOT_FULL && !UART_isBufferEmpty(&txBuffer))
+            {
+                U1TXREG = UART_getNextChar(&txBuffer);    
+            }
+            /* Checks if the transmit buffer is empty. If so, disable the TX interrupt. */
+            if(UART_isBufferEmpty(&txBuffer))
+            {
+                INTEnable(INT_SOURCE_UART_TX(UART_MODULE_ID), INT_DISABLED);
+            }
+        }
+        
+        // Clear the RX interrupt Flag.
+	    INTClearFlag(INT_SOURCE_UART_TX(UART_MODULE_ID));
+	}
+}
+
+/**
+ * @brief Pushes the specified character into the buffer.
+ * @arg buffer The buffer used to store the character.
+ * @arg ch The character to push into buffer.
+ * @return Void.
+ */
+void UART_putNextChar(MON_FIFO* buffer, char ch)
+{
+    FIFO_MonPush(buffer, ch);
+}
+
+/**
+ * @brief Pops a character from the buffer.
+ * @arg buffer The buffer to pop the character from.
+ * @return Returns the character that is popped off from the buffer.
+ */
+char UART_getNextChar(MON_FIFO* buffer)
+{
+    return FIFO_MonPop(buffer);
+}
+
+/**
+ * @brief Checks if the specified buffer is empty.
+ * @arg buffer The buffer that is being checked.
+ * @return Returns a boolean indicating if the buffer is empty.
+ * @retval TRUE if the buffer is empty.
+ * @retval FALSE if the buffer is not empty.
+ */
+BOOL UART_isBufferEmpty(MON_FIFO* buffer)
+{
+    if(buffer->bufferSize > 0)
+    {
+        return FALSE;
+    }
+    return TRUE;
+}
+
+/**
+ * @brief Displays the list of available commands.
+ * @return Void.
+ */
+void MON_GetHelp(void)
+{
+    int i = 0;
+    UINT16 strLength = 0;
+    char buf[128] = "";
+    for(i = 0; i < numOfCmds; i++)
+    {
+        memset(&buf[0], 0, sizeof(buf)); // Clears the buffer for each command.
+        strLength = MON_getStringLength(MON_COMMANDS[i].name);
+        strncpy(&buf[0], MON_COMMANDS[i].name, strLength);
+        strncat(&buf[strLength], MON_COMMANDS[i].description, (128-strLength));
+        MON_SendString(&buf[0]);
+    }
+}
+
+/**
+ * @brief Command used to test parsing commands. 
+ * @return Void.
+ */
+void MON_Test(void)
+{
+    Test_SelectTest((UINT16)atoi(cmdStr.arg1));
+}
+
+/**
+ * @brief Command used to display a list of files.
+ * @return Void.
+ */
+void MON_GetFileList(void)
+{
+    AUDIO_ListFiles();
+}
+
+/**
+ * @brief Command used to select a specific file.
+ * @return Void.
+ */
+void MON_Set_File(void)
+{
+    if(AUDIO_setNewFile(cmdStr.arg1))
+    {
+        MON_SendString("The new file has been set.");
+    }
+    else
+    {
+        MON_SendString("Failed to open the file. Make sure the file exists.");
+    }
+}
+
+/**
+ * @brief Command used to reset the selected file pointer
+ * @return Void.
+ */
+void MON_Reset_File(void)
+{
+    AUDIO_resetFilePtr();
+    MON_SendString("The file pointer has been reset.");
+}
+
+/**
+ * @brief Command used to read the selected file.
+ * @return Void.
+ */
+void MON_Read_File(void)
+{
+    UINT16 reset = atoi(cmdStr.arg1);
+    UINT16 bytesToRead = atoi(cmdStr.arg2);
+    BYTE* bufPtr;
+    char buf[16];
+    int i = 0;
+    
+    if(reset)
+    {
+        AUDIO_resetFilePtr();
+    }
+    
+    AUDIO_ReadFile(bytesToRead);
+    bufPtr = (BYTE*)AUDIO_GetRecieveBuffer();
+
+    // Prints out the columns
+    MON_SendString("       0x00 0x01 0x02 0x03 0x04 0x05 0x06 0x07 0x08 0x09 0x0A 0x0B"); 
+    MON_SendString("     ---------------------------------------------------------------");
+    // Prints out the rows
+    MON_SendStringNR("0x00 | ");
+    
+    for(i = 1; i <= bytesToRead; i++)
+    {
+        snprintf(&buf[0], 16, "0x%02x ", bufPtr[i-1]);
+        MON_SendStringNR(&buf[0]);
+        if(i%12 == 0)
+        {
+            MON_SendString("");   // Adds a new line and returns
+            snprintf(&buf[0], 16, "0x%02x | ", i-1);
+            MON_SendStringNR(&buf[0]);
+        }
+    }
+    MON_SendString("");   // Adds a new line and returns
+}
+
+/**
+ * @brief Command used to write data to the DAC.
+ * @return Void.
+ */
+void MON_TestDAC(void)
+{
+    UINT32 value = atoi(cmdStr.arg1);
+    
+    //Verifies that the value received is within range.
+    if(value >= 65535)
+    {
+        value = 65535;
+    }
+    else if(value <= 0)
+    {
+        value = 0;
+    }
+    DAC_WriteToDAC(WRITE_UPDATE_CHN_A, value);
+}
+
+/**
+ * @brief Command used to zero the DAC's output.
+ * @return Void.
+ */
+void MON_ZeroDAC(void)
+{
+    DAC_ZeroOutput();
+}
 
 /**
  * @brief Command used to write a sin wav to the DAC.
@@ -803,46 +803,46 @@ void MON_SinDAC(void)
     }
 }
 
-///**
-// * @brief Command used to Toggle on/off the Timer 3 module.
-// * @return Void.
-// */
-//void MON_Timer_ON_OFF(void)
-//{
-//    if(!TIMER3_IsON())
-//    {
-//        TIMER3_ON(TRUE);
-//    }
-//    else
-//    {
-//        TIMER3_ON(FALSE);
-//        AUDIO_setNewTone(1);
-//    }
-//}
-//
-///**
-// * @brief Command used to display a Timer 3 period.
-// * @return Void.
-// */
-//void MON_Timer_Get_PS(void)
-//{   
-//    char buf[32];
-//    snprintf(&buf[0] ,32 ,"The current period: %d", (UINT16)PR3);
-//    MON_SendString(&buf[0]);
-//}
-//
-///**
-// * @brief Command used to set Timer 3 period.
-// * @return Void.
-// */
-//void MON_Timer_Set_PS(void)
-//{   
-//    char buf[32];
-//    UINT16 prd = atoi(cmdStr.arg1);
-//    T3CONbits.ON = 0;
-//    PR3 = prd;
-//    TMR3 = 0;
-//    
-//    snprintf(&buf[0] ,32 ,"The period set to: %d", prd);
-//    MON_SendString(&buf[0]);
-//}
+/**
+ * @brief Command used to Toggle on/off the Timer 3 module.
+ * @return Void.
+ */
+void MON_Timer_ON_OFF(void)
+{
+    if(!TIMER3_IsON())
+    {
+        TIMER3_ON(TRUE);
+    }
+    else
+    {
+        TIMER3_ON(FALSE);
+        AUDIO_setNewTone(1);
+    }
+}
+
+/**
+ * @brief Command used to display a Timer 3 period.
+ * @return Void.
+ */
+void MON_Timer_Get_PS(void)
+{   
+    char buf[32];
+    snprintf(&buf[0] ,32 ,"The current period: %d", (UINT16)PR3);
+    MON_SendString(&buf[0]);
+}
+
+/**
+ * @brief Command used to set Timer 3 period.
+ * @return Void.
+ */
+void MON_Timer_Set_PS(void)
+{   
+    char buf[32];
+    UINT16 prd = atoi(cmdStr.arg1);
+    T3CONbits.ON = 0;
+    PR3 = prd;
+    TMR3 = 0;
+    
+    snprintf(&buf[0] ,32 ,"The period set to: %d", prd);
+    MON_SendString(&buf[0]);
+}
