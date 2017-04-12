@@ -130,7 +130,7 @@ void SPI2_Init(void)
     SPI2CONbits.SMP = 1;        // Input data sampled at end of data output
     SPI2CONbits.CKE = 0;        // Serial output data changes from idle to active clk
     SPI2CONbits.SSEN = 0;       // Slave select disable
-    SPI2CONbits.CKP = 1;        // Clk is active low
+    SPI2CONbits.CKP = 0;        // Clk is active low
     SPI2CONbits.MSTEN = 1;      // Master mode enabled
     SPI2CONbits.DISSDI = 0;     // SDI2 controlled by module
     SPI2CONbits.STXISEL = 0b00; // Transmit interrupts on last transfer
