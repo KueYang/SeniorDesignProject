@@ -120,7 +120,7 @@ void UART_Init(void)
         PPSLock;
     });
     
-U1MODEbits.ON = 0;          // Disables the UART module
+    U1MODEbits.ON = 0;          // Disables the UART module
     U1MODEbits.SIDL = 0;        // Disables sleep on idle
     U1MODEbits.IREN = 0;        // IrDA is disabled
     U1MODEbits.RTSMD = 0;       // U1RTS pin is in Flow control Mode
