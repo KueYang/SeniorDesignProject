@@ -7,7 +7,7 @@
  */
 
 #include <p32xxxx.h>
-#include <plib.h>
+#include "plib/plib.h"
 #include "HardwareProfile.h"
 #include "STDDEF.h"
 #include "./fatfs/diskio.h"
@@ -18,11 +18,7 @@
  * @privatesection
  * @{
  */
-/** @def INT32_MAX_NUM 
- * Defines the max value for a 32-bit variable. */
-#define INT32_MAX_NUM           1<<31
-
-/** @def PERIOD 
+/** @def ONE_MS_PERIOD 
  * Timer 1 Period for one ms. */
 #define ONE_MS_PERIOD           40000
 
@@ -58,10 +54,10 @@ void TIMER_Init(void)
  */
 void TIMER_Process(void)
 {
-    PORTBbits.RB5 = 1;
-    TIMER_MSecondDelay(3000);
-    PORTBbits.RB5 = 0;
-    TIMER_MSecondDelay(3000);
+    PORTEbits.RE3 = 1;
+    TIMER_MSecondDelay(5000);
+    PORTEbits.RE3 = 0;
+    TIMER_MSecondDelay(5000);
 }
 
 /**
@@ -70,28 +66,29 @@ void TIMER_Process(void)
  */
 void TIMER1_Init(void)
 {
-    T1CONbits.ON = 0;
-    T1CONbits.SIDL = 0;
-    T1CONbits.TGATE = 0;
-    T1CONbits.TCKPS = 0b000;    //PS = 1
+    T1CONbits.ON = 0;           // Disable Timer 1
+    T1CONbits.SIDL = 0;         // Disables sleep on idle
+    T1CONbits.TGATE = 0;        // Gated time accumulation is disabled
+    T1CONbits.TCKPS = 0b000;    // Timer 1 Pre-Scalar = 1
     T1CONbits.TCS = 0;
     
-    PR1 = ONE_MS_PERIOD;
-    TMR1 = 0;
+    PR1 = ONE_MS_PERIOD;        // Sets Timer 1 Period to 1 ms
+    TMR1 = 0;                   // Clears Timer 1 counter
     
-    T1CONbits.ON = 1;
+    T1CONbits.ON = 1;           // Enable Timer 1
     
-    // Set up the timer interrupt with a priority of 2
-    INTEnable(INT_T1, INT_ENABLED);
-    INTSetVectorPriority(INT_TIMER_1_VECTOR, INT_PRIORITY_LEVEL_2);
-    INTSetVectorSubPriority(INT_TIMER_1_VECTOR, INT_SUB_PRIORITY_LEVEL_0);
+    /* Sets up the Timer 1 interrupts. */
+    IFS0bits.T1IF = 0;          // Clears Timer 1 Interrupt Flag
+    IEC0bits.T1IE = 1;          // Enables Timer 1 Interrupt
+    IPC1bits.T1IP = 2;          // Sets Timer 1 Interrupt Priority 2
+    IPC1bits.T1IS = 0;          // Sets Timer 1 Interrupt Sub-Priority 0
 }
 
 /**
  * @brief Checks if Timer 1 is on/off.
  * @return Returns a boolean indicating if Timer 1 is on/off.
- * @retval TRUE, Timer 1 is on.
- * @retval FALSE, Timer 1 is off.
+ * @retval TRUE Timer 1 is on.
+ * @retval FALSE Timer 1 is off.
  */
 BOOL TIMER1_IsON(void)
 {
@@ -109,13 +106,13 @@ void TIMER1_ON(BOOL ON)
     {
         T1CONbits.ON = 1;
         Timer1_ON = TRUE;
-        INTClearFlag(INT_T1);
+        IFS0bits.T1IF = 0;
     }
     else
     {
         T1CONbits.ON = 0;
         Timer1_ON = FALSE;
-        INTClearFlag(INT_T1);
+        IFS0bits.T1IF = 0;
     }
 }
 
@@ -156,10 +153,12 @@ void __ISR(_TIMER_1_VECTOR, IPL2AUTO) Timer1Handler(void)
         ms_TICK = 0;
     }
     
+    WDTCONbits.WDTCLR = 0x01;       // Clears the watchdog timer flag.
 	disk_timerproc();	/* Drive timer procedure of low level disk I/O module */
+    WDTCONbits.WDTCLR = 0x01;       // Clears the watchdog timer flag.
     
     // Clear the interrupt flag
-    INTClearFlag(INT_T1);
+    IFS0bits.T1IF = 0;
 }
 
 /**
@@ -168,22 +167,26 @@ void __ISR(_TIMER_1_VECTOR, IPL2AUTO) Timer1Handler(void)
  */
 void TIMER3_Init(void)
 {
-    T3CONbits.ON = 0;
-    T3CONbits.SIDL = 0;
-    T3CONbits.TGATE = 0;
-    T3CONbits.TCKPS = 0b000;    //PS = 1
+    T3CONbits.ON = 0;           // Disable Timer 3
+    T3CONbits.SIDL = 0;         // Disables sleep on idle
+    T3CONbits.TGATE = 0;        // Gated time accumulation is disabled
+    T3CONbits.TCKPS = 0b000;    // Timer 3 Pre-Scalar = 1
     T3CONbits.TCS = 0;
     
-    PR3 = ONE_MS_PERIOD;
-    TMR3 = 0;
+    PR3 = ONE_MS_PERIOD;        // Sets Timer 3 Period to 1 ms
+    TMR3 = 0;                   // Clears Timer 3 counter
+    
+    T3CONbits.ON = 0;           // Disable Timer 3
+    
+    /* Sets up the Timer 1 interrupts. */
+    IFS0bits.T3IF = 0;          // Clears Timer 3 interrupt flag
+    IEC0bits.T3IE = 1;          // Enables Timer 3 interrupt
+    IPC3bits.T3IP = 2;          // Sets Timer 3 priority to 2
+    IPC3bits.T3IS = 2;          // Sets Timer 3 sub-priority to 2
     
     Timer3_ON = FALSE;
-    
-    // Set up the timer interrupt with a priority of 2
-    INTEnable(INT_T3, INT_ENABLED);
-    INTSetVectorPriority(INT_TIMER_3_VECTOR, INT_PRIORITY_LEVEL_2);
-    INTSetVectorSubPriority(INT_TIMER_3_VECTOR, INT_SUB_PRIORITY_LEVEL_3);
 }
+
 /**
  * @brief Sets the Timer 3 period
  * @arg sampleRate The sample rate to set Timer 3 at.
@@ -192,15 +195,15 @@ void TIMER3_Init(void)
 void TIMER3_SetSampleRate(UINT16 sampleRate)
 {
     UINT16 period = ((GetPeripheralClock()/sampleRate)-1);
-    PR3 = period + (period/3);
+    PR3 = period + (period/2);
     TMR3 = 0;
 }
 
 /**
  * @brief Checks if Timer 3 is on/off.
  * @return Returns a boolean indicating if Timer 3 is on/off.
- * @retval TRUE, Timer 3 is on.
- * @retval FALSE, Timer 3 is off.
+ * @retval TRUE Timer 3 is on.
+ * @retval FALSE Timer 3 is off.
  */
 BOOL TIMER3_IsON(void)
 {
@@ -216,15 +219,17 @@ void TIMER3_ON(BOOL ON)
 {
     if(ON == TRUE)
     {
+        TMR3 = 0;
         T3CONbits.ON = 1;
         Timer3_ON = TRUE;
-        INTClearFlag(INT_T3);
+        IFS0bits.T3IF = 0;
     }
     else
     {
+        TMR3 = 0;
         T3CONbits.ON = 0;
         Timer3_ON = FALSE;
-        INTClearFlag(INT_T3);
+        IFS0bits.T3IF = 0;
     }
 }
 
@@ -244,5 +249,5 @@ void __ISR(_TIMER_3_VECTOR, IPL2AUTO) Timer3Handler(void)
     AUDIO_WriteDataToDAC();
     
     // Clear the interrupt flag
-    INTClearFlag(INT_T3);
+    IFS0bits.T3IF = 0;
 }

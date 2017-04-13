@@ -1,12 +1,12 @@
-/* 
- * File:   TestNew.c
- * Author: Belinda Yang
- *
- * Created on January 30, 2017, 10:52 PM
+/**
+ * @file TESTS.c
+ * @author Kue Yang
+ * @date 11/22/2016
+ * @details The TESTS module will have tests to test reading from the SD card
+ * and writing to the DAC.
  */
-
 #include <p32xxxx.h>
-#include <plib.h>
+#include <stdio.h>
 #include "TIMER.h"
 #include "UART.h"
 #include "DAC.h"

@@ -9,17 +9,19 @@
  */
 
 #include <p32xxxx.h>
-#include <plib.h>
+#include <stdio.h>
 #include "HardwareProfile.h"
+#include "STDDEF.h"
 #include "IO.h"
 
+/** @def FRET_GROUP_COUNT 
+ * Defines the number of fret groups. */
 #define FRET_GROUP_COUNT    4
+/** @def FRETS_PER_GROUP 
+ * Defines the number of frets per group. */
 #define FRETS_PER_GROUP     5
 
 void IO_setGroupOutput(int group);
-int IO_scanGroupFrets(int index);
-
-int currentFret;
 
 /**
  * @brief Initializes the IO module.
@@ -28,31 +30,59 @@ int currentFret;
  */
 void IO_Init(void)
 {   
+    // Disables all analog pins
+    ANSELA = 0x0000; ANSELB = 0x0000; ANSELC = 0x0000;
+    ANSELD = 0x0000; ANSELE = 0x0000; ANSELF = 0x0000;
+    ANSELG = 0x0000;
+    
     // Digital IO
-    TRISBbits.TRISB5 = 0;   // Used to test Timer LED
+    TRISEbits.TRISE2 = 0;   // LED, ON
+    TRISEbits.TRISE3 = 0;   // LED, ERROR
+    TRISEbits.TRISE4 = 0;   // LED, NO SD CARD DETECT
+    
+    // Fret
+    TRISDbits.TRISD1 = 1;   // Fret 1
+    TRISDbits.TRISD2 = 1;   // Fret 2
+    TRISDbits.TRISD3 = 1;   // Fret 3
+    TRISDbits.TRISD12 = 1;  // Fret 4
+    TRISDbits.TRISD13 = 1;  // Fret 5
+    
+    // Frets Groups
+    TRISDbits.TRISD4 = 0;   // Group 1
+    TRISDbits.TRISD5 = 0;   // Group 2
+    TRISDbits.TRISD6 = 0;   // Group 3
+    TRISDbits.TRISD7 = 0;   // Group 4
     
     // UART IO
-    TRISAbits.TRISA2 = 1;   // U1RX
-    TRISBbits.TRISB3 = 0;   // U1TX
+    TRISCbits.TRISC1 = 1;   // U1RX
+    TRISEbits.TRISE5 = 0;   // U1TX
     
     // SPI IO, DAC
-    TRISAbits.TRISA4 = 0;   // SYNC
-    TRISBbits.TRISB2 = 1;   // SD_SDI2
-    TRISBbits.TRISB1 = 0;   // SD_SDO2
-    TRISBbits.TRISB15 = 0;  // SD_CLK2
+    TRISCbits.TRISC4 = 0;   // SYNC
+    TRISGbits.TRISG6 = 0;   // DAC_CLK2
+    TRISGbits.TRISG7 = 1;   // DAC_SDI2
+    TRISGbits.TRISG8 = 0;   // DAC_SDO2
+    
+//    TRISCbits.TRISC12 = 0;   // SYNC
+//    TRISDbits.TRISD10 = 0;   // DAC_CLK1
+//    TRISDbits.TRISD11 = 1;   // DAC_SDI1
+//    TRISCbits.TRISC13 = 0;   // DAC_SDO1
     
     // SPI IO, SD Card
-    TRISBbits.TRISB7 = 0;   // CS
+    TRISBbits.TRISB11 = 0;  // CS
     TRISBbits.TRISB8 = 1;   // CD
-    TRISBbits.TRISB11 = 1;  // SD_SDI1
-    TRISBbits.TRISB13 = 0;  // SD_SDO1
-    TRISBbits.TRISB14 = 0;  // SD_CLK1
+    TRISBbits.TRISB9 = 1;   // SD_SDI3
+    TRISBbits.TRISB10 = 0;  // SD_SDO3
+    TRISFbits.TRISF13 = 0;  // SD_CLK3
     
     // ADC 
-    TRISBbits.TRISB0 = 1;   // set RB0 as an input
-    ANSELBbits.ANSB0 = 1;   // set RB0 (AN2) to analog
+    TRISGbits.TRISG15 = 1;   // set RG15 as an input
+    ANSELGbits.ANSG15 = 1;   // set RG15 (AN28) to analog
     
-    currentFret = 0;    // Sets the current fret to 0, indicating that the string is "opened."
+    // Clears All Digital IO
+    PORTA = 0x0000; PORTB = 0x0000; PORTC = 0x0000;
+    PORTD = 0x0000; PORTE = 0x0000; PORTF = 0x0000; 
+    PORTG = 0x0000;
 }
 
 /**
@@ -64,65 +94,75 @@ void IO_Process(void)
     
 }
 
-void IO_setCurrentFret(int fret)
+/**
+ * @brief Scans a selection of frets.
+ * @details Scans all frets groups to determine which fret was pressed. Sets the
+ * currently selected fret to the fret that is pressed. Defaults to an open fret.
+ * @return Void
+ */
+int IO_scanFrets(void)
 {
-    currentFret = fret;
-}
-
-int IO_getCurrentFret(void)
-{
+    int groupIndex = 0;
+    int fretFound = 0;
+    int currentFret = 0;
+    
+    /* Scans through all the fret groups. */
+    for(groupIndex = 1; groupIndex <= FRET_GROUP_COUNT; groupIndex++)
+    {
+        /* Selects the fret group. */
+        IO_setGroupOutput(groupIndex);
+        
+        /* Scans through the five fret inputs. */
+        if(FRET1 == 0) {fretFound = 1;}
+        if(FRET2 == 0) {fretFound = 2;}
+        if(FRET3 == 0) {fretFound = 3;}
+        if(FRET4 == 0) {fretFound = 4;}
+        if(FRET5 == 0) {fretFound = 5;}
+        
+        /* Checks if any frets were pressed. */
+        if(fretFound > 0)
+        {
+            currentFret = (groupIndex-1)*FRETS_PER_GROUP + fretFound;
+            
+            char buf[32];
+            snprintf(&buf[0] ,32 ,"Fret Selected: %d", currentFret);
+            MON_SendString(&buf[0]);
+            
+            break;
+        }
+    }
+    
     return currentFret;
 }
 
-void IO_scanFrets(void)
-{
-    int groupIndex, fretIndex;
-    BOOL setNewFret = FALSE;
-    
-    // Scans through all the frets.
-    for(groupIndex = 1; groupIndex <= FRET_GROUP_COUNT; groupIndex+=5)
-    {
-        IO_setGroupOutput(groupIndex); // Sets the output pin high for the group.
-        for(fretIndex = 0; fretIndex < FRETS_PER_GROUP; fretIndex++)
-        {
-            if(IO_scanGroupFrets(groupIndex + fretIndex) == 1)
-            {
-                currentFret = groupIndex + fretIndex;
-                setNewFret = TRUE;
-                break;
-            }
-        }
-    }
-    // If no frets were pressed, set the fret to 0, indicating an open string.
-    if(!setNewFret)
-    {
-        currentFret = 0;
-    }
-}
-
+/**
+ * @brief Sets the fret group to be scan.
+ * @arg group The fret group to be scan.
+ * @return Void
+ */
 void IO_setGroupOutput(int group)
 {
     switch(group)
     {
-        case 0:
+        case 1:
             GROUP1_OUT = 1;
             GROUP2_OUT = 0;
             GROUP3_OUT = 0;
             GROUP4_OUT = 0;
             break;
-        case 1:
+        case 2:
             GROUP1_OUT = 0;
             GROUP2_OUT = 1;
             GROUP3_OUT = 0;
             GROUP4_OUT = 0;
             break;
-        case 2:
+        case 3:
             GROUP1_OUT = 0;
             GROUP2_OUT = 0;
             GROUP3_OUT = 1;
             GROUP4_OUT = 0;
             break;
-        case 3:
+        case 4:
             GROUP1_OUT = 0;
             GROUP2_OUT = 0;
             GROUP3_OUT = 0;
@@ -136,52 +176,3 @@ void IO_setGroupOutput(int group)
             break;
     }
 }
-
-int IO_scanGroupFrets(int index)
-{
-    switch(index)
-    {
-        case 1:
-            return FRET1;
-        case 2:
-            return FRET2;
-        case 3:
-            return FRET3;
-        case 4:
-            return FRET4;
-        case 5:
-            return FRET5;
-        case 6:
-            return FRET6;
-        case 7:
-            return FRET7;
-        case 8:
-            return FRET8;
-        case 9:
-            return FRET9;
-        case 10:
-            return FRET10;
-        case 11:
-            return FRET11;
-        case 12:
-            return FRET12;
-        case 13:
-            return FRET13;
-        case 14:
-            return FRET14;
-        case 15:
-            return FRET15;
-        case 16:
-            return FRET16;
-        case 17:
-            return FRET17;
-        case 18:
-            return FRET18;
-        case 19:
-            return FRET19;
-        case 20:
-            return FRET20;
-    }
-    return 0;
-}
-

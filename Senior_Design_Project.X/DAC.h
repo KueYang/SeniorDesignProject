@@ -11,69 +11,14 @@
 extern "C" {
 #endif
     
-/**@def DAC12B
- * Selects the DAC to be used. Defaults to the AD5689R */
-//#define DAC12B
-    
 /** @def AC_ZERO 
  * Defines the mid-scale value for the 16-bit DAC. */
 #define AC_ZERO                         0x7777
-    
+
 /** @def SYNC 
- * Defines the IO port used to write data to DAC. */
-#define SYNC                            PORTAbits.RA4
-    
-#ifdef  DAC12B
-/** @def DAC_A 
- * Defines the selection bit for channel A on the DAC. */
-#define DAC_A                           0b01
-/** @def DAC_B 
- * Defines the selection bit for channel B on the DAC. */
-#define DAC_B                           0b10
-/** @def DAC_B_A 
- * Defines the selection bit for channel B on the DAC. */
-#define DAC_B_A                         DAC_A | DAC_B
+ * Defines the Enable pin used to write data to DAC. */
+#define SYNC                            PORTCbits.RC4
 
-/** @def POWER_ON_OFF_CHN_A 
- * Defines the command to turn on DAC and channel A. */
-#define POWER_ON_OFF_CHN_A              0x20
-/** @def WRITE_INPUT_CHN_A 
- * Defines the command to write to channel A. */
-#define WRITE_INPUT_CHN_A               0x00
-/** @def UPDATE_CHN_A 
- * Defines the command to update the registers for channel A. */
-#define UPDATE_CHN_A                    0x07
-/** @def WRITE_UPDATE_CHN_A 
- * Defines the command to write and update channel A. */
-#define WRITE_UPDATE_CHN_A              0x10
-
-/** @def POWER_ON_OFF_CHN_B 
- * Defines the command to turn on DAC and channel B. */
-#define POWER_ON_OFF_CHN_B              0x21
-/** @def WRITE_INPUT_CHN_B 
- * Defines the command to write to channel B. */
-#define WRITE_INPUT_CHN_B               0x01
-/** @def UPDATE_CHN_B 
- * Defines the command to update the registers for channel B. */
-#define UPDATE_CHN_B                    0x08
-/** @def WRITE_UPDATE_CHN_B 
- * Defines the command to write and update channel B. */
-#define WRITE_UPDATE_CHN_B              0x11
-
-/** @def POWER_ON_OFF_CHN_A_B 
- * Defines the command to turn on DAC and both channel A and channel B. */
-#define POWER_ON_OFF_CHN_A_B            0x27
-/** @def WRITE_INPUT_CHN_A_B 
- * Defines the command to write to both channel A and channel B. */
-#define WRITE_INPUT_CHN_A_B             0x07
-/** @def UPDATE_CHN_A_B 
- * Defines the command to update the registers for both channel A and channel B. */
-#define UPDATE_CHN_A_B                  0x0E
-/** @def WRITE_UPDATE_CHN_A_B 
- * Defines the command to write and update both channel A and channel B. */
-#define WRITE_UPDATE_CHN_A_B            0x17
-    
-#else
 /** @def DAC_A 
  * Defines the selection bit for channel A on the DAC. */
 #define DAC_A                           0x1
@@ -125,6 +70,9 @@ extern "C" {
 /** @def WRITE_UPDATE_CHN_A 
  * Defines the command to write and update channel A. */
 #define WRITE_UPDATE_CHN_A              (CMD_WRITE_UPDATE_DAC << 4) | DAC_A
+/** @def READ_CHN_A 
+ * Defines the command to read channel A. */
+#define READ_CHN_A                      (CMD_READ_CHN_REG << 4) | DAC_A
 
 /** @def WRITE_INPUT_CHN_B 
  * Defines the command to write to channel B. */
@@ -135,6 +83,9 @@ extern "C" {
 /** @def WRITE_UPDATE_CHN_B 
  * Defines the command to write and update channel B. */
 #define WRITE_UPDATE_CHN_B              (CMD_WRITE_UPDATE_DAC << 4) | DAC_B
+/** @def READ_CHN_B 
+ * Defines the command to read channel B. */
+#define READ_CHN_B                      (CMD_READ_CHN_REG << 4) | DAC_B
 
 /** @def POWER_ON_OFF_CHN_A_B 
  * Defines the command to turn on DAC and both channel A and channel B. */
@@ -148,12 +99,11 @@ extern "C" {
 /** @def WRITE_UPDATE_CHN_A_B 
  * Defines the command to write and update both channel A and channel B. */
 #define WRITE_UPDATE_CHN_A_B            (CMD_WRITE_UPDATE_DAC << 4) | DAC_B_A
-#endif
     
 void DAC_Init(void);
 void DAC_Zero(void);
 void DAC_ZeroOutput(void);
-BOOL DAC_WriteToDAC(BYTE cmd_addr, WORD data);
+DWORD DAC_WriteToDAC(BYTE cmd_addr, WORD data);
 
 #ifdef	__cplusplus
 }

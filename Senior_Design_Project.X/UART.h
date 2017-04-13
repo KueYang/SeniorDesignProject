@@ -49,11 +49,12 @@ void MON_removeWhiteSpace(const char* string);
 UINT16 MON_getStringLength(const char* string);
 BOOL MON_stringsMatch(const char* str1, const char* str2);
 char MON_lowerToUpper(const char* ch);
+char* MON_setString(const char* str, WORD args);
 
 /* UART character and string handlers. */
-BOOL MON_SendStringNR(const char* str);
-BOOL MON_SendString(const char* str);
-BOOL MON_SendChar(const char* character);
+void MON_SendStringNR(const char* str);
+void MON_SendString(const char* str);
+void MON_SendChar(const char* character);
 
 #ifdef	__cplusplus
 }

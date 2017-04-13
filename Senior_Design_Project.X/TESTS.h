@@ -1,8 +1,7 @@
-/* 
- * File:   TestNew.h
- * Author: Belinda Yang
- *
- * Created on January 30, 2017, 10:52 PM
+/**
+ * @file TESTS.h
+ * @author Kue Yang
+ * @date 11/22/2016
  */
 
 #ifndef TESTNEW_H

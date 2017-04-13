@@ -3,49 +3,21 @@
  * @author Kue Yang
  * @date 11/22/2016
  * @details The Audio module will handle all audio processing related tasks.
- * Tasks includes: initializing the DAC and Fatfs File System library, 
+ * Tasks includes: initializing Fatfs File System library, 
  * reading data from external memory and writing audio data to the DACs.
  * @remarks The Audio module requires Fatfs File System library. The library
  * uses the library from the pic24 example project.
  */
 
 #include <p32xxxx.h>
-#include <plib.h>
+#include <stdio.h>
+#include <string.h>
 #include "STDDEF.h"
+#include "IO.h"
 #include "DAC.h"
 #include "FILES.h"
+#include "FILEDEF.h"
 #include "AUDIO.h"
-
-/** @def FILE_0 
- * Defines file index 0. */
-#define FILE_0      0
-/** @def FILE_1 
- * Defines file index 1. */
-#define FILE_1      1
-/** @def FILE_2 
- * Defines file index 2. */
-#define FILE_2      2
-/** @def FILE_3 
- * Defines file index 3. */
-#define FILE_3      3
-/** @def FILE_4 
- * Defines file index 4. */
-#define FILE_4      4
-/** @def FILE_5 
- * Defines file index 5. */
-#define FILE_5      5
-/** @def FILE_6 
- * Defines file index 6. */
-#define FILE_6      6
-/** @def FILE_7 
- * Defines file index 7. */
-#define FILE_7      7
-/** @def FILE_8 
- * Defines file index 8. */
-#define FILE_8      8
-/** @def FILE_9 
- * Defines file index 9. */
-#define FILE_9      9
 
 UINT8 AUDIO_GetHeader(int index);
 BOOL AUDIO_GetAudioData(FILES* file, UINT16 bytes);
@@ -56,7 +28,7 @@ FILES files[MAX_NUM_OF_FILES];
 /** @var receiveBuffer
  * A buffer used to store data read from the audio file. */
 BYTE receiveBuffer[REC_BUF_SIZE];
-/** @var LAUDIOSTACK.buffer 
+/** @var LAUDIOSTACK 
  * A buffer used to store left channel audio data. */
 UINT16 LAUDIOSTACK[AUDIO_BUF_SIZE];
 /** @var RAUDIOSTACK
@@ -77,27 +49,11 @@ UINT32 bytesRead;
 /** @var bytesWritten 
  * Stores the number of bytes that have been written. */
 UINT32 bytesWritten;
-/** @var fileNames 
- * Stores the list of audio file names. */
-const char* fileNames[MAX_NUM_OF_FILES] = {
-    "OST_02.WAV",
-    "S1ELOW.WAV",
-    "S2_A.WAV",
-    "S3_D.WAV",
-    "S4_G.WAV",
-    "S5_B.WAV",
-    "S6_EHIGH.WAV",
-    "BOST_02.WAV",
-    "ETUDES~1.WAV",
-    "DK64JJ.WAV"
-};
 
 /**
  * @brief Initializes the Audio module.
  * @details Initializes the SD card and Microchip MDD File library. After 
  * initialization, all the audio files that are specific to the PIC are opened.
- * The DAC is also powered on with only one of its channels on (channel A is on
- * by default). 
  * @return Void
  */
 void AUDIO_Init(void)
@@ -162,21 +118,17 @@ void AUDIO_ListFiles(void)
 
 /**
  * @brief Sets a new file to be read.
- * @arg fileName The file name that is being set to.
+ * @arg selectedFile The selected file to be set.
  * @return A boolean indicating if the file has been set successfully.
  * @retval TRUE, file has been set successfully.
  * @retval FALSE, file has not been set successfully.
  */
-BOOL AUDIO_setNewFile(const char* fileName)
+BOOL AUDIO_setNewFile(UINT16 selectedFile)
 {
-    int i = 0;
-    for(i = 0; i < MAX_NUM_OF_FILES; i++)
+    if(selectedFile <= 20 && selectedFile >= 0)
     {
-        if(MON_stringsMatch(&files[i].audioInfo.fileName[0], fileName))
-        {
-            AUDIO_setNewTone(i);
-            return TRUE;
-        }
+        AUDIO_setNewTone(selectedFile);
+        return TRUE;
     }
     return FALSE;
 }
@@ -190,12 +142,12 @@ BOOL AUDIO_setNewFile(const char* fileName)
  */
 void AUDIO_setNewTone(int fret)
 {
-    // Disables the timer if it is on.
+    /* Disables the timer if it is on. */
     if(TIMER3_IsON())
     {
         TIMER3_ON(FALSE);
+        MON_SendString("Turning off timer");
     }
-    
     /* Sets the audio in pointer to zero. */
     audioInPtr = 0;
     /* Sets the audio out pointer to zero. */
@@ -208,6 +160,8 @@ void AUDIO_setNewTone(int fret)
     AUDIO_resetFilePtr();
     /* Sets the file index to the specified fret. */
     fileIndex = fret;
+    /* Sets the Timer based on the new sample rate*/
+//    TIMER3_SetSampleRate(files[fileIndex].audioInfo.sampleRate);
     /* Sets the DAC's output to zero. */
     DAC_ZeroOutput();
     
@@ -357,32 +311,32 @@ BOOL AUDIO_GetAudioData(FILES* file, UINT16 bytes)
     {   
         // Converts and writes read bytes to audio buffers.
         int i = 0;
-        UINT16 audioByte, unsign_audio;
+        UINT16 audioData, unsign_audio;
         for(i = 0; i < bytes; i+=4)
         {
             // Left Channel
-            audioByte = ((receiveBuffer[i+1] << 8) | (receiveBuffer[i]));
-            if (audioByte & 0x8000) {
-                unsign_audio = ~(audioByte - 1);
-                audioByte = AC_ZERO - unsign_audio;
+            audioData = ((receiveBuffer[i+1] << 8) | (receiveBuffer[i]));
+            if (audioData & 0x8000) {
+                unsign_audio = ~(audioData - 1);
+                audioData = AC_ZERO - unsign_audio;
             }
             else {
-                audioByte = AC_ZERO + audioByte;
+                audioData = AC_ZERO + audioData;
             }
-            LAUDIOSTACK[audioInPtr] = audioByte;
+            LAUDIOSTACK[audioInPtr] = audioData;
             
             if(file->audioInfo.numOfChannels == 2)
             {
-                audioByte = ((receiveBuffer[i+3] << 8) | (receiveBuffer[i+2]));
-                if (audioByte & 0x8000) {
-                    unsign_audio = ~(audioByte - 1);
-                    audioByte = AC_ZERO - unsign_audio;
+                audioData = ((receiveBuffer[i+3] << 8) | (receiveBuffer[i+2]));
+                if (audioData & 0x8000) {
+                    unsign_audio = ~(audioData - 1);
+                    audioData = AC_ZERO - unsign_audio;
                 }
                 else {
-                    audioByte = AC_ZERO + audioByte;
+                    audioData = AC_ZERO + audioData;
                 }             
             }
-            RAUDIOSTACK[audioInPtr++] = audioByte;
+            RAUDIOSTACK[audioInPtr++] = audioData;
             
             if(audioInPtr >= AUDIO_BUF_SIZE)
             {
@@ -411,6 +365,7 @@ BOOL AUDIO_ReadFile(UINT16 bytesToRead)
 
     return AUDIO_GetAudioData(&files[fileIndex], bytesToRead);
 }
+
 /**
  * @brief Gets buffer pointer.
  * @details Gets a pointer to the buffer that stores the bytes read from the SD 
