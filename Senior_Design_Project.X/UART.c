@@ -8,7 +8,9 @@
  */
 
 #include <p32xxxx.h>
-#include <plib.h>
+#include "plib/plib.h"
+#include <stdio.h>
+#include <string.h>
 #include "HardwareProfile.h"
 #include "STDDEF.h"
 #include "Timer.h"
@@ -18,9 +20,6 @@
 #include "TESTS.h"
 #include "UART.h"
 
-/** @def UART_MODULE_ID 
- * The UART module ID. */
-#define UART_MODULE_ID          UART1
 /** @def DESIRED_BAUDRATE 
  * The desired UART baud rate. */
 #define DESIRED_BAUDRATE        (19200)     //The desired BaudRate
@@ -53,7 +52,6 @@ void MON_Test(void);
 
 /* File related commands*/
 void MON_GetFileList(void);
-void MON_Get_File(void);
 void MON_Set_File(void);
 void MON_Reset_File(void);
 void MON_Read_File(void);
@@ -83,6 +81,8 @@ BOOL cmdReady;
 /** @var actualBaudRate 
  * The configured UART baud rate. */
 UINT16 actualBaudRate;
+/** @var numOfCmds 
+ * The number of commands. */
 UINT16 numOfCmds;
 /** @var MON_COMMANDS 
  * The list of commands. */
@@ -111,27 +111,49 @@ void UART_Init(void)
     cmdReady = FALSE;
     numOfCmds = sizeof(MON_COMMANDS)/sizeof(MON_COMMANDS[0]);
     
-    // Re-mapped pins RPB3R and RPA2 pins to U1RX and U1TX
+    // Re-mapped pins RPC1 and RPE5 pins to U1RX and U1TX
     mSysUnlockOpLock({
         PPSUnLock;
-        PPSInput(3,U1RX,RPA2);     // Assign RPA2 as input pin for U1RX
-        PPSOutput(1,RPB3,U1TX);    // Set RPB3R pin as output for U1TX
+        PPSInput(1,U1RX,RPC1);     // Assign RPC1 as input pin for U1RX
+        PPSOutput(2,RPE5,U1TX);    // Set RPE5 pin as output for U1TX
         PPSLock;
     });
     
-    // Configure UART1 module
-    UARTConfigure(UART_MODULE_ID, UART_ENABLE_PINS_TX_RX_ONLY | UART_INVERT_RECEIVE_POLARITY | UART_INVERT_TRANSMIT_POLARITY);
-    UARTSetFifoMode(UART_MODULE_ID, UART_INTERRUPT_ON_TX_BUFFER_EMPTY | UART_INTERRUPT_ON_RX_NOT_EMPTY);
-    UARTSetLineControl(UART_MODULE_ID, UART_DATA_SIZE_8_BITS | UART_PARITY_NONE | UART_STOP_BITS_1);
-    actualBaudRate = UARTSetDataRate(UART_MODULE_ID, GetPeripheralClock(), DESIRED_BAUDRATE);
-    UARTEnable(UART_MODULE_ID, UART_ENABLE_FLAGS(UART_PERIPHERAL | UART_RX | UART_TX));
-
-    // Configure UART RX1 and TX1 Interrupt
-    INTEnable(INT_SOURCE_UART_RX(UART_MODULE_ID), INT_ENABLED);
-    INTEnable(INT_SOURCE_UART_TX(UART_MODULE_ID), INT_DISABLED);
-    INTSetVectorPriority(INT_VECTOR_UART(UART_MODULE_ID), INT_PRIORITY_LEVEL_1);
-    INTSetVectorSubPriority(INT_VECTOR_UART(UART_MODULE_ID), INT_SUB_PRIORITY_LEVEL_1);
+    U1MODEbits.ON = 0;          // Disables the UART module
+    U1MODEbits.SIDL = 0;        // Disables sleep on idle
+    U1MODEbits.IREN = 0;        // IrDA is disabled
+    U1MODEbits.RTSMD = 0;       // U1RTS pin is in Flow control Mode
+    U1MODEbits.UEN = 0b00;      // UTX and URX enabled, CTS controlled by PORT register
+    U1MODEbits.WAKE = 0;        // Wake-up disabled
+    U1MODEbits.LPBACK = 0;      // Loop back disabled
+    U1MODEbits.ABAUD = 0;       // Auto Baud rate disabled
+    U1MODEbits.RXINV = 1;       // URX idle low
+    U1MODEbits.PDSEL = 0b00;    // 8-bit data, no parity
+    U1MODEbits.STSEL = 0;       // 1 Stop Bit
+    U1MODEbits.BRGH = 0;        // Standard Speed mode, 16x baud clock enabled
     
+    U1BRG = UART_GetBaudRate(DESIRED_BAUDRATE);
+    
+    U1STAbits.ADM_EN = 0;       // Auto Address Detect disabled
+    U1STAbits.ADDEN = 0;        // Address Detect disabled
+    U1STAbits.UTXEN = 1;        // UTX enabled
+    U1STAbits.UTXINV = 1;       // UTX idle low
+    U1STAbits.UTXISEL = 0b10;   // Interrupt when TX buffer empty
+    U1STAbits.UTXBRK = 0;       // Break transmission disabled
+    U1STAbits.URXEN = 1;        // URX enabled
+    U1STAbits.URXISEL = 0b00;   // Interrupt when receive buffer isn't empty
+    
+    U1MODEbits.ON = 1;          // Enables the UART module
+    
+    // Configure UART RX1 and TX1 Interrupt
+    IFS1bits.U1RXIF = 0;        // Clears Receive Interrupt Flag
+    IEC1bits.U1RXIE = 1;        // Enables U1RX Interrupt Enable
+    IFS1bits.U1TXIF = 0;        // Clears Transmit Interrupt Flag 
+    IEC1bits.U1TXIE = 0;        // Disables U1TX Interrupt Enable
+    IPC7bits.U1IP = 2;          // Sets UART Interrupt Priority 2
+    IPC7bits.U1IS = 1;          // Sets UART Interrupt Sub-Priority 2
+    
+    MON_GetHelp();
     MON_SendString(">");  // Sends a prompt.
 }
 
@@ -142,7 +164,7 @@ void UART_Init(void)
  */
 int UART_GetBaudRate(int desireBaud)
 {
-    return ((GetPeripheralClock()/desireBaud)) - 1;
+    return ((GetPeripheralClock()/(16*desireBaud))) - 1;
 }
 
 /**
@@ -151,7 +173,7 @@ int UART_GetBaudRate(int desireBaud)
  */
 void UART_Process(void)
 {
-    UART_processCommand();
+//    UART_processCommand();
 } 
 
 /**
@@ -163,7 +185,7 @@ void UART_processCommand(void)
     if(!UART_isBufferEmpty(&rxBuffer) && cmdReady == TRUE)
     {
         int numOfArgs = 0;
-        
+
         /* Parses command from receive buffer. */
         numOfArgs = MON_parseCommand(&cmdStr, &rxBuffer);
         
@@ -252,13 +274,27 @@ int MON_parseCommand(COMMANDSTR* cmd, MON_FIFO* buffer)
     return numOfArgs;
 }
 
-BOOL MON_SendChar(const char* character)
+/**
+ * @brief Transmit a character.
+ * @details Add character to transmit fifo buffer.
+ * @arg character The character to transmit.
+ * @return Void.
+ */
+void MON_SendChar(const char* character)
 {
     UART_putNextChar(&txBuffer, *character);
-    INTEnable(INT_SOURCE_UART_TX(UART_MODULE_ID), INT_ENABLED);
+    
+    IFS1bits.U1TXIF = 0;        // Clears Transmit Interrupt Flag 
+    IEC1bits.U1TXIE = 1;        // Enables U1TX Interrupt Enable
 }
 
-BOOL MON_SendString(const char* str)
+/**
+ * @brief Transmit a string.
+ * @details Adds string to transmit fifo buffer.
+ * @arg str The string to transmit.
+ * @return Void.
+ */
+void MON_SendString(const char* str)
 {
     if(*str == '>')
     {
@@ -276,10 +312,17 @@ BOOL MON_SendString(const char* str)
         UART_putNextChar(&txBuffer, '\r');
     }
     
-    INTEnable(INT_SOURCE_UART_TX(UART_MODULE_ID), INT_ENABLED);
+    IFS1bits.U1TXIF = 0;        // Clears Transmit Interrupt Flag 
+    IEC1bits.U1TXIE = 1;        // Enables U1TX Interrupt Enable
 }
 
-BOOL MON_SendStringNR(const char* str)
+/**
+ * @brief Transmit a string.
+ * @details Transmit a string without a newline or return character.
+ * @arg str The string to transmit.
+ * @return Void.
+ */
+void MON_SendStringNR(const char* str)
 {
     if(*str == '>')
     {
@@ -294,9 +337,16 @@ BOOL MON_SendStringNR(const char* str)
         }
     }
     
-    INTEnable(INT_SOURCE_UART_TX(UART_MODULE_ID), INT_ENABLED);
+    IFS1bits.U1TXIF = 0;        // Clears Transmit Interrupt Flag 
+    IEC1bits.U1TXIE = 1;        // Enables U1TX Interrupt Enable
 }
 
+/**
+ * @brief Changes character to undercase.
+ * @details Changes character to undercase.
+ * @arg ch The character to undercase.
+ * @return The undercase character
+ */
 char MON_lowerToUpper(const char* ch)
 {
     char uChar = (*ch);
@@ -352,6 +402,11 @@ void MON_removeWhiteSpace(const char* string)
     }
 }
 
+/**
+ * @brief Gets the length of a string.
+ * @arg string The string that is being modified.
+ * @return Returns the string length.
+ */
 UINT16 MON_getStringLength(const char* string)
 {
     UINT16 length = 0;
@@ -361,6 +416,11 @@ UINT16 MON_getStringLength(const char* string)
         length++;
     }
     return length;
+}
+
+void MON_getString(char* str, WORD args)
+{
+//    snprintf(&buf[0], 256, str, args);
 }
 
 /**
@@ -389,9 +449,9 @@ COMMANDS MON_getCommand(const char* cmdName)
  * command is ready flag is set. 
  * @return Void.
  */
-void __ISR(_UART1_VECTOR, IPL4AUTO) IntUart1Handler(void)
+void __ISR(_UART1_VECTOR, IPL2AUTO) IntUart1Handler(void)
 {
-	if(INTGetFlag(INT_SOURCE_UART_RX(UART_MODULE_ID)))
+	if(IFS1bits.U1RXIF)
 	{   
         /* Checks if bus collision has occurred and clears collision flag.*/
         if(IFS1bits.U1EIF)
@@ -399,19 +459,19 @@ void __ISR(_UART1_VECTOR, IPL4AUTO) IntUart1Handler(void)
            U1STAbits.OERR = 0;
            IFS1bits.U1EIF=0;
         }
-        else if(IFS1bits.U1RXIF)
+        else
         {
             /* Checks if there is data ready to read from the receive buffer. */
-            if(UART_DATA_READY)
+            if(U1STAbits.URXDA == 1)
             {
                 // Reads BYTEs from receive buffer.
-                BYTE data = U1RXREG;
+                BYTE rxData = U1RXREG;
 
                 // Writes data to receive buffer.
-                UART_putNextChar(&rxBuffer, data);
+                UART_putNextChar(&rxBuffer, rxData);
                 
                 // Sets a flag for end of receiving a command.
-                if(data == '\r')
+                if(rxData == '\r')
                 {
                     cmdReady = TRUE;
                     UART_processCommand();
@@ -420,33 +480,37 @@ void __ISR(_UART1_VECTOR, IPL4AUTO) IntUart1Handler(void)
         }
         
         // Clear the RX interrupt Flag.
-	    INTClearFlag(INT_SOURCE_UART_RX(UART_MODULE_ID));
+        IFS1bits.U1RXIF = 0;
 	}
     
-    if(INTGetFlag(INT_SOURCE_UART_TX(UART_MODULE_ID)))
+    if(IFS1bits.U1TXIF)
 	{   
         /* Checks if bus collision has occurred and clears collision flag.*/
         if(IFS1bits.U1EIF)
         {
            U1STAbits.OERR = 0;
-           IFS1bits.U1EIF=0;
+           
+            IFS1bits.U1TXIF = 0;        // Clears Transmit Interrupt Flag 
+            IEC1bits.U1TXIE = 1;        // Enables U1TX Interrupt Enable
         }
-        else if(IFS1bits.U1TXIF)
+        else
         {
             /* Checks if there is data ready to read from the receive buffer. */
-            if(UART_TRANSMITTER_NOT_FULL && !UART_isBufferEmpty(&txBuffer))
+            if(!U1STAbits.UTXBF && !UART_isBufferEmpty(&txBuffer))
             {
-                U1TXREG = UART_getNextChar(&txBuffer);    
+                BYTE txData = UART_getNextChar(&txBuffer);
+                U1TXREG = txData;
             }
             /* Checks if the transmit buffer is empty. If so, disable the TX interrupt. */
-            if(UART_isBufferEmpty(&txBuffer))
+            if(UART_isBufferEmpty(&txBuffer) && U1STAbits.TRMT)
             {
-                INTEnable(INT_SOURCE_UART_TX(UART_MODULE_ID), INT_DISABLED);
+                IFS1bits.U1TXIF = 0;        // Clears Transmit Interrupt Flag 
+                IEC1bits.U1TXIE = 0;        // Disables U1TX Interrupt Enable
             }
         }
         
-        // Clear the RX interrupt Flag.
-	    INTClearFlag(INT_SOURCE_UART_TX(UART_MODULE_ID));
+        // Clear the TX interrupt Flag.
+        IFS1bits.U1TXIF = 0;
 	}
 }
 
@@ -515,14 +579,23 @@ void MON_Test(void)
     Test_SelectTest((UINT16)atoi(cmdStr.arg1));
 }
 
+/**
+ * @brief Command used to display a list of files.
+ * @return Void.
+ */
 void MON_GetFileList(void)
 {
     AUDIO_ListFiles();
 }
 
+/**
+ * @brief Command used to select a specific file.
+ * @return Void.
+ */
 void MON_Set_File(void)
 {
-    if(AUDIO_setNewFile(cmdStr.arg1))
+    UINT16 selectedFile = atoi(cmdStr.arg1);
+    if(AUDIO_setNewFile(selectedFile))
     {
         MON_SendString("The new file has been set.");
     }
@@ -532,12 +605,20 @@ void MON_Set_File(void)
     }
 }
 
+/**
+ * @brief Command used to reset the selected file pointer
+ * @return Void.
+ */
 void MON_Reset_File(void)
 {
     AUDIO_resetFilePtr();
     MON_SendString("The file pointer has been reset.");
 }
 
+/**
+ * @brief Command used to read the selected file.
+ * @return Void.
+ */
 void MON_Read_File(void)
 {
     UINT16 reset = atoi(cmdStr.arg1);
@@ -574,6 +655,10 @@ void MON_Read_File(void)
     MON_SendString("");   // Adds a new line and returns
 }
 
+/**
+ * @brief Command used to write data to the DAC.
+ * @return Void.
+ */
 void MON_TestDAC(void)
 {
     UINT32 value = atoi(cmdStr.arg1);
@@ -590,11 +675,19 @@ void MON_TestDAC(void)
     DAC_WriteToDAC(WRITE_UPDATE_CHN_A, value);
 }
 
+/**
+ * @brief Command used to zero the DAC's output.
+ * @return Void.
+ */
 void MON_ZeroDAC(void)
 {
     DAC_ZeroOutput();
 }
 
+/**
+ * @brief Command used to write a sin wav to the DAC.
+ * @return Void.
+ */
 void MON_SinDAC(void)
 {
     WORD testBytes[1024] = {0x400,0x406,0x40d,0x413,0x419,0x41f,0x426,0x42c,
@@ -747,6 +840,10 @@ void MON_SinDAC(void)
     }
 }
 
+/**
+ * @brief Command used to Toggle on/off the Timer 3 module.
+ * @return Void.
+ */
 void MON_Timer_ON_OFF(void)
 {
     if(!TIMER3_IsON())
@@ -756,10 +853,14 @@ void MON_Timer_ON_OFF(void)
     else
     {
         TIMER3_ON(FALSE);
-        AUDIO_setNewTone(0);
+        AUDIO_setNewTone(1);
     }
 }
 
+/**
+ * @brief Command used to display a Timer 3 period.
+ * @return Void.
+ */
 void MON_Timer_Get_PS(void)
 {   
     char buf[32];
@@ -767,6 +868,10 @@ void MON_Timer_Get_PS(void)
     MON_SendString(&buf[0]);
 }
 
+/**
+ * @brief Command used to set Timer 3 period.
+ * @return Void.
+ */
 void MON_Timer_Set_PS(void)
 {   
     char buf[32];

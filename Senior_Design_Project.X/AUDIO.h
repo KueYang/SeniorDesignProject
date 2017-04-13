@@ -1,8 +1,7 @@
-/* 
- * File:   AudioNew.h
- * Author: Belinda Yang
- *
- * Created on January 28, 2017, 11:45 AM
+/**
+ * @file AUDIO.h
+ * @author Kue Yang
+ * @date 11/22/2016
  */
 
 #ifndef AUDIO_H
@@ -15,12 +14,9 @@ extern "C" {
 #include "WAVDEF.h"
 #include "FILES.h"
 
-/** @def MAX_NUM_OF_FILES 
- * Defines the max number of audio files to be open. */
-#define MAX_NUM_OF_FILES        10
 /** @def REC_BUF_SIZE 
  * Defines the receive buffer size. */
-#define REC_BUF_SIZE            8192//10240
+#define REC_BUF_SIZE            512
 /** @def AUDIO_BUF_SIZE 
  * Defines the audio buffer size. */
 #define AUDIO_BUF_SIZE          REC_BUF_SIZE/4
@@ -34,13 +30,11 @@ void AUDIO_WriteDataToDAC(void);
 /* UART related functions */
 void AUDIO_ListFiles(void);
 void AUDIO_setNewTone(int fret);
-BOOL AUDIO_setNewFile(const char* fileName);
+BOOL AUDIO_setNewFile(UINT16 selectedFile);
 void AUDIO_resetFilePtr(void);
 
 UINT32 AUDIO_getBytesRead(void);
 UINT32 AUDIO_getBytesWritten(void);
-
-
 
 #ifdef	__cplusplus
 }

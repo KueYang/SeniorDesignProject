@@ -11,12 +11,12 @@
 extern "C" {
 #endif
 
-/**@def BUFFERSIZE 
+/**@def MON_BUFFERSIZE 
  * Defines the buffer size used for the FIFO queue. */
 #define MON_BUFFERSIZE  1024
 
 /**
- * @brief FIFO data structure.
+ * @brief MON_FIFO data structure.
  * @details The FIFO data structure is used to create and store a FIFO queue.
  */
 typedef struct MON_FIFO

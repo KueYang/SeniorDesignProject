@@ -12,7 +12,6 @@
 /-------------------------------------------------------------------------*/
 
 #include <p32xxxx.h>
-#include <plib.h>
 #include "diskio.h"
 #include "../SPI.h"
 
@@ -20,7 +19,7 @@
 /* Socket controls  (Platform dependent) */
 #define CS_LOW()  _LATB7 = 0       /* MMC CS = L */
 #define CS_HIGH() _LATB7 = 1       /* MMC CS = H */
-#define CD	(!_RB8)                /* Card detected   (yes:true, no:false, default:true) */
+#define CD	1//(!_RB8)                /* Card detected   (yes:true, no:false, default:true) */
 #define WP	(_RB10)                 /* Write protected (yes:true, no:false, default:false) */
 
 
@@ -70,7 +69,7 @@ int wait_ready (void)
 	Timer2 = 500;               /* Wait for ready in timeout of 500ms */
 	do
     {
-		d = SPI1_ReadWrite(0xFF);
+		d = SPI3_ReadWrite(0xFF);
 	}while ((d != 0xFF) && Timer2);
 
 	return ((d == 0xFF) ? 1 : 0);
@@ -82,7 +81,7 @@ int wait_ready (void)
 void deselect (void)
 {
 	CS_HIGH();                  /* Set CS# high */
-	SPI1_ReadWrite(0xFF);		/* Dummy clock (force DO hi-z for multiple slave SPI) */
+	SPI3_ReadWrite(0xFF);		/* Dummy clock (force DO hi-z for multiple slave SPI) */
 }
 
 /*-----------------------------------------------------------------------*/
@@ -91,7 +90,7 @@ void deselect (void)
 int select (void)	/* 1:Successful, 0:Timeout */
 {
 	CS_LOW();                   /* Set CS# low */
-	SPI1_ReadWrite(0xFF);       /* Dummy clock (force DO enabled) */
+	SPI3_ReadWrite(0xFF);       /* Dummy clock (force DO enabled) */
 
 	if (wait_ready()) 
     {
@@ -116,7 +115,7 @@ int rcvr_datablock ( BYTE *buff, UINT16 btr	)
 
 	Timer1 = 100;
 	do {							/* Wait for data packet in timeout of 100ms */
-		token = SPI1_ReadWrite(0xFF);
+		token = SPI3_ReadWrite(0xFF);
 	} while ((token == 0xFF) && Timer1);
 
 	if(token != 0xFE) 
@@ -124,9 +123,9 @@ int rcvr_datablock ( BYTE *buff, UINT16 btr	)
         return 0;                   /* If not valid data token, retutn with error */
     }
 
-	SPI1_MultiRead(buff, btr);		/* Receive the data block into buffer */
-	SPI1_ReadWrite(0xFF);			/* Discard CRC */
-	SPI1_ReadWrite(0xFF);
+	SPI3_MultiRead(buff, btr);		/* Receive the data block into buffer */
+	SPI3_ReadWrite(0xFF);			/* Discard CRC */
+	SPI3_ReadWrite(0xFF);
 
 	return 1;						/* Return with success */
 }
@@ -161,11 +160,11 @@ BYTE send_cmd (
 	}
 
 	/* Send command packet */
-	SPI1_ReadWrite(0x40 | cmd);			/* Start + Command index */
-	SPI1_ReadWrite((BYTE)(arg >> 24));	/* Argument[31..24] */
-	SPI1_ReadWrite((BYTE)(arg >> 16));	/* Argument[23..16] */
-	SPI1_ReadWrite((BYTE)(arg >> 8));	/* Argument[15..8] */
-	SPI1_ReadWrite((BYTE)arg);			/* Argument[7..0] */
+	SPI3_ReadWrite(0x40 | cmd);			/* Start + Command index */
+	SPI3_ReadWrite((BYTE)(arg >> 24));	/* Argument[31..24] */
+	SPI3_ReadWrite((BYTE)(arg >> 16));	/* Argument[23..16] */
+	SPI3_ReadWrite((BYTE)(arg >> 8));	/* Argument[15..8] */
+	SPI3_ReadWrite((BYTE)arg);			/* Argument[7..0] */
     
 	n = 0x01;                           /* Dummy CRC + Stop */
 	if (cmd == CMD0){ 
@@ -174,18 +173,18 @@ BYTE send_cmd (
 	if (cmd == CMD8){ 
         n = 0x87;                       /* Valid CRC for CMD8(0x1AA) + Stop */
     }
-	SPI1_ReadWrite(n);
+	SPI3_ReadWrite(n);
 
 	/* Receive command response */
 	if (cmd == CMD12) 
     {
-        SPI1_ReadWrite(0xFF);           /* Skip a stuff byte on stop to read */
+        SPI3_ReadWrite(0xFF);           /* Skip a stuff byte on stop to read */
     }
 	
     n = 10;                             /* Wait for a valid response in timeout of 10 attempts */
 	do
     {
-		res = SPI1_ReadWrite(0xFF);
+		res = SPI3_ReadWrite(0xFF);
 	}while ((res & 0x80) && --n);
 
 	return res;                         /* Return with the response value */
@@ -229,10 +228,10 @@ DSTATUS disk_initialize ( BYTE pdrv )
         return Stat;                                                /* No card in the socket */
     }
 
-	SPI1_Init(400000);                                              /* Initialize memory card interface at 400kHz. */
+	SPI3_Init(400000);                                              /* Initialize memory card interface at 400kHz. */
 	for (n = 10; n; n--) 
     {
-        SPI1_ReadWrite(0xFF);                                       /* 80 dummy clocks */
+        SPI3_ReadWrite(0xFF);                                       /* 80 dummy clocks */
     }	
 
 	ty = 0;
@@ -243,7 +242,7 @@ DSTATUS disk_initialize ( BYTE pdrv )
         {                           
 			for (n = 0; n < 4; n++) 
             {
-                ocr[n] = SPI1_ReadWrite(0xFF);                      /* Get trailing return value of R7 resp */
+                ocr[n] = SPI3_ReadWrite(0xFF);                      /* Get trailing return value of R7 resp */
             }			
 			if (ocr[2] == 0x01 && ocr[3] == 0xAA)                   /* The card can work at vdd range of 2.7-3.6V */
             {				
@@ -252,7 +251,7 @@ DSTATUS disk_initialize ( BYTE pdrv )
                 {			
 					for (n = 0; n < 4; n++) 
                     {
-                        ocr[n] = SPI1_ReadWrite(0xFF);
+                        ocr[n] = SPI3_ReadWrite(0xFF);
                     }
 					ty = (ocr[0] & 0x40) ? (CT_SD2|CT_BLOCK) : CT_SD2;/* SDv2 */
 				}
@@ -282,11 +281,11 @@ DSTATUS disk_initialize ( BYTE pdrv )
 	if (ty)                                 /* Function succeded */
     {		
 		Stat &= ~STA_NOINIT;                /* Clear STA_NOINIT */
-		SPI1_Init(20000000);   
+		SPI3_Init(20000000);   
 	} 
     else                                    /* Function failed */ 
     {		
-		SPI1CONbits.ON = 0;                 /* Deinitialize interface */
+		SPI3CONbits.ON = 0;                 /* Deinitialize interface */
 	}
 
 	return Stat;
@@ -382,9 +381,9 @@ DRESULT disk_ioctl (
 	case GET_BLOCK_SIZE :	/* Get erase block size in unit of sectors (DWORD) */
 		if (CardType & CT_SD2) {	/* SDv2? */
 			if (send_cmd(ACMD13, 0) == 0) {		/* Read SD status */
-				SPI1_ReadWrite(0xFF);
+				SPI3_ReadWrite(0xFF);
 				if (rcvr_datablock(csd, 16)) {				/* Read partial block */
-					for (n = 64 - 16; n; n--) SPI1_ReadWrite(0xFF);	/* Purge trailing data */
+					for (n = 64 - 16; n; n--) SPI3_ReadWrite(0xFF);	/* Purge trailing data */
 					*(DWORD*)buff = 16UL << (csd[10] >> 4);
 					res = RES_OK;
 				}
@@ -421,21 +420,21 @@ DRESULT disk_ioctl (
 	case MMC_GET_OCR :	/* Receive OCR as an R3 resp (4 bytes) */
 		if (send_cmd(CMD58, 0) == 0) {	/* READ_OCR */
 			for (n = 0; n < 4; n++)
-				*((BYTE*)buff+n) = SPI1_ReadWrite(0xFF);
+				*((BYTE*)buff+n) = SPI3_ReadWrite(0xFF);
 			res = RES_OK;
 		}
 		break;
 
 	case MMC_GET_SDSTAT :	/* Receive SD statsu as a data block (64 bytes) */
 		if ((CardType & CT_SD2) && send_cmd(ACMD13, 0) == 0) {	/* SD_STATUS */
-			SPI1_ReadWrite(0xFF);
+			SPI3_ReadWrite(0xFF);
 			if (rcvr_datablock(buff, 64))
 				res = RES_OK;
 		}
 		break;
 
 	case CTRL_POWER_OFF :	/* Power off */
-		SPI1CONbits.ON = 0;
+		SPI3CONbits.ON = 0;
 		Stat |= STA_NOINIT;
 		res = RES_OK;
 		break;

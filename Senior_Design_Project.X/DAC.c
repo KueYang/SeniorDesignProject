@@ -8,7 +8,6 @@
  */
 
 #include <p32xxxx.h>
-#include <plib.h>
 #include "STDDEF.h"
 #include "SPI.h"
 #include "DAC.h"
@@ -21,12 +20,9 @@
  */
 void DAC_Init(void)
 {
-    SYNC = 1;   // Sets the latch high.#ifdef DAC12B
-#ifdef DAC12B
-    DAC_WriteToDAC(POWER_ON_OFF_CHN_A_B , 0x000F & DAC_B_A);
-#else    
+    SYNC = 1;       // Sets the latch high.
     DAC_WriteToDAC(POWER_ON_OFF_CHN_A_B , POWER_ON_DAC_B_A);
-#endif
+//    DAC_ZeroOutput();
 }
 
 /**
@@ -40,20 +36,21 @@ void DAC_Init(void)
  * @retval TRUE If the file was read successfully
  * @retval FALSE If the file was read unsuccessfully
  */
-BOOL DAC_WriteToDAC(BYTE cmd_addr, WORD data)
+DWORD DAC_WriteToDAC(BYTE cmd_addr, WORD data)
 {
+    DWORD readBack = 0;
+    
     SYNC = 0;    // Shifts the latch low to initiate write
    
-    SPI2_ReadWrite(cmd_addr);
-    SPI2_ReadWrite((data & 0xFF00)>>8);     // Sends the first 2 MSB
-#ifdef DAC12B
-    SPI2_ReadWrite((data & 0x00F0));         // Sends the LSB
-#else
-    SPI2_ReadWrite(data & 0x00FF);          // Sends the last 2 LSB
-#endif
+    readBack |= SPI2_ReadWrite(cmd_addr) << 16;              // Sends the address BYTES
+    readBack |= SPI2_ReadWrite((data & 0xFF00)>>8) << 8;     // Sends the first 2 MSB
+    readBack |= SPI2_ReadWrite(data & 0x00FF);               // Sends the last 2 LSB
    
-   SYNC = 1;    // Shifts the latch high to end write
+    SYNC = 1;    // Shifts the latch high to end write
+    
+    return readBack;
 }
+
 /**
  * @brief Sets the DAC output to mid-scale.
  * @remark Requires SPI and the DAC to be initialized. 
@@ -74,4 +71,22 @@ void DAC_ZeroOutput(void)
 {
     DAC_WriteToDAC(WRITE_UPDATE_CHN_A, 0);
     DAC_WriteToDAC(WRITE_UPDATE_CHN_B, 0);
+}
+
+/**
+ * @brief Reads the DAC registers.
+ * @arg channelA The channel to read back data.
+ * @return The DAC register value.
+ */
+DWORD DAC_ReadBack(BOOL channelA)
+{
+    if(channelA)
+    { 
+        DAC_WriteToDAC(READ_CHN_A, 0x0000);
+    }
+    else
+    {
+        DAC_WriteToDAC(READ_CHN_B, 0x0000);
+    }
+    return DAC_WriteToDAC(0x00, 0x0000);
 }

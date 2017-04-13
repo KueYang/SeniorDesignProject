@@ -1,8 +1,7 @@
-/* 
- * File:   FILES.h
- * Author: Belinda Yang
- *
- * Created on January 28, 2017, 10:38 AM
+/**
+ * @file FILES.h
+ * @author Kue Yang
+ * @date 11/22/2016
  */
 
 #ifndef FILES_H
@@ -14,18 +13,29 @@ extern "C" {
     
 #include "./fatfs/ff.h"
 
+/**
+ * @brief AUDIOINFO data structure.
+ * @details The AUDIOINFO data structure is used to store the audio header
+ * data and file name.
+ */
 typedef struct AUDIOINFO
 {
     /**@{*/
-    UINT16  bitsPerSample;
-    UINT16  numOfChannels;
-    UINT16  sampleRate;
-    UINT16  blockAlign;
-    UINT32  dataSize;           /**< Variable used to store the size of the data. */
-    char fileName[16];
+    UINT16  bitsPerSample;      /**< Variable used to store the bits per sample. */
+    UINT16  numOfChannels;      /**< Variable used to store the number of channels. */
+    UINT16  sampleRate;         /**< Variable used to store the sample rate. */
+    UINT16  blockAlign;         /**< Variable used to store the block align. */
+    UINT32  dataSize;           /**< Variable used to store the size of the file data. */
+    char fileName[16];          /**< Variable used to store the file name. */
     /**@}*/
 }AUDIOINFO;
-    
+
+/**
+ * @brief FILES data structure.
+ * @details The FILES data structure is used to store the file data used in
+ * conjunction with the Fatfs File System Library. The structure also stores the
+ * audio header data corresponding to the specified file.
+ */
 typedef struct FILES
 {
     /**@{*/
