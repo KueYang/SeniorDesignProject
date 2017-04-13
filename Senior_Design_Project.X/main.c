@@ -84,7 +84,7 @@
  */
 int main(void) 
 {    
-//    WDTCONbits.ON = 0;              // Disables WatchDog Timer
+    WDTCONbits.ON = 0;              // Disables WatchDog Timer
     
     /* Enable multi-vector interrupts */
     INTConfigureSystem(INT_SYSTEM_CONFIG_MULT_VECTOR);
@@ -92,27 +92,25 @@ int main(void)
 
     /* Peripheral Initializations */
     IO_Init();                      // Initializes all digital IO.
-//    TIMER_Init();                   // Initializes all timer modules.
+    TIMER_Init();                   // Initializes all timer modules.
 //    ADC_Init();                     // Initializes all ADC modules.
     SPI_Init();                     // Initializes all SPI modules.
     UART_Init();                    // Initializes all UART modules
-//    AUDIO_Init();                   // Initializes the Audio module.
+    AUDIO_Init();                   // Initializes the Audio module.
     DAC_Init();                     // Initializes the DACs.
 
-//    PORTEbits.RE2 = 1;              // ON LED
+    PORTEbits.RE2 = 1;              // ON LED
     PORTEbits.RE3 = 1;              // ERROR LED
-//    
-//    DEVCFG1bits.WDTPS = 0b00100;    // PostScalar 1:16, 16ms
-//    WDTCONbits.WDTCLR = 0x01;       // Clears the watchdog timer flag.
-//    WDTCONbits.ON = 1;              // Enable WatchDog Timer
+    
+    DEVCFG1bits.WDTPS = 0b00100;    // PostScalar 1:16, 16ms
+    WDTCONbits.WDTCLR = 0x01;       // Clears the watchdog timer flag.
+    WDTCONbits.ON = 1;              // Enable WatchDog Timer
     
     while(1)
     {
-//        WDTCONbits.WDTCLR = 0x01;       // Clears the watchdog timer flag.
-//        AUDIO_Process();
-//        TIMER_Process();
-//        PORTEbits.RE3 = 0;              // Turn off ERROR LED
-//        MON_SinDAC();
+        WDTCONbits.WDTCLR = 0x01;       // Clears the watchdog timer flag.
+        AUDIO_Process();
+        PORTEbits.RE3 = 0;              // Turn off ERROR LED
     }
 
     return (0);

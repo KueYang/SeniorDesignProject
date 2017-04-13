@@ -594,7 +594,8 @@ void MON_GetFileList(void)
  */
 void MON_Set_File(void)
 {
-    if(AUDIO_setNewFile(cmdStr.arg1))
+    UINT16 selectedFile = atoi(cmdStr.arg1);
+    if(AUDIO_setNewFile(selectedFile))
     {
         MON_SendString("The new file has been set.");
     }

@@ -16,38 +16,8 @@
 #include "IO.h"
 #include "DAC.h"
 #include "FILES.h"
+#include "FILEDEF.h"
 #include "AUDIO.h"
-
-/** @def FILE_0 
- * Defines file index 0. */
-#define FILE_0      0
-/** @def FILE_1 
- * Defines file index 1. */
-#define FILE_1      1
-/** @def FILE_2 
- * Defines file index 2. */
-#define FILE_2      2
-/** @def FILE_3 
- * Defines file index 3. */
-#define FILE_3      3
-/** @def FILE_4 
- * Defines file index 4. */
-#define FILE_4      4
-/** @def FILE_5 
- * Defines file index 5. */
-#define FILE_5      5
-/** @def FILE_6 
- * Defines file index 6. */
-#define FILE_6      6
-/** @def FILE_7 
- * Defines file index 7. */
-#define FILE_7      7
-/** @def FILE_8 
- * Defines file index 8. */
-#define FILE_8      8
-/** @def FILE_9 
- * Defines file index 9. */
-#define FILE_9      9
 
 UINT8 AUDIO_GetHeader(int index);
 BOOL AUDIO_GetAudioData(FILES* file, UINT16 bytes);
@@ -79,20 +49,6 @@ UINT32 bytesRead;
 /** @var bytesWritten 
  * Stores the number of bytes that have been written. */
 UINT32 bytesWritten;
-/** @var fileNames 
- * Stores the list of audio file names. */
-const char* fileNames[MAX_NUM_OF_FILES] = {
-    "OST_02.WAV",
-    "S1ELOW.WAV",
-    "S2_A.WAV",
-    "S3_D.WAV",
-    "S4_G.WAV",
-    "S5_B.WAV",
-    "S6_EHIGH.WAV",
-    "BOST_02.WAV",
-    "ETUDES~1.WAV",
-    "DK64JJ.WAV"
-};
 
 /**
  * @brief Initializes the Audio module.
@@ -162,21 +118,17 @@ void AUDIO_ListFiles(void)
 
 /**
  * @brief Sets a new file to be read.
- * @arg fileName The file name that is being set to.
+ * @arg selectedFile The selected file to be set.
  * @return A boolean indicating if the file has been set successfully.
  * @retval TRUE, file has been set successfully.
  * @retval FALSE, file has not been set successfully.
  */
-BOOL AUDIO_setNewFile(const char* fileName)
+BOOL AUDIO_setNewFile(UINT16 selectedFile)
 {
-    int i = 0;
-    for(i = 0; i < MAX_NUM_OF_FILES; i++)
+    if(selectedFile <= 20 && selectedFile >= 0)
     {
-        if(MON_stringsMatch(&files[i].audioInfo.fileName[0], fileName))
-        {
-            AUDIO_setNewTone(i);
-            return TRUE;
-        }
+        AUDIO_setNewTone(selectedFile);
+        return TRUE;
     }
     return FALSE;
 }

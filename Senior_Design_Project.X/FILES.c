@@ -80,6 +80,7 @@ FRESULT FILES_CloseFile(FIL* file)
 BOOL FILES_ListFiles(const char* selectedName)
 {
     char buf[128];
+    int fileIndex = 0;
     FRESULT res;        /* Stores the results of the operation. */
     DIR dir;            /* Stores information on the directory. */
     FILINFO Finfo;      /* Stores file information. */
@@ -96,13 +97,15 @@ BOOL FILES_ListFiles(const char* selectedName)
             if(MON_stringsMatch(selectedName, &Finfo.fname[0]))
             {
                 // Indicates the file is selected.
-                snprintf(&buf[0], 128, "%s\t%u KB ***", Finfo.fname, Finfo.fsize/1000);
+                snprintf(&buf[0], 128, "%s\t%u KB %i ***", Finfo.fname, Finfo.fsize/1000, fileIndex);
             }
             else
             {
-                snprintf(&buf[0], 128, "%s\t%u KB", Finfo.fname, Finfo.fsize/1000);
+                snprintf(&buf[0], 128, "%s\t%u KB %i", Finfo.fname, Finfo.fsize/1000, fileIndex);
             }
             MON_SendString(&buf[0]);
+            
+            fileIndex++;
             
             // Searches for the next file in the directory.
             res = f_findnext(&dir, &Finfo);

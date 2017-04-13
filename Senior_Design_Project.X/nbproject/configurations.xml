@@ -31,6 +31,7 @@
       <itemPath>FILES.h</itemPath>
       <itemPath>AUDIO.h</itemPath>
       <itemPath>WAVDEF.h</itemPath>
+      <itemPath>FILEDEF.h</itemPath>
     </logicalFolder>
     <logicalFolder name="LinkerScript"
                    displayName="Linker Files"
