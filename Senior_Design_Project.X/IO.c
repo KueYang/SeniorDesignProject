@@ -38,7 +38,7 @@ void IO_Init(void)
     // Digital IO
     TRISEbits.TRISE2 = 0;   // LED, ON
     TRISEbits.TRISE3 = 0;   // LED, ERROR
-    TRISEbits.TRISE4 = 0;   // LED, OTHER
+    TRISEbits.TRISE4 = 0;   // LED, INITIALIZATION
     
     // Fret
     TRISGbits.TRISG1 = 1;   // Fret 1
@@ -75,13 +75,13 @@ void IO_Init(void)
     ANSELGbits.ANSG15 = 1;   // set RG15 (AN28) to analog
     
     // Clears All Digital IO
-    PORTA = 0x0000; PORTB = 0x0000; PORTC = 0x0000;
-    PORTD = 0x0000; PORTE = 0x0000; PORTF = 0x0000; 
-    PORTG = 0x0000;
+    PORTACLR = 0xFFFF; PORTBCLR = 0xFFFF; PORTCCLR = 0xFFFF;
+    PORTDCLR = 0xFFFF; PORTECLR = 0xFFFF; PORTFCLR = 0xFFFF; 
+    PORTGCLR = 0xFFFF;
     
-    PORTEbits.RE2 = 1;              // ON LED
-    PORTEbits.RE3 = 1;              // ERROR LED
-    PORTEbits.RE4 = 1;              // OTHER LED
+    ON_LED = 1;                 // ON LED
+    ERROR_LED = 0;              // ERROR LED
+    INITIALIZE_LED = 1;         // INITIALIZATION LED
 }
 
 /**
@@ -113,23 +113,22 @@ int IO_scanFrets(void)
         
         /* Scans through the five fret inputs. */
         if(FRET1 == 1) {fretFound = 1;}
-        if(FRET2 == 1) {fretFound = 2;}
-        if(FRET3 == 1) {fretFound = 3;}
-        if(FRET4 == 1) {fretFound = 4;}
-        if(FRET5 == 1) {fretFound = 5;}
+        else if(FRET2 == 1) {fretFound = 2;}
+        else if(FRET3 == 1) {fretFound = 3;}
+        else if(FRET4 == 1) {fretFound = 4;}
+        else if(FRET5 == 1) {fretFound = 5;}
         
         /* Checks if any frets were pressed. */
         if(fretFound > 0)
         {
             currentFret = (groupIndex-1)*FRETS_PER_GROUP + fretFound;
-            
-            char buf[32];
-            snprintf(&buf[0] ,32 ,"Fret Selected: %d", currentFret);
-            MON_SendString(&buf[0]);
-            
             break;
         }
     }
+    
+    char buf[32];
+    snprintf(&buf[0] ,32 ,"Fret Selected: %d", currentFret);
+    MON_SendString(&buf[0]);
     
     return currentFret;
 }

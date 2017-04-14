@@ -8,6 +8,7 @@
 
 #include <p32xxxx.h>
 #include "plib/plib.h"
+#include "HardwareProfile.h"
 #include "STDDEF.h"
 #include "IO.h"
 #include "TIMER.h"
@@ -129,6 +130,8 @@ void ADC_ZeroBuffer(void)
  */
 void __ISR(_ADC_VECTOR, IPL2AUTO) ADCHandler(void)
 {
+    CLEAR_WATCHDOG_TIMER;
+            
     // Reads the ADC buffer
     UINT16 adcSample = (UINT16)ADC1BUF0;
     sampleCount++;
@@ -195,4 +198,6 @@ void __ISR(_ADC_VECTOR, IPL2AUTO) ADCHandler(void)
     
     // Clear the interrupt flag
     IFS0bits.AD1IF = 0;
+    
+    CLEAR_WATCHDOG_TIMER;
 }

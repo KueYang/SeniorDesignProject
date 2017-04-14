@@ -18,4 +18,6 @@
  * Calculates and returns the Instruction Clock Speed. */
 #define	GetInstructionClock()	(SYS_FREQ)
 
+#define CLEAR_WATCHDOG_TIMER    WDTCONbits.WDTCLR = 0x01;
+
 #endif

@@ -42,6 +42,16 @@ extern "C" {
  * Defines the input PORT for Fret 5 */
 #define FRET5       PORTEbits.RE0
 
+/** @def ON_LED 
+ * Defines the LED for ON. */
+#define ON_LED              PORTEbits.RE2
+/** @def ERROR_LED 
+ * Defines the LED for ERROR. */
+#define ERROR_LED           PORTEbits.RE3
+/** @def INITIALIZE_LED 
+ * Defines the LED for finishing INITIALIZATION. */
+#define INITIALIZE_LED      PORTEbits.RE4
+    
 void IO_Init(void);
 void IO_Process(void);
 int IO_scanFrets(void);

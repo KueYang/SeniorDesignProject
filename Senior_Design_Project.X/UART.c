@@ -153,7 +153,7 @@ void UART_Init(void)
     IPC7bits.U1IP = 2;          // Sets UART Interrupt Priority 2
     IPC7bits.U1IS = 1;          // Sets UART Interrupt Sub-Priority 2
     
-    MON_GetHelp();
+//    MON_GetHelp();
     MON_SendString(">");  // Sends a prompt.
 }
 
@@ -418,11 +418,6 @@ UINT16 MON_getStringLength(const char* string)
     return length;
 }
 
-void MON_getString(char* str, WORD args)
-{
-//    snprintf(&buf[0], 256, str, args);
-}
-
 /**
  * @brief Gets the handler for the specified command.
  * @arg cmdName The name of the command.
@@ -451,6 +446,8 @@ COMMANDS MON_getCommand(const char* cmdName)
  */
 void __ISR(_UART1_VECTOR, IPL2AUTO) IntUart1Handler(void)
 {
+    CLEAR_WATCHDOG_TIMER;
+    
 	if(IFS1bits.U1RXIF)
 	{   
         /* Checks if bus collision has occurred and clears collision flag.*/
@@ -512,6 +509,8 @@ void __ISR(_UART1_VECTOR, IPL2AUTO) IntUart1Handler(void)
         // Clear the TX interrupt Flag.
         IFS1bits.U1TXIF = 0;
 	}
+    
+    CLEAR_WATCHDOG_TIMER;
 }
 
 /**
