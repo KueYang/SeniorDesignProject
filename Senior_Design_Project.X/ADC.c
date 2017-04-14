@@ -81,7 +81,7 @@ void ADC_Init(void)
     AD1CHSbits.CH0SA = 0x001C;      // Channel 0 positive input for Sample A is AN28
     
     /* AD1CSSL configurations */
-    AD1CSSLbits.CSSL = 0x0002;      // Selects AN2 for input scan, all others are skipped
+    AD1CSSLbits.CSSL = 0x001C;      // Selects AN28 for input scan, all others are skipped
     
     AD1CON1bits.ON = 1;             // Enables ADC
     AD1CON1bits.ASAM = 1;           // Sampling begins immediately
