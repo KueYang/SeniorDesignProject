@@ -38,20 +38,20 @@ void IO_Init(void)
     // Digital IO
     TRISEbits.TRISE2 = 0;   // LED, ON
     TRISEbits.TRISE3 = 0;   // LED, ERROR
-    TRISEbits.TRISE4 = 0;   // LED, NO SD CARD DETECT
+    TRISEbits.TRISE4 = 0;   // LED, OTHER
     
     // Fret
-    TRISDbits.TRISD1 = 1;   // Fret 1
-    TRISDbits.TRISD2 = 1;   // Fret 2
-    TRISDbits.TRISD3 = 1;   // Fret 3
-    TRISDbits.TRISD12 = 1;  // Fret 4
-    TRISDbits.TRISD13 = 1;  // Fret 5
+    TRISGbits.TRISG1 = 1;   // Fret 1
+    TRISGbits.TRISG0 = 1;   // Fret 2
+    TRISAbits.TRISA6 = 1;   // Fret 3
+    TRISAbits.TRISA7 = 1;   // Fret 4
+    TRISEbits.TRISE0 = 1;   // Fret 5
     
     // Frets Groups
-    TRISDbits.TRISD4 = 0;   // Group 1
-    TRISDbits.TRISD5 = 0;   // Group 2
-    TRISDbits.TRISD6 = 0;   // Group 3
-    TRISDbits.TRISD7 = 0;   // Group 4
+    TRISEbits.TRISE1 = 0;   // Group 1
+    TRISGbits.TRISG14 = 0;  // Group 2
+    TRISGbits.TRISG12 = 0;  // Group 3
+    TRISGbits.TRISG13 = 0;  // Group 4
     
     // UART IO
     TRISCbits.TRISC1 = 1;   // U1RX
@@ -62,11 +62,6 @@ void IO_Init(void)
     TRISGbits.TRISG6 = 0;   // DAC_CLK2
     TRISGbits.TRISG7 = 1;   // DAC_SDI2
     TRISGbits.TRISG8 = 0;   // DAC_SDO2
-    
-//    TRISCbits.TRISC12 = 0;   // SYNC
-//    TRISDbits.TRISD10 = 0;   // DAC_CLK1
-//    TRISDbits.TRISD11 = 1;   // DAC_SDI1
-//    TRISCbits.TRISC13 = 0;   // DAC_SDO1
     
     // SPI IO, SD Card
     TRISBbits.TRISB11 = 0;  // CS
@@ -83,6 +78,10 @@ void IO_Init(void)
     PORTA = 0x0000; PORTB = 0x0000; PORTC = 0x0000;
     PORTD = 0x0000; PORTE = 0x0000; PORTF = 0x0000; 
     PORTG = 0x0000;
+    
+    PORTEbits.RE2 = 1;              // ON LED
+    PORTEbits.RE3 = 1;              // ERROR LED
+    PORTEbits.RE4 = 1;              // OTHER LED
 }
 
 /**
@@ -113,11 +112,11 @@ int IO_scanFrets(void)
         IO_setGroupOutput(groupIndex);
         
         /* Scans through the five fret inputs. */
-        if(FRET1 == 0) {fretFound = 1;}
-        if(FRET2 == 0) {fretFound = 2;}
-        if(FRET3 == 0) {fretFound = 3;}
-        if(FRET4 == 0) {fretFound = 4;}
-        if(FRET5 == 0) {fretFound = 5;}
+        if(FRET1 == 1) {fretFound = 1;}
+        if(FRET2 == 1) {fretFound = 2;}
+        if(FRET3 == 1) {fretFound = 3;}
+        if(FRET4 == 1) {fretFound = 4;}
+        if(FRET5 == 1) {fretFound = 5;}
         
         /* Checks if any frets were pressed. */
         if(fretFound > 0)
