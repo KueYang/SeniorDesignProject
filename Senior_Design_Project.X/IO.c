@@ -85,15 +85,6 @@ void IO_Init(void)
 }
 
 /**
- * @brief Checks and updates IO used for detecting the fret position.
- * @return Void
- */
-void IO_Process(void)
-{
-    
-}
-
-/**
  * @brief Scans a selection of frets.
  * @details Scans all frets groups to determine which fret was pressed. Sets the
  * currently selected fret to the fret that is pressed. Defaults to an open fret.
@@ -118,9 +109,13 @@ int IO_scanFrets(void)
         else if(FRET4 == 1) {fretFound = 4;}
         else if(FRET5 == 1) {fretFound = 5;}
         
+        /* Turn off all output pins. */
+        IO_setGroupOutput(0);
+        
         /* Checks if any frets were pressed. */
         if(fretFound > 0)
         {
+            /* Calculates the fret that is selected*/
             currentFret = (groupIndex-1)*FRETS_PER_GROUP + fretFound;
             break;
         }

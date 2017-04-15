@@ -27,7 +27,6 @@
       <itemPath>FIFO.h</itemPath>
       <itemPath>DAC.h</itemPath>
       <itemPath>HardwareProfile.h</itemPath>
-      <itemPath>TESTS.h</itemPath>
       <itemPath>FILES.h</itemPath>
       <itemPath>AUDIO.h</itemPath>
       <itemPath>WAVDEF.h</itemPath>
@@ -52,7 +51,6 @@
       <itemPath>FIFO.c</itemPath>
       <itemPath>DAC.c</itemPath>
       <itemPath>FILES.c</itemPath>
-      <itemPath>TESTS.c</itemPath>
       <itemPath>TIMER.c</itemPath>
       <itemPath>AUDIO.c</itemPath>
       <itemPath>Interrupts.c</itemPath>
@@ -75,7 +73,7 @@
         <targetDevice>PIC32MX270F512L</targetDevice>
         <targetHeader></targetHeader>
         <targetPluginBoard></targetPluginBoard>
-        <platformTool>PICkit3PlatformTool</platformTool>
+        <platformTool>Simulator</platformTool>
         <languageToolchain>XC32</languageToolchain>
         <languageToolchainVersion>1.42</languageToolchainVersion>
         <platform>3</platform>
@@ -327,13 +325,6 @@
         <property key="periphComp6.gte" value="gt"/>
         <property key="reset.scl" value="false"/>
         <property key="reset.type" value="MCLR"/>
-        <property key="tracecontrol.include.timestamp" value="summarydataenabled"/>
-        <property key="tracecontrol.select" value="0"/>
-        <property key="tracecontrol.stallontracebufferfull" value="false"/>
-        <property key="tracecontrol.timestamp" value="0"/>
-        <property key="tracecontrol.tracebufmax" value="546000"/>
-        <property key="tracecontrol.tracefile" value="defmplabxtrace.log"/>
-        <property key="tracecontrol.traceresetonrun" value="false"/>
         <property key="uart10io.output" value="window"/>
         <property key="uart10io.outputfile" value=""/>
         <property key="uart10io.uartioenabled" value="false"/>

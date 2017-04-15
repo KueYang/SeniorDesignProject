@@ -17,7 +17,6 @@
 #include "FIFO.h"
 #include "DAC.h"
 #include "AUDIO.h"
-#include "TESTS.h"
 #include "UART.h"
 
 /** @def DESIRED_BAUDRATE 
@@ -48,7 +47,6 @@ COMMANDS MON_getCommand(const char* cmdName);
 
 /** Commands Handlers. */
 void MON_GetHelp(void);
-void MON_Test(void);
 
 /* File related commands*/
 void MON_GetFileList(void);
@@ -88,7 +86,6 @@ UINT16 numOfCmds;
  * The list of commands. */
 COMMANDS MON_COMMANDS[] = {
     {"HELP", " Display the list of commands avaliable. ", MON_GetHelp},
-    {"TEST", " Unit Test, 0-read/write, 1-read, 2-write. FORMAT: TEST value. ", MON_Test},
     {"LIST", " Lists all WAV files. ", MON_GetFileList},
     {"SET", " Sets the file to read. FORMAT: SET fileName.", MON_Set_File},
     {"RESET", " Resets the file pointer to beginning of file.", MON_Reset_File},
@@ -567,15 +564,6 @@ void MON_GetHelp(void)
         strncat(&buf[strLength], MON_COMMANDS[i].description, (128-strLength));
         MON_SendString(&buf[0]);
     }
-}
-
-/**
- * @brief Command used to test parsing commands. 
- * @return Void.
- */
-void MON_Test(void)
-{
-    Test_SelectTest((UINT16)atoi(cmdStr.arg1));
 }
 
 /**

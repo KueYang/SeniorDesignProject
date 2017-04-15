@@ -53,7 +53,6 @@ extern "C" {
 #define INITIALIZE_LED      PORTEbits.RE4
     
 void IO_Init(void);
-void IO_Process(void);
 int IO_scanFrets(void);
 
 #ifdef	__cplusplus

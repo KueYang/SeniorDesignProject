@@ -1,3 +1,9 @@
+/**
+ * @file FILEDEF.h
+ * @author Kue Yang
+ * @date 11/22/2016
+ */
+
 #ifndef _FILEDEF_H    /* Guard against multiple inclusion */
 #define _FILEDEF_H
 
@@ -44,10 +50,10 @@
 /** @def FILE_12 
  * Defines file index 12. */
 #define FILE_12      12
-/** @def FILE_3 
+/** @def FILE_13 
  * Defines file index 13. */
 #define FILE_13      13
-/** @def FILE_4 
+/** @def FILE_14 
  * Defines file index 14. */
 #define FILE_14      14
 /** @def FILE_15 

@@ -16,7 +16,6 @@
 #include "UART.h"
 #include "DAC.h"
 #include "AUDIO.h"
-#include "TESTS.h"
 
 /**
  * @defgroup usbConfig USB configurations
@@ -87,8 +86,8 @@ int main(void)
     WDTCONbits.ON = 0;              // Disables WatchDog Timer
     
     /* Enable multi-vector interrupts */
-    INTConfigureSystem(INT_SYSTEM_CONFIG_MULT_VECTOR);
-    INTEnableInterrupts();
+//    INTConfigureSystem(INT_SYSTEM_CONFIG_MULT_VECTOR);
+//    INTEnableInterrupts();
 
     /* Peripheral Initializations */
     IO_Init();                      // Initializes all analog/digital IO.
@@ -96,24 +95,24 @@ int main(void)
     /* Checks for a watchdog reset. */
     ((RCONbits.WDTO == 1) ?  (ERROR_LED = 1) : (ERROR_LED = 0));
     
-    TIMER_Init();                   // Initializes all timer modules.
-    ADC_Init();                     // Initializes all ADC modules.
-    SPI_Init();                     // Initializes all SPI modules.
+//    TIMER_Init();                   // Initializes all timer modules.
+//    ADC_Init();                     // Initializes all ADC modules.
+//    SPI_Init();                     // Initializes all SPI modules.
 //    UART_Init();                    // Initializes all UART modules
-    AUDIO_Init();                   // Initializes the Audio module.
-    DAC_Init();                     // Initializes the DACs.
+//    AUDIO_Init();                   // Initializes the Audio module.
+//    DAC_Init();                     // Initializes the DACs.
 
     INITIALIZE_LED = 0;             // Turn off the initialize LED
     
-    DEVCFG1bits.WDTPS = 0b00110;    // PostScalar 1:64, 64ms
-    DEVCFG1bits.FWDTEN = 0;         // Enable software control of WDT
-    CLEAR_WATCHDOG_TIMER;           // Clears the watchdog timer
-    WDTCONbits.ON = 1;              // Enable WatchDog Timer
+//    DEVCFG1bits.WDTPS = 0b00110;    // PostScalar 1:64, 64ms
+//    DEVCFG1bits.FWDTEN = 0;         // Enable software control of WDT
+//    CLEAR_WATCHDOG_TIMER;           // Clears the watchdog timer
+//    WDTCONbits.ON = 1;              // Enable WatchDog Timer
     
     while(1)
     {
         CLEAR_WATCHDOG_TIMER;           // Clears the watchdog timer
-        AUDIO_Process();
+//        AUDIO_Process();
         PORTEbits.RE3 = 0;              // Turn off ERROR LED
     }
 
