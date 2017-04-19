@@ -659,7 +659,7 @@ void MON_TestDAC(void)
     {
         value = 0;
     }
-    DAC_WriteToDAC(WRITE_UPDATE_CHN_A, value);
+    DAC_WriteToDAC(WRITE_UPDATE_CHN_A_B, value);
 }
 
 /**
