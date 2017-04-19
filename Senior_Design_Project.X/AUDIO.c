@@ -148,6 +148,12 @@ void AUDIO_setNewTone(int fret)
         TIMER3_ON(FALSE);
         MON_SendString("Turning off timer");
     }
+    
+    /* Clears out all the buffers. */
+    memset(&receiveBuffer[0], 0, sizeof(receiveBuffer));
+    memset(&LAUDIOSTACK[0], 0, sizeof(LAUDIOSTACK));
+    memset(&RAUDIOSTACK[0], 0, sizeof(RAUDIOSTACK));
+
     /* Sets the audio in pointer to zero. */
     audioInPtr = 0;
     /* Sets the audio out pointer to zero. */
@@ -164,6 +170,8 @@ void AUDIO_setNewTone(int fret)
 //    TIMER3_SetSampleRate(files[fileIndex].audioInfo.sampleRate);
     /* Sets the DAC's output to zero. */
     DAC_ZeroOutput();
+    /* Reads the new tone. */
+//    AUDIO_ReadFile(REC_BUF_SIZE);
     
     MON_SendString("Setting new a tone.");
 }
