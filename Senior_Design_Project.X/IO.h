@@ -20,7 +20,8 @@ extern "C" {
 #define GROUP2_OUT  PORTGbits.RG14   
 /** @def GROUP3_OUT 
  * Defines the output PORT for Group 3 */
-#define GROUP3_OUT  PORTGbits.RG12  
+//#define GROUP3_OUT  PORTGbits.RG12  
+#define GROUP3_OUT  PORTDbits.RD4  
 /** @def GROUP4_OUT 
  * Defines the output PORT for Group 4 */
 #define GROUP4_OUT  PORTGbits.RG13   

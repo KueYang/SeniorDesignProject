@@ -41,17 +41,18 @@ void IO_Init(void)
     TRISEbits.TRISE4 = 0;   // LED, INITIALIZATION
     
     // Fret
-    TRISGbits.TRISG1 = 1;   // Fret 1
-    TRISGbits.TRISG0 = 1;   // Fret 2
+    TRISGbits.TRISG1 = 1;   // Fret 5
+    TRISGbits.TRISG0 = 1;   // Fret 4
     TRISAbits.TRISA6 = 1;   // Fret 3
-    TRISAbits.TRISA7 = 1;   // Fret 4
-    TRISEbits.TRISE0 = 1;   // Fret 5
+    TRISAbits.TRISA7 = 1;   // Fret 2
+    TRISEbits.TRISE0 = 1;   // Fret 1
     
     // Frets Groups
-    TRISEbits.TRISE1 = 0;   // Group 1
-    TRISGbits.TRISG14 = 0;  // Group 2
-    TRISGbits.TRISG12 = 0;  // Group 3
-    TRISGbits.TRISG13 = 0;  // Group 4
+    TRISEbits.TRISE1 = 0;   // Group 4
+    TRISGbits.TRISG14 = 0;  // Group 3
+//    TRISGbits.TRISG12 = 0;  // Group 2
+    TRISDbits.TRISD4 = 0;   // Group 2
+    TRISGbits.TRISG13 = 0;  // Group 1
     
     // UART IO
     TRISCbits.TRISC1 = 1;   // U1RX
@@ -79,9 +80,9 @@ void IO_Init(void)
     PORTDCLR = 0xFFFF; PORTECLR = 0xFFFF; PORTFCLR = 0xFFFF; 
     PORTGCLR = 0xFFFF;
     
-    ON_LED = 1;                 // ON LED
-    ERROR_LED = 0;              // ERROR LED
-    INITIALIZE_LED = 1;         // INITIALIZATION LED
+    ON_LED = 0;                 // ON LED
+    ERROR_LED = 1;              // ERROR LED
+    INITIALIZE_LED = 0;         // INITIALIZATION LED
 }
 
 /**
@@ -159,6 +160,12 @@ void IO_setGroupOutput(int group)
             GROUP1_OUT = 0;
             GROUP2_OUT = 0;
             GROUP3_OUT = 0;
+            GROUP4_OUT = 1;
+            break;
+        case 5:
+            GROUP1_OUT = 1;
+            GROUP2_OUT = 1;
+            GROUP3_OUT = 1;
             GROUP4_OUT = 1;
             break;
         default:
