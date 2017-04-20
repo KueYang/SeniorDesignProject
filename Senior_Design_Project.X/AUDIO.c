@@ -49,6 +49,9 @@ UINT32 bytesRead;
 /** @var bytesWritten 
  * Stores the number of bytes that have been written. */
 UINT32 bytesWritten;
+/** @var hasReadFile 
+ * Stores boolean indicating the specified audio file has been read. */
+BOOL hasReadFile;
 
 /**
  * @brief Initializes the Audio module.
@@ -140,6 +143,7 @@ BOOL AUDIO_setNewFile(UINT16 selectedFile)
  * @arg fret The fret that is being played.
  * @return Void
  */
+char buf[32];
 void AUDIO_setNewTone(int fret)
 {
     /* Disables the timer if it is on. */
@@ -150,10 +154,10 @@ void AUDIO_setNewTone(int fret)
     }
     
     /* Clears out all the buffers. */
-    memset(&receiveBuffer[0], 0, sizeof(receiveBuffer));
-    memset(&LAUDIOSTACK[0], 0, sizeof(LAUDIOSTACK));
-    memset(&RAUDIOSTACK[0], 0, sizeof(RAUDIOSTACK));
-
+    memset(&receiveBuffer[0], AC_ZERO, sizeof(receiveBuffer));
+    memset(&LAUDIOSTACK[0], AC_ZERO, sizeof(LAUDIOSTACK));
+    memset(&RAUDIOSTACK[0], AC_ZERO, sizeof(RAUDIOSTACK));
+    
     /* Sets the audio in pointer to zero. */
     audioInPtr = 0;
     /* Sets the audio out pointer to zero. */
@@ -166,12 +170,10 @@ void AUDIO_setNewTone(int fret)
     AUDIO_resetFilePtr();
     /* Sets the file index to the specified fret. */
     fileIndex = fret;
-    /* Sets the Timer based on the new sample rate*/
-//    TIMER3_SetSampleRate(files[fileIndex].audioInfo.sampleRate);
     /* Sets the DAC's output to zero. */
-    DAC_ZeroOutput();
-    /* Reads the new tone. */
-//    AUDIO_ReadFile(REC_BUF_SIZE);
+    DAC_Zero();
+    /* Sets the hasReadFile boolean. */
+    hasReadFile = FALSE;
     
     MON_SendString("Setting new a tone.");
 }
@@ -352,8 +354,10 @@ BOOL AUDIO_GetAudioData(FILES* file, UINT16 bytes)
             }
         }
         bytesRead+=bytes;
+        hasReadFile = TRUE;
         return TRUE;
     }
+    hasReadFile = FALSE;
     return FALSE;
 }
 
@@ -395,12 +399,11 @@ void AUDIO_WriteDataToDAC(void)
 {
     if(AUDIO_isDoneReading() && AUDIO_isDoneWriting())
     {
-        TIMER3_ON(FALSE);
-        AUDIO_setNewTone(FILE_1);
+        AUDIO_setNewTone(FILE_0);
     }
     else
     {
-        if(bytesRead > bytesWritten)
+        if((bytesRead > bytesWritten) && hasReadFile == TRUE)
         {
             /* Writes 1 WORD of data to the DAC Channel A, left channel. */
             DAC_WriteToDAC(WRITE_UPDATE_CHN_A, LAUDIOSTACK[audioOutPtr]);
