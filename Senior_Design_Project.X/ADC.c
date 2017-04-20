@@ -101,15 +101,6 @@ void ADC_Init(void)
 }
 
 /**
- * @brief Process ADC related operations. 
- * @return Void
- */
-void ADC_Process(void)
-{
-    
-}
-
-/**
  * @brief Reinitializes ADC buffers to the midrail.
  * @return Void
  */
