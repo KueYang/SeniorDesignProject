@@ -63,7 +63,7 @@
  */
 #pragma config IESO = OFF           // Internal/External Switch Over, disabled
 #pragma config JTAGEN = OFF         // JTAG Disabled
-#pragma config ICESEL = ICS_PGx3    // ICE3/ICD3 Comm Channel Select
+#pragma config ICESEL = ICS_PGx1    // ICE3/ICD3 Comm Channel Select
 #pragma config PWP = OFF            // Program Flash Write Protect
 #pragma config CP = OFF             // Code Protection Disabled
 /**@}*/
@@ -83,37 +83,36 @@
  */
 int main(void) 
 {    
-    WDTCONbits.ON = 0;              // Disables WatchDog Timer
+//    DEVCFG1bits.FWDTEN = 0;         // Enable software control of WDT
+//    WDTCONbits.ON = 0;              // Disables WatchDog Timer
+//    CLEAR_WATCHDOG_TIMER;           // Clears the watchdog timer
+//    DEVCFG1bits.WDTPS = 0b00110;    // PostScalar 1:64, 64ms
     
     /* Enable multi-vector interrupts */
-//    INTConfigureSystem(INT_SYSTEM_CONFIG_MULT_VECTOR);
-//    INTEnableInterrupts();
+    INTConfigureSystem(INT_SYSTEM_CONFIG_MULT_VECTOR);
+    INTEnableInterrupts();
 
     /* Peripheral Initializations */
     IO_Init();                      // Initializes all analog/digital IO.
     
     /* Checks for a watchdog reset. */
-    ((RCONbits.WDTO == 1) ?  (ERROR_LED = 1) : (ERROR_LED = 0));
+//    ((RCONbits.WDTO == 1) ?  (ERROR_LED = 0) : (ERROR_LED = 1));
     
-//    TIMER_Init();                   // Initializes all timer modules.
-//    ADC_Init();                     // Initializes all ADC modules.
-//    SPI_Init();                     // Initializes all SPI modules.
-//    UART_Init();                    // Initializes all UART modules
-//    AUDIO_Init();                   // Initializes the Audio module.
-//    DAC_Init();                     // Initializes the DACs.
+    TIMER_Init();                   // Initializes all timer modules.
+    ADC_Init();                     // Initializes all ADC modules.
+    SPI_Init();                     // Initializes all SPI modules.
+    UART_Init();                    // Initializes all UART modules
+    AUDIO_Init();                   // Initializes the Audio module.
+    DAC_Init();                     // Initializes the DACs.
 
-    INITIALIZE_LED = 0;             // Turn off the initialize LED
+    INITIALIZE_LED = 1;             // Turn off the initialize LED
     
-//    DEVCFG1bits.WDTPS = 0b00110;    // PostScalar 1:64, 64ms
-//    DEVCFG1bits.FWDTEN = 0;         // Enable software control of WDT
-//    CLEAR_WATCHDOG_TIMER;           // Clears the watchdog timer
 //    WDTCONbits.ON = 1;              // Enable WatchDog Timer
     
     while(1)
     {
         CLEAR_WATCHDOG_TIMER;           // Clears the watchdog timer
-//        AUDIO_Process();
-        PORTEbits.RE3 = 0;              // Turn off ERROR LED
+        AUDIO_Process();
     }
 
     return (0);
