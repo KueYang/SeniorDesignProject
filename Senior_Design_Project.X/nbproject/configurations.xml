@@ -27,7 +27,6 @@
       <itemPath>FIFO.h</itemPath>
       <itemPath>DAC.h</itemPath>
       <itemPath>HardwareProfile.h</itemPath>
-      <itemPath>TESTS.h</itemPath>
       <itemPath>FILES.h</itemPath>
       <itemPath>AUDIO.h</itemPath>
       <itemPath>WAVDEF.h</itemPath>
@@ -52,7 +51,6 @@
       <itemPath>FIFO.c</itemPath>
       <itemPath>DAC.c</itemPath>
       <itemPath>FILES.c</itemPath>
-      <itemPath>TESTS.c</itemPath>
       <itemPath>TIMER.c</itemPath>
       <itemPath>AUDIO.c</itemPath>
       <itemPath>Interrupts.c</itemPath>

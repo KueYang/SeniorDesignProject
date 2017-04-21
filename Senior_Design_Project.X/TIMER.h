@@ -13,10 +13,6 @@ extern "C" {
 
 #include "STDDEF.h"
     
-/** @def INT32_MAX_NUM 
- * Defines the max value for a 32-bit variable. */
-#define INT32_MAX_NUM           1<<31
-    
 void TIMER_Init(void);
 void TIMER_Process(void);
 

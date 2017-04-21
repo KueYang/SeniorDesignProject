@@ -8,6 +8,7 @@
 
 #include <p32xxxx.h>
 #include "plib/plib.h"
+#include "HardwareProfile.h"
 #include "STDDEF.h"
 #include "IO.h"
 #include "TIMER.h"
@@ -21,7 +22,7 @@
 #define ADC_ARRAY_SIZE          5
 /** @def ADC_MIDRAIL 
  * Defines the ADC mid-rail. */
-#define ADC_MIDRAIL             480
+#define ADC_MIDRAIL             512
 /** @def ADC_NOISEMAG 
  * Defines the minimum noise magnitude ADC thread hold. */
 #define ADC_NOISEMAG            150         
@@ -31,6 +32,17 @@
 /** @def ADC_MINSAMPLE 
  * Defines the minimum sample count for strum detection. */
 #define ADC_MINSAMPLE           256
+
+#define ADC_SCALE_STEP          ADC_MIDRAIL/4
+#define ADC_SCALE_1P            ADC_MIDRAIL+ADC_SCALE_STEP
+#define ADC_SCALE_2P            ADC_MIDRAIL+2*ADC_SCALE_STEP
+#define ADC_SCALE_3P            ADC_MIDRAIL+3*ADC_SCALE_STEP
+#define ADC_SCALE_4P            ADC_MIDRAIL*4*ADC_SCALE_STEP
+#define ADC_SCALE_1N            ADC_MIDRAIL-ADC_SCALE_STEP
+#define ADC_SCALE_2N            ADC_MIDRAIL-2*ADC_SCALE_STEP
+#define ADC_SCALE_3N            ADC_MIDRAIL-3*ADC_SCALE_STEP
+#define ADC_SCALE_4N            ADC_MIDRAIL-4*ADC_SCALE_STEP
+
 
 /** @var isPositive 
  * Indicates if the sample is the positive or negative part of signal. */
@@ -49,6 +61,7 @@ UINT32 sampleCount;
 BOOL startStrumDetection;
 
 void ADC_ZeroBuffer(void);
+int ADC_GetScaleFactor(UINT16 localMax);
 
 /**
  * @brief Initializes the ADC module.
@@ -81,7 +94,7 @@ void ADC_Init(void)
     AD1CHSbits.CH0SA = 0x001C;      // Channel 0 positive input for Sample A is AN28
     
     /* AD1CSSL configurations */
-    AD1CSSLbits.CSSL = 0x0002;      // Selects AN2 for input scan, all others are skipped
+    AD1CSSLbits.CSSL = 0x001C;      // Selects AN28 for input scan, all others are skipped
     
     AD1CON1bits.ON = 1;             // Enables ADC
     AD1CON1bits.ASAM = 1;           // Sampling begins immediately
@@ -97,15 +110,6 @@ void ADC_Init(void)
     isPositive = FALSE;
     sampleCount = 0;
     startStrumDetection = TRUE;
-}
-
-/**
- * @brief Process ADC related operations. 
- * @return Void
- */
-void ADC_Process(void)
-{
-    
 }
 
 /**
@@ -129,6 +133,8 @@ void ADC_ZeroBuffer(void)
  */
 void __ISR(_ADC_VECTOR, IPL2AUTO) ADCHandler(void)
 {
+    CLEAR_WATCHDOG_TIMER;
+            
     // Reads the ADC buffer
     UINT16 adcSample = (UINT16)ADC1BUF0;
     sampleCount++;
@@ -168,7 +174,7 @@ void __ISR(_ADC_VECTOR, IPL2AUTO) ADCHandler(void)
             // Compares local maxs to determine if user has strum.
             if((localMax[0] > (tempMax+ADC_MINDELTA)) && startStrumDetection)
             {
-                AUDIO_setNewTone(IO_scanFrets());                // Sets the file to be read.
+                AUDIO_setNewTone(IO_scanFrets(), ADC_GetScaleFactor(localMax[0]));                // Sets the file to be read.
                 if(!TIMER3_IsON())
                 {
                     TIMER3_ON(TRUE);                            // Kick starts reading the audio file process.
@@ -195,4 +201,47 @@ void __ISR(_ADC_VECTOR, IPL2AUTO) ADCHandler(void)
     
     // Clear the interrupt flag
     IFS0bits.AD1IF = 0;
+    
+    CLEAR_WATCHDOG_TIMER;
+}
+
+int ADC_GetScaleFactor(UINT16 localMax)
+{
+    UINT16 scaleFactor = 1024;
+    
+    if((localMax > ADC_SCALE_1P) && (localMax < ADC_SCALE_2P))
+    {
+        scaleFactor = 512;
+    }
+    else if((localMax > ADC_SCALE_2P) && (localMax < ADC_SCALE_3P))
+    {
+        scaleFactor = 256;
+    }
+    else if((localMax > ADC_SCALE_3P)&& (localMax < ADC_SCALE_4P))
+    {
+        scaleFactor = 128;
+    }
+    else if((localMax > ADC_SCALE_4P))
+    {
+        scaleFactor = 0;
+    }
+    else if((localMax < ADC_SCALE_1N) && (localMax > ADC_SCALE_2N))
+    {
+        scaleFactor = 512;
+    }
+    else if((localMax < ADC_SCALE_2N) && (localMax > ADC_SCALE_3N))
+    {
+        scaleFactor = 256;
+    }
+    else if((localMax < ADC_SCALE_3N) && (localMax > ADC_SCALE_4N))
+    {
+        scaleFactor = 128;
+    }
+    else if(localMax < ADC_SCALE_4N)
+    {
+        scaleFactor = 0;
+    }
+
+    // Normalize the scale value between 0 and 1.
+    return (INT32_MAX_NUM/2)*(1 - scaleFactor/1024);
 }

@@ -17,5 +17,8 @@
 /**@def GetInstructionClock() 
  * Calculates and returns the Instruction Clock Speed. */
 #define	GetInstructionClock()	(SYS_FREQ)
+/**@def CLEAR_WATCHDOG_TIMER 
+ * Clears the watchdog timer. */
+#define CLEAR_WATCHDOG_TIMER    WDTCONbits.WDTCLR = 0x01;
 
 #endif

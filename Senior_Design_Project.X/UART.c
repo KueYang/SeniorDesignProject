@@ -17,7 +17,6 @@
 #include "FIFO.h"
 #include "DAC.h"
 #include "AUDIO.h"
-#include "TESTS.h"
 #include "UART.h"
 
 /** @def DESIRED_BAUDRATE 
@@ -48,7 +47,6 @@ COMMANDS MON_getCommand(const char* cmdName);
 
 /** Commands Handlers. */
 void MON_GetHelp(void);
-void MON_Test(void);
 
 /* File related commands*/
 void MON_GetFileList(void);
@@ -88,7 +86,6 @@ UINT16 numOfCmds;
  * The list of commands. */
 COMMANDS MON_COMMANDS[] = {
     {"HELP", " Display the list of commands avaliable. ", MON_GetHelp},
-    {"TEST", " Unit Test, 0-read/write, 1-read, 2-write. FORMAT: TEST value. ", MON_Test},
     {"LIST", " Lists all WAV files. ", MON_GetFileList},
     {"SET", " Sets the file to read. FORMAT: SET fileName.", MON_Set_File},
     {"RESET", " Resets the file pointer to beginning of file.", MON_Reset_File},
@@ -153,7 +150,7 @@ void UART_Init(void)
     IPC7bits.U1IP = 2;          // Sets UART Interrupt Priority 2
     IPC7bits.U1IS = 1;          // Sets UART Interrupt Sub-Priority 2
     
-    MON_GetHelp();
+//    MON_GetHelp();
     MON_SendString(">");  // Sends a prompt.
 }
 
@@ -418,11 +415,6 @@ UINT16 MON_getStringLength(const char* string)
     return length;
 }
 
-void MON_getString(char* str, WORD args)
-{
-//    snprintf(&buf[0], 256, str, args);
-}
-
 /**
  * @brief Gets the handler for the specified command.
  * @arg cmdName The name of the command.
@@ -451,6 +443,8 @@ COMMANDS MON_getCommand(const char* cmdName)
  */
 void __ISR(_UART1_VECTOR, IPL2AUTO) IntUart1Handler(void)
 {
+    CLEAR_WATCHDOG_TIMER;
+    
 	if(IFS1bits.U1RXIF)
 	{   
         /* Checks if bus collision has occurred and clears collision flag.*/
@@ -512,6 +506,8 @@ void __ISR(_UART1_VECTOR, IPL2AUTO) IntUart1Handler(void)
         // Clear the TX interrupt Flag.
         IFS1bits.U1TXIF = 0;
 	}
+    
+    CLEAR_WATCHDOG_TIMER;
 }
 
 /**
@@ -568,15 +564,6 @@ void MON_GetHelp(void)
         strncat(&buf[strLength], MON_COMMANDS[i].description, (128-strLength));
         MON_SendString(&buf[0]);
     }
-}
-
-/**
- * @brief Command used to test parsing commands. 
- * @return Void.
- */
-void MON_Test(void)
-{
-    Test_SelectTest((UINT16)atoi(cmdStr.arg1));
 }
 
 /**
@@ -672,7 +659,7 @@ void MON_TestDAC(void)
     {
         value = 0;
     }
-    DAC_WriteToDAC(WRITE_UPDATE_CHN_A, value);
+    DAC_WriteToDAC(WRITE_UPDATE_CHN_A_B, value);
 }
 
 /**
@@ -853,7 +840,7 @@ void MON_Timer_ON_OFF(void)
     else
     {
         TIMER3_ON(FALSE);
-        AUDIO_setNewTone(1);
+        AUDIO_setNewTone(0, 1);
     }
 }
 

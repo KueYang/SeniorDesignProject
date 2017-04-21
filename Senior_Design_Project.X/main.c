@@ -16,7 +16,6 @@
 #include "UART.h"
 #include "DAC.h"
 #include "AUDIO.h"
-#include "TESTS.h"
 
 /**
  * @defgroup usbConfig USB configurations
@@ -74,8 +73,8 @@
  * @{
  * @details The watch dog is enabled in software for this application.
  */
-#pragma config FWDTEN = OFF          // Watchdog Timer Enabled
-#pragma config WDTPS = PS16         // Watchdog Timer Post-scaler, 32 ms timeout
+#pragma config FWDTEN = OFF         // Watchdog Timer Enabled
+#pragma config WDTPS = PS64         // Watchdog Timer Post-scaler, 64 ms timeout
 /**@}*/
 
 /**
@@ -84,33 +83,36 @@
  */
 int main(void) 
 {    
-    WDTCONbits.ON = 0;              // Disables WatchDog Timer
+//    DEVCFG1bits.FWDTEN = 0;         // Enable software control of WDT
+//    WDTCONbits.ON = 0;              // Disables WatchDog Timer
+//    CLEAR_WATCHDOG_TIMER;           // Clears the watchdog timer
+//    DEVCFG1bits.WDTPS = 0b00110;    // PostScalar 1:64, 64ms
     
     /* Enable multi-vector interrupts */
     INTConfigureSystem(INT_SYSTEM_CONFIG_MULT_VECTOR);
     INTEnableInterrupts();
 
     /* Peripheral Initializations */
-    IO_Init();                      // Initializes all digital IO.
+    IO_Init();                      // Initializes all analog/digital IO.
+    
+    /* Checks for a watchdog reset. */
+//    ((RCONbits.WDTO == 1) ?  (ERROR_LED = 0) : (ERROR_LED = 1));
+    
     TIMER_Init();                   // Initializes all timer modules.
-//    ADC_Init();                     // Initializes all ADC modules.
+    ADC_Init();                     // Initializes all ADC modules.
     SPI_Init();                     // Initializes all SPI modules.
     UART_Init();                    // Initializes all UART modules
     AUDIO_Init();                   // Initializes the Audio module.
     DAC_Init();                     // Initializes the DACs.
 
-    PORTEbits.RE2 = 1;              // ON LED
-    PORTEbits.RE3 = 1;              // ERROR LED
+    INITIALIZE_LED = 1;             // Turn off the initialize LED
     
-    DEVCFG1bits.WDTPS = 0b00100;    // PostScalar 1:16, 16ms
-    WDTCONbits.WDTCLR = 0x01;       // Clears the watchdog timer flag.
-    WDTCONbits.ON = 1;              // Enable WatchDog Timer
+//    WDTCONbits.ON = 1;              // Enable WatchDog Timer
     
     while(1)
     {
-        WDTCONbits.WDTCLR = 0x01;       // Clears the watchdog timer flag.
+        CLEAR_WATCHDOG_TIMER;           // Clears the watchdog timer
         AUDIO_Process();
-        PORTEbits.RE3 = 0;              // Turn off ERROR LED
     }
 
     return (0);

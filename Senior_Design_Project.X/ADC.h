@@ -12,7 +12,6 @@ extern "C" {
 #endif
 
 void ADC_Init(void);
-void ADC_Process(void);
 
 #ifdef	__cplusplus
 }

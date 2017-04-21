@@ -35,6 +35,11 @@ typedef unsigned short      WORD;   // 16-bits
 /** @brief Typedef definition for DWORD datatype. */
 typedef unsigned long       DWORD;  // 32-bits
 
+/** @def INT32_MAX_NUM 
+ * Defines the max value for a 32-bit variable. */
+#define INT32_MAX_NUM           1<<31
+    
+
 #ifdef	__cplusplus
 }
 #endif

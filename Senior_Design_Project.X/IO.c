@@ -38,20 +38,21 @@ void IO_Init(void)
     // Digital IO
     TRISEbits.TRISE2 = 0;   // LED, ON
     TRISEbits.TRISE3 = 0;   // LED, ERROR
-    TRISEbits.TRISE4 = 0;   // LED, NO SD CARD DETECT
+    TRISEbits.TRISE4 = 0;   // LED, INITIALIZATION
     
     // Fret
-    TRISDbits.TRISD1 = 1;   // Fret 1
-    TRISDbits.TRISD2 = 1;   // Fret 2
-    TRISDbits.TRISD3 = 1;   // Fret 3
-    TRISDbits.TRISD12 = 1;  // Fret 4
-    TRISDbits.TRISD13 = 1;  // Fret 5
+    TRISGbits.TRISG1 = 1;   // Fret 5
+    TRISGbits.TRISG0 = 1;   // Fret 4
+    TRISAbits.TRISA6 = 1;   // Fret 3
+    TRISAbits.TRISA7 = 1;   // Fret 2
+    TRISEbits.TRISE0 = 1;   // Fret 1
     
     // Frets Groups
-    TRISDbits.TRISD4 = 0;   // Group 1
-    TRISDbits.TRISD5 = 0;   // Group 2
-    TRISDbits.TRISD6 = 0;   // Group 3
-    TRISDbits.TRISD7 = 0;   // Group 4
+    TRISEbits.TRISE1 = 0;   // Group 4
+    TRISGbits.TRISG14 = 0;  // Group 3
+//    TRISGbits.TRISG12 = 0;  // Group 2
+    TRISDbits.TRISD4 = 0;   // Group 2
+    TRISGbits.TRISG13 = 0;  // Group 1
     
     // UART IO
     TRISCbits.TRISC1 = 1;   // U1RX
@@ -62,11 +63,6 @@ void IO_Init(void)
     TRISGbits.TRISG6 = 0;   // DAC_CLK2
     TRISGbits.TRISG7 = 1;   // DAC_SDI2
     TRISGbits.TRISG8 = 0;   // DAC_SDO2
-    
-//    TRISCbits.TRISC12 = 0;   // SYNC
-//    TRISDbits.TRISD10 = 0;   // DAC_CLK1
-//    TRISDbits.TRISD11 = 1;   // DAC_SDI1
-//    TRISCbits.TRISC13 = 0;   // DAC_SDO1
     
     // SPI IO, SD Card
     TRISBbits.TRISB11 = 0;  // CS
@@ -80,18 +76,13 @@ void IO_Init(void)
     ANSELGbits.ANSG15 = 1;   // set RG15 (AN28) to analog
     
     // Clears All Digital IO
-    PORTA = 0x0000; PORTB = 0x0000; PORTC = 0x0000;
-    PORTD = 0x0000; PORTE = 0x0000; PORTF = 0x0000; 
-    PORTG = 0x0000;
-}
-
-/**
- * @brief Checks and updates IO used for detecting the fret position.
- * @return Void
- */
-void IO_Process(void)
-{
+    PORTACLR = 0xFFFF; PORTBCLR = 0xFFFF; PORTCCLR = 0xFFFF;
+    PORTDCLR = 0xFFFF; PORTECLR = 0xFFFF; PORTFCLR = 0xFFFF; 
+    PORTGCLR = 0xFFFF;
     
+    ON_LED = 0;                 // ON LED
+    ERROR_LED = 1;              // ERROR LED
+    INITIALIZE_LED = 0;         // INITIALIZATION LED
 }
 
 /**
@@ -113,24 +104,27 @@ int IO_scanFrets(void)
         IO_setGroupOutput(groupIndex);
         
         /* Scans through the five fret inputs. */
-        if(FRET1 == 0) {fretFound = 1;}
-        if(FRET2 == 0) {fretFound = 2;}
-        if(FRET3 == 0) {fretFound = 3;}
-        if(FRET4 == 0) {fretFound = 4;}
-        if(FRET5 == 0) {fretFound = 5;}
+        if(FRET1 == 1) {fretFound = 1;}
+        else if(FRET2 == 1) {fretFound = 2;}
+        else if(FRET3 == 1) {fretFound = 3;}
+        else if(FRET4 == 1) {fretFound = 4;}
+        else if(FRET5 == 1) {fretFound = 5;}
+        
+        /* Turn off all output pins. */
+        IO_setGroupOutput(0);
         
         /* Checks if any frets were pressed. */
         if(fretFound > 0)
         {
+            /* Calculates the fret that is selected*/
             currentFret = (groupIndex-1)*FRETS_PER_GROUP + fretFound;
-            
-            char buf[32];
-            snprintf(&buf[0] ,32 ,"Fret Selected: %d", currentFret);
-            MON_SendString(&buf[0]);
-            
             break;
         }
     }
+    
+    char buf[32];
+    snprintf(&buf[0] ,32 ,"Fret Selected: %d", currentFret);
+    MON_SendString(&buf[0]);
     
     return currentFret;
 }
@@ -166,6 +160,12 @@ void IO_setGroupOutput(int group)
             GROUP1_OUT = 0;
             GROUP2_OUT = 0;
             GROUP3_OUT = 0;
+            GROUP4_OUT = 1;
+            break;
+        case 5:
+            GROUP1_OUT = 1;
+            GROUP2_OUT = 1;
+            GROUP3_OUT = 1;
             GROUP4_OUT = 1;
             break;
         default:

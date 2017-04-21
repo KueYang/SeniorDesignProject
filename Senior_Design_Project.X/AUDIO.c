@@ -49,6 +49,11 @@ UINT32 bytesRead;
 /** @var bytesWritten 
  * Stores the number of bytes that have been written. */
 UINT32 bytesWritten;
+/** @var hasReadFile 
+ * Stores boolean indicating the specified audio file has been read. */
+BOOL hasReadFile;
+
+UINT16 scaleFactor;
 
 /**
  * @brief Initializes the Audio module.
@@ -80,7 +85,7 @@ void AUDIO_Init(void)
     // Initializes the index to the first file.
     fileIndex = FILE_1;
     // Sets the initial tone.
-    AUDIO_setNewTone(fileIndex);
+    AUDIO_setNewTone(fileIndex, 1);
     // Sets the TIMER clock period to write out audio data.
     TIMER3_SetSampleRate(files[fileIndex].audioInfo.sampleRate);
     // Lists the files in memory
@@ -127,7 +132,7 @@ BOOL AUDIO_setNewFile(UINT16 selectedFile)
 {
     if(selectedFile <= 20 && selectedFile >= 0)
     {
-        AUDIO_setNewTone(selectedFile);
+        AUDIO_setNewTone(selectedFile, 1);
         return TRUE;
     }
     return FALSE;
@@ -140,7 +145,8 @@ BOOL AUDIO_setNewFile(UINT16 selectedFile)
  * @arg fret The fret that is being played.
  * @return Void
  */
-void AUDIO_setNewTone(int fret)
+char buf[64];
+void AUDIO_setNewTone(int fret, UINT16 factor)
 {
     /* Disables the timer if it is on. */
     if(TIMER3_IsON())
@@ -148,6 +154,12 @@ void AUDIO_setNewTone(int fret)
         TIMER3_ON(FALSE);
         MON_SendString("Turning off timer");
     }
+    
+    /* Clears out all the buffers. */
+    memset(&receiveBuffer[0], AC_ZERO, sizeof(receiveBuffer));
+    memset(&LAUDIOSTACK[0], AC_ZERO, sizeof(LAUDIOSTACK));
+    memset(&RAUDIOSTACK[0], AC_ZERO, sizeof(RAUDIOSTACK));
+    
     /* Sets the audio in pointer to zero. */
     audioInPtr = 0;
     /* Sets the audio out pointer to zero. */
@@ -160,12 +172,15 @@ void AUDIO_setNewTone(int fret)
     AUDIO_resetFilePtr();
     /* Sets the file index to the specified fret. */
     fileIndex = fret;
-    /* Sets the Timer based on the new sample rate*/
-//    TIMER3_SetSampleRate(files[fileIndex].audioInfo.sampleRate);
     /* Sets the DAC's output to zero. */
-    DAC_ZeroOutput();
+    DAC_Zero();
+    /* Sets the scaling factor. */
+    scaleFactor = factor;
+    /* Sets the hasReadFile boolean. */
+    hasReadFile = FALSE;
     
-    MON_SendString("Setting new a tone.");
+    snprintf(&buf[0] ,64 ,"Fret: %d \n\rScale Factor: %f \n\rSetting new a tone.", fret, scaleFactor/1024);
+    MON_SendString(&buf[0]);
 }
 
 /**
@@ -344,8 +359,10 @@ BOOL AUDIO_GetAudioData(FILES* file, UINT16 bytes)
             }
         }
         bytesRead+=bytes;
+        hasReadFile = TRUE;
         return TRUE;
     }
+    hasReadFile = FALSE;
     return FALSE;
 }
 
@@ -387,12 +404,11 @@ void AUDIO_WriteDataToDAC(void)
 {
     if(AUDIO_isDoneReading() && AUDIO_isDoneWriting())
     {
-        TIMER3_ON(FALSE);
-        AUDIO_setNewTone(FILE_1);
+        AUDIO_setNewTone(FILE_0, 1);
     }
     else
     {
-        if(bytesRead > bytesWritten)
+        if((bytesRead > bytesWritten) && hasReadFile == TRUE)
         {
             /* Writes 1 WORD of data to the DAC Channel A, left channel. */
             DAC_WriteToDAC(WRITE_UPDATE_CHN_A, LAUDIOSTACK[audioOutPtr]);
