@@ -52,7 +52,8 @@ UINT32 bytesWritten;
 /** @var hasReadFile 
  * Stores boolean indicating the specified audio file has been read. */
 BOOL hasReadFile;
-
+/** @var scaleFactor 
+ * Stores the scaling factor. */
 UINT16 scaleFactor;
 
 /**
