@@ -840,7 +840,7 @@ void MON_Timer_ON_OFF(void)
     else
     {
         TIMER3_ON(FALSE);
-        AUDIO_setNewTone(1);
+        AUDIO_setNewTone(0, 1);
     }
 }
 

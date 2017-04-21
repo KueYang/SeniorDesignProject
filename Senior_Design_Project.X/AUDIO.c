@@ -53,6 +53,8 @@ UINT32 bytesWritten;
  * Stores boolean indicating the specified audio file has been read. */
 BOOL hasReadFile;
 
+UINT16 scaleFactor;
+
 /**
  * @brief Initializes the Audio module.
  * @details Initializes the SD card and Microchip MDD File library. After 
@@ -83,7 +85,7 @@ void AUDIO_Init(void)
     // Initializes the index to the first file.
     fileIndex = FILE_1;
     // Sets the initial tone.
-    AUDIO_setNewTone(fileIndex);
+    AUDIO_setNewTone(fileIndex, 1);
     // Sets the TIMER clock period to write out audio data.
     TIMER3_SetSampleRate(files[fileIndex].audioInfo.sampleRate);
     // Lists the files in memory
@@ -130,7 +132,7 @@ BOOL AUDIO_setNewFile(UINT16 selectedFile)
 {
     if(selectedFile <= 20 && selectedFile >= 0)
     {
-        AUDIO_setNewTone(selectedFile);
+        AUDIO_setNewTone(selectedFile, 1);
         return TRUE;
     }
     return FALSE;
@@ -143,8 +145,8 @@ BOOL AUDIO_setNewFile(UINT16 selectedFile)
  * @arg fret The fret that is being played.
  * @return Void
  */
-char buf[32];
-void AUDIO_setNewTone(int fret)
+char buf[64];
+void AUDIO_setNewTone(int fret, UINT16 factor)
 {
     /* Disables the timer if it is on. */
     if(TIMER3_IsON())
@@ -172,10 +174,13 @@ void AUDIO_setNewTone(int fret)
     fileIndex = fret;
     /* Sets the DAC's output to zero. */
     DAC_Zero();
+    /* Sets the scaling factor. */
+    scaleFactor = factor;
     /* Sets the hasReadFile boolean. */
     hasReadFile = FALSE;
     
-    MON_SendString("Setting new a tone.");
+    snprintf(&buf[0] ,64 ,"Fret: %d \n\rScale Factor: %f \n\rSetting new a tone.", fret, scaleFactor/1024);
+    MON_SendString(&buf[0]);
 }
 
 /**
@@ -399,7 +404,7 @@ void AUDIO_WriteDataToDAC(void)
 {
     if(AUDIO_isDoneReading() && AUDIO_isDoneWriting())
     {
-        AUDIO_setNewTone(FILE_0);
+        AUDIO_setNewTone(FILE_0, 1);
     }
     else
     {

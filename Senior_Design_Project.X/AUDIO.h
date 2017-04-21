@@ -29,7 +29,7 @@ void AUDIO_WriteDataToDAC(void);
 
 /* UART related functions */
 void AUDIO_ListFiles(void);
-void AUDIO_setNewTone(int fret);
+void AUDIO_setNewTone(int fret, UINT16 factor);
 BOOL AUDIO_setNewFile(UINT16 selectedFile);
 void AUDIO_resetFilePtr(void);
 
