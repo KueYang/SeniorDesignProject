@@ -179,7 +179,7 @@ void AUDIO_setNewTone(int fret, UINT16 factor)
     /* Sets the hasReadFile boolean. */
     hasReadFile = FALSE;
     
-    snprintf(&buf[0] ,64 ,"Fret: %d \n\rScale Factor: %f \n\rSetting new a tone.", fret, scaleFactor/1024);
+    snprintf(&buf[0] ,64 ,"Fret: %d \n\rScale Factor: %d \n\rSetting new a tone.", fret, scaleFactor);
     MON_SendString(&buf[0]);
 }
 
@@ -338,7 +338,7 @@ BOOL AUDIO_GetAudioData(FILES* file, UINT16 bytes)
             else {
                 audioData = AC_ZERO + audioData;
             }
-            LAUDIOSTACK[audioInPtr] = audioData;
+            LAUDIOSTACK[audioInPtr] = (audioData/512)*(scaleFactor-512);
             
             if(file->audioInfo.numOfChannels == 2)
             {
@@ -351,7 +351,7 @@ BOOL AUDIO_GetAudioData(FILES* file, UINT16 bytes)
                     audioData = AC_ZERO + audioData;
                 }             
             }
-            RAUDIOSTACK[audioInPtr++] = audioData;
+            RAUDIOSTACK[audioInPtr++] = (audioData/512)*(scaleFactor-512);
             
             if(audioInPtr >= AUDIO_BUF_SIZE)
             {

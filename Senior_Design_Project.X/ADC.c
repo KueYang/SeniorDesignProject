@@ -33,17 +33,6 @@
  * Defines the minimum sample count for strum detection. */
 #define ADC_MINSAMPLE           256
 
-#define ADC_SCALE_STEP          ADC_MIDRAIL/4
-#define ADC_SCALE_1P            ADC_MIDRAIL+ADC_SCALE_STEP
-#define ADC_SCALE_2P            ADC_MIDRAIL+2*ADC_SCALE_STEP
-#define ADC_SCALE_3P            ADC_MIDRAIL+3*ADC_SCALE_STEP
-#define ADC_SCALE_4P            ADC_MIDRAIL*4*ADC_SCALE_STEP
-#define ADC_SCALE_1N            ADC_MIDRAIL-ADC_SCALE_STEP
-#define ADC_SCALE_2N            ADC_MIDRAIL-2*ADC_SCALE_STEP
-#define ADC_SCALE_3N            ADC_MIDRAIL-3*ADC_SCALE_STEP
-#define ADC_SCALE_4N            ADC_MIDRAIL-4*ADC_SCALE_STEP
-
-
 /** @var isPositive 
  * Indicates if the sample is the positive or negative part of signal. */
 BOOL isPositive;
@@ -61,7 +50,6 @@ UINT32 sampleCount;
 BOOL startStrumDetection;
 
 void ADC_ZeroBuffer(void);
-int ADC_GetScaleFactor(UINT16 localMax);
 
 /**
  * @brief Initializes the ADC module.
@@ -174,7 +162,7 @@ void __ISR(_ADC_VECTOR, IPL2AUTO) ADCHandler(void)
             // Compares local maxs to determine if user has strum.
             if((localMax[0] > (tempMax+ADC_MINDELTA)) && startStrumDetection)
             {
-                AUDIO_setNewTone(IO_scanFrets(), ADC_GetScaleFactor(localMax[0]));                // Sets the file to be read.
+                AUDIO_setNewTone(IO_scanFrets(), localMax[0]);                // Sets the file to be read.
                 if(!TIMER3_IsON())
                 {
                     TIMER3_ON(TRUE);                            // Kick starts reading the audio file process.
@@ -203,45 +191,4 @@ void __ISR(_ADC_VECTOR, IPL2AUTO) ADCHandler(void)
     IFS0bits.AD1IF = 0;
     
     CLEAR_WATCHDOG_TIMER;
-}
-
-int ADC_GetScaleFactor(UINT16 localMax)
-{
-    UINT16 scaleFactor = 1024;
-    
-    if((localMax > ADC_SCALE_1P) && (localMax < ADC_SCALE_2P))
-    {
-        scaleFactor = 512;
-    }
-    else if((localMax > ADC_SCALE_2P) && (localMax < ADC_SCALE_3P))
-    {
-        scaleFactor = 256;
-    }
-    else if((localMax > ADC_SCALE_3P)&& (localMax < ADC_SCALE_4P))
-    {
-        scaleFactor = 128;
-    }
-    else if((localMax > ADC_SCALE_4P))
-    {
-        scaleFactor = 0;
-    }
-    else if((localMax < ADC_SCALE_1N) && (localMax > ADC_SCALE_2N))
-    {
-        scaleFactor = 512;
-    }
-    else if((localMax < ADC_SCALE_2N) && (localMax > ADC_SCALE_3N))
-    {
-        scaleFactor = 256;
-    }
-    else if((localMax < ADC_SCALE_3N) && (localMax > ADC_SCALE_4N))
-    {
-        scaleFactor = 128;
-    }
-    else if(localMax < ADC_SCALE_4N)
-    {
-        scaleFactor = 0;
-    }
-
-    // Normalize the scale value between 0 and 1.
-    return (INT32_MAX_NUM/2)*(1 - scaleFactor/1024);
 }
