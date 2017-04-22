@@ -73,8 +73,8 @@
  * @{
  * @details The watch dog is enabled in software for this application.
  */
-#pragma config FWDTEN = OFF         // Watchdog Timer Enabled
-#pragma config WDTPS = PS64         // Watchdog Timer Post-scaler, 64 ms timeout
+#pragma config FWDTEN = ON         // Watchdog Timer Enabled
+#pragma config WDTPS = PS2048         // Watchdog Timer Post-scaler, 2s timeout
 /**@}*/
 
 /**
@@ -96,16 +96,20 @@ int main(void)
     IO_Init();                      // Initializes all analog/digital IO.
     
     /* Checks for a watchdog reset. */
-//    ((RCONbits.WDTO == 1) ?  (ERROR_LED = 0) : (ERROR_LED = 1));
-    
+    ((RCONbits.WDTO == 1) ?  (ERROR_LED = 0) : (ERROR_LED = 1));
+        
     TIMER_Init();                   // Initializes all timer modules.
     ADC_Init();                     // Initializes all ADC modules.
     SPI_Init();                     // Initializes all SPI modules.
     UART_Init();                    // Initializes all UART modules
     AUDIO_Init();                   // Initializes the Audio module.
     DAC_Init();                     // Initializes the DACs.
-
-    INITIALIZE_LED = 1;             // Turn off the initialize LED
+    
+    TIMER_MSecondDelay(1);
+    ERROR_LED = 1;              // ERROR LED
+    TIMER_MSecondDelay(1);
+    INITIALIZE_LED = 1;         // INITIALIZATION LED
+    TIMER_MSecondDelay(1);
     
 //    WDTCONbits.ON = 1;              // Enable WatchDog Timer
     
