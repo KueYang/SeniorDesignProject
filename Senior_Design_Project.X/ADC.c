@@ -22,13 +22,13 @@
 #define ADC_ARRAY_SIZE          5
 /** @def ADC_MIDRAIL 
  * Defines the ADC mid-rail. */
-#define ADC_MIDRAIL             512
+#define ADC_MIDRAIL             480
 /** @def ADC_NOISEMAG 
  * Defines the minimum noise magnitude ADC thread hold. */
 #define ADC_NOISEMAG            150         
 /** @def ADC_MINDELTA 
  * Defines the minimum change in ADC sample for indicating strum. */
-#define ADC_MINDELTA            10  
+#define ADC_MINDELTA            10 
 /** @def ADC_MINSAMPLE 
  * Defines the minimum sample count for strum detection. */
 #define ADC_MINSAMPLE           256

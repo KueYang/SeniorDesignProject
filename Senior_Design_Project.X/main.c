@@ -73,8 +73,13 @@
  * @{
  * @details The watch dog is enabled in software for this application.
  */
+#ifdef __DEBUG
+#pragma config FWDTEN = OFF         // Watchdog Timer Enabled
+#pragma config WDTPS = PS2048         // Watchdog Timer Post-scaler, 2s timeout
+#else
 #pragma config FWDTEN = ON         // Watchdog Timer Enabled
 #pragma config WDTPS = PS2048         // Watchdog Timer Post-scaler, 2s timeout
+#endif
 /**@}*/
 
 /**
@@ -83,11 +88,6 @@
  */
 int main(void) 
 {    
-//    DEVCFG1bits.FWDTEN = 0;         // Enable software control of WDT
-//    WDTCONbits.ON = 0;              // Disables WatchDog Timer
-//    CLEAR_WATCHDOG_TIMER;           // Clears the watchdog timer
-//    DEVCFG1bits.WDTPS = 0b00110;    // PostScalar 1:64, 64ms
-    
     /* Enable multi-vector interrupts */
     INTConfigureSystem(INT_SYSTEM_CONFIG_MULT_VECTOR);
     INTEnableInterrupts();
@@ -110,8 +110,6 @@ int main(void)
     TIMER_MSecondDelay(1);
     INITIALIZE_LED = 1;         // INITIALIZATION LED
     TIMER_MSecondDelay(1);
-    
-//    WDTCONbits.ON = 1;              // Enable WatchDog Timer
     
     while(1)
     {

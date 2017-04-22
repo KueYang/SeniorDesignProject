@@ -7,9 +7,17 @@
 #ifndef _FILEDEF_H    /* Guard against multiple inclusion */
 #define _FILEDEF_H
 
+/** @var PIC1 
+ * Defines the selected PIC. */
+#define PIC6
+
 /** @def MAX_NUM_OF_FILES 
  * Defines the max number of audio files to be open. */
+#ifndef PIC0
 #define MAX_NUM_OF_FILES        21
+#else
+#define MAX_NUM_OF_FILES        10
+#endif
 
 /** @def FILE_0 
  * Defines file index 0. */
@@ -75,13 +83,23 @@
  * Defines file index 20. */
 #define FILE_20      20
 
-/** @var PIC1 
- * Defines the selected PIC. */
-#define PIC1
-
 /** @var fileNames 
  * Stores the list of audio file names. */
 const char* fileNames[MAX_NUM_OF_FILES] = 
+#ifdef PIC0
+{
+    "OST_02.WAV",
+    "S1ELOW.WAV",
+    "S2_A.WAV",
+    "S3_D.WAV",
+    "S4_G.WAV",
+    "S5_B.WAV",
+    "S6_EHIGH.WAV",
+    "BOST_02.WAV",
+    "ETUDES~1.WAV",
+    "DK64JJ.WAV"
+};
+#endif
 #ifdef PIC1
 {
     "S1_0.wav",
@@ -106,7 +124,8 @@ const char* fileNames[MAX_NUM_OF_FILES] =
     "S1_19.wav",
     "S1_20.wav"
 };
-#elif PIC2
+#endif
+#ifdef PIC2
 {
     "S2_0.wav",
     "S2_1.wav",
@@ -130,7 +149,8 @@ const char* fileNames[MAX_NUM_OF_FILES] =
     "S2_19.wav",
     "S2_20.wav"
 };
-#elif PIC3
+#endif
+#ifdef PIC3
 {
     "S3_0.wav",
     "S3_1.wav",
@@ -153,8 +173,9 @@ const char* fileNames[MAX_NUM_OF_FILES] =
     "S3_18.wav",
     "S3_19.wav",
     "S3_20.wav"
-}
-#elif PIC4
+};
+#endif
+#ifdef PIC4
 {
     "S4_0.wav",
     "S4_1.wav",
@@ -177,8 +198,9 @@ const char* fileNames[MAX_NUM_OF_FILES] =
     "S4_18.wav",
     "S4_19.wav",
     "S4_20.wav"
-}
-#elif PIC5
+};
+#endif
+#ifdef PIC5
 {
     "S5_0.wav",
     "S5_1.wav",
@@ -202,7 +224,8 @@ const char* fileNames[MAX_NUM_OF_FILES] =
     "S5_19.wav",
     "S5_20.wav"
 };
-#else
+#endif
+#ifdef PIC6
 {
     "S6_0.wav",
     "S6_1.wav",

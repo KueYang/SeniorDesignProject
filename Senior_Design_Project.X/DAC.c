@@ -22,7 +22,6 @@ void DAC_Init(void)
 {
     SYNC = 1;       // Sets the latch high.
     DAC_WriteToDAC(POWER_ON_OFF_CHN_A_B , POWER_ON_DAC_B_A);
-//    DAC_ZeroOutput();
 }
 
 /**
