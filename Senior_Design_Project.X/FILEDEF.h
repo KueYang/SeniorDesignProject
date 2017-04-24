@@ -9,14 +9,14 @@
 
 /** @var PIC1 
  * Defines the selected PIC. */
-#define PIC6
+#define PIC4
 
 /** @def MAX_NUM_OF_FILES 
  * Defines the max number of audio files to be open. */
 #ifndef PIC0
 #define MAX_NUM_OF_FILES        21
 #else
-#define MAX_NUM_OF_FILES        10
+#define MAX_NUM_OF_FILES        11
 #endif
 
 /** @def FILE_0 
@@ -97,7 +97,8 @@ const char* fileNames[MAX_NUM_OF_FILES] =
     "S6_EHIGH.WAV",
     "BOST_02.WAV",
     "ETUDES~1.WAV",
-    "DK64JJ.WAV"
+    "DK64JJ.WAV",
+    "22k_DK64.WAV"
 };
 #endif
 #ifdef PIC1

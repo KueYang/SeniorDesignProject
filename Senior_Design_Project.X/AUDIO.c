@@ -84,7 +84,7 @@ void AUDIO_Init(void)
     }
 
     // Initializes the index to the first file.
-    fileIndex = FILE_1;
+    fileIndex = FILE_0;
     // Sets the initial tone.
     AUDIO_setNewTone(fileIndex, 1);
     // Sets the TIMER clock period to write out audio data.
