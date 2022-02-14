@@ -1,8 +1,8 @@
-# The Senior Design Project for the University of Akron's Electrical & Computer Engineering Program.
-
-# Project Name: Stringless Guitar
-# Purpose: Design a fully functional bass guitar without the need of strings.
-# Contributors: Kue Yang, Domonic Mercorelli Nathaniel Hawks, Tony Bately.
+# UA 2017 The Senior Design Project
+- Design project for the University of Akron's Electrical & Computer Engineering Program.
+- Project Name: Stringless Guitar
+- Purpose: Design a fully functional bass guitar without the need of strings.
+- Contributors: Kue Yang, Domonic Mercorelli Nathaniel Hawks, Tony Bately.
 
 # Design Overview:
   - Each string of the bass guitar uses a resistive sensor for detecting the finger position and note being played. 
